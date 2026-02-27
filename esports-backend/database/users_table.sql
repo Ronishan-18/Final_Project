@@ -1,0 +1,18 @@
+CREATE DATABASE IF NOT EXISTS esports_db;
+USE esports_db;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'gamer', 'organizer', 'sponsor') NOT NULL DEFAULT 'gamer',
+  is_verified BOOLEAN DEFAULT FALSE,
+  verification_token VARCHAR(255) DEFAULT NULL,
+  verification_token_expires DATETIME DEFAULT NULL,
+  reset_password_token VARCHAR(255) DEFAULT NULL,
+  reset_password_expires DATETIME DEFAULT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
