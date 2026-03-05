@@ -1,58 +1,57 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../config/db');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../config/email');
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import db from '../config/db.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../config/email.js';
+
+// ============================================
+// HELPER — Generate 6 digit OTP
+// ============================================
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 // ============================================
 // REGISTER
 // POST /api/auth/register
 // ============================================
-const register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
-    if (!username || !email || !password || !role) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
-    }
-
-    const allowedRoles = ['gamer', 'organizer', 'sponsor'];
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({ success: false, message: 'Invalid role. Choose: gamer, organizer, or sponsor' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-    }
-
+    // Check duplicate
     const [existing] = await db.query(
       'SELECT id FROM users WHERE email = ? OR username = ?',
       [email, username]
     );
-
     if (existing.length > 0) {
-      return res.status(409).json({ success: false, message: 'Email or username already in use' });
+      return res.status(409).json({
+        success: false,
+        message: 'Email or username already in use'
+      });
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Generate email verification token
-    const verificationToken = uuidv4();
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Generate OTP (5 minutes)
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
+    // Save user
     const [result] = await db.query(
-      `INSERT INTO users (username, email, password, role, is_verified, verification_token, verification_token_expires)
+      `INSERT INTO users 
+       (username, email, password, role, is_verified, otp_code, otp_expires)
        VALUES (?, ?, ?, ?, FALSE, ?, ?)`,
-      [username, email, hashedPassword, role, verificationToken, tokenExpiry]
+      [username, email, hashedPassword, role, otp, otpExpiry]
     );
 
-    // Send verification email
-    await sendVerificationEmail(email, username, verificationToken);
+    // Send OTP email
+    await sendVerificationEmail(email, username, otp);
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email to verify your account.',
+      message: 'Registration successful! Please check your email for the OTP to verify your account.',
       userId: result.insertId
     });
 
@@ -63,30 +62,69 @@ const register = async (req, res) => {
 };
 
 // ============================================
-// VERIFY EMAIL
-// GET /api/auth/verify-email/:token
+// VERIFY EMAIL WITH OTP
+// POST /api/auth/verify-email
 // ============================================
-const verifyEmail = async (req, res) => {
+export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.params;
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
 
     const [users] = await db.query(
-      'SELECT id, verification_token_expires FROM users WHERE verification_token = ?',
-      [token]
+      'SELECT id, otp_code, otp_expires, is_verified FROM users WHERE email = ?',
+      [email]
     );
 
     if (users.length === 0) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired verification link' });
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email'
+      });
     }
 
     const user = users[0];
 
-    if (new Date() > new Date(user.verification_token_expires)) {
-      return res.status(400).json({ success: false, message: 'Verification link expired. Please request a new one.' });
+    // Already verified
+    if (user.is_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account is already verified'
+      });
     }
 
+    // Check OTP exists
+    if (!user.otp_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'No OTP found. Please request a new one.'
+      });
+    }
+
+    // Check OTP expiry
+    if (new Date() > new Date(user.otp_expires)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Check OTP match
+    if (user.otp_code !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP. Please try again.'
+      });
+    }
+
+    // Mark verified + clear OTP
     await db.query(
-      'UPDATE users SET is_verified = TRUE, verification_token = NULL, verification_token_expires = NULL WHERE id = ?',
+      'UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expires = NULL WHERE id = ?',
       [user.id]
     );
 
@@ -102,16 +140,12 @@ const verifyEmail = async (req, res) => {
 };
 
 // ============================================
-// RESEND VERIFICATION EMAIL
+// RESEND VERIFICATION OTP
 // POST /api/auth/resend-verification
 // ============================================
-const resendVerification = async (req, res) => {
+export const resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
-    }
 
     const [users] = await db.query(
       'SELECT id, username, is_verified FROM users WHERE email = ?',
@@ -119,30 +153,35 @@ const resendVerification = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(404).json({ success: false, message: 'No account found with this email' });
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email'
+      });
     }
 
     const user = users[0];
 
     if (user.is_verified) {
-      return res.status(400).json({ success: false, message: 'This account is already verified' });
+      return res.status(400).json({
+        success: false,
+        message: 'This account is already verified'
+      });
     }
 
-    // Generate new token
-    const verificationToken = uuidv4();
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Generate new OTP (5 minutes)
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
     await db.query(
-      'UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?',
-      [verificationToken, tokenExpiry, user.id]
+      'UPDATE users SET otp_code = ?, otp_expires = ? WHERE id = ?',
+      [otp, otpExpiry, user.id]
     );
 
-    await sendVerificationEmail(email, user.username, verificationToken);
+    await sendVerificationEmail(email, user.username, otp);
 
     res.status(200).json({
       success: true,
-      message: 'Verification email resent! Please check your inbox.',
-      verificationToken
+      message: 'New OTP sent! Please check your inbox.'
     });
 
   } catch (error) {
@@ -155,13 +194,9 @@ const resendVerification = async (req, res) => {
 // LOGIN
 // POST /api/auth/login
 // ============================================
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
-    }
 
     const [users] = await db.query(
       'SELECT id, username, email, password, role, is_verified, is_active FROM users WHERE email = ?',
@@ -169,34 +204,60 @@ const login = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
     }
 
     const user = users[0];
 
     if (!user.is_active) {
-      return res.status(403).json({ success: false, message: 'Your account has been suspended. Contact support.' });
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been suspended. Contact support.'
+      });
     }
 
     if (!user.is_verified) {
-      return res.status(403).json({ success: false, message: 'Please verify your email before logging in.' });
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email before logging in.'
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
     }
 
+    // Different expiry for admin
+    const tokenExpiry = user.role === 'admin' ? '8h' : '7d';
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: tokenExpiry }
     );
+
+    // ✅ Set cookie
+    const cookieOptions = {
+      httpOnly: true,    // JS cannot access → XSS protection
+      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+      sameSite: 'strict', // CSRF protection
+      maxAge: user.role === 'admin'
+        ? 8 * 60 * 60 * 1000        // 8 hours (admin)
+        : 7 * 24 * 60 * 60 * 1000   // 7 days (others)
+    };
+
+    res.cookie('token', token, cookieOptions);
 
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      token,
+      token,  // ← also in body for Postman/mobile
       user: {
         id: user.id,
         username: user.username,
@@ -212,46 +273,42 @@ const login = async (req, res) => {
 };
 
 // ============================================
-// FORGOT PASSWORD
+// FORGOT PASSWORD — Send OTP
 // POST /api/auth/forgot-password
 // ============================================
-const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
-    }
 
     const [users] = await db.query(
       'SELECT id, username FROM users WHERE email = ?',
       [email]
     );
 
-    // Always return success (security: don't reveal if email exists)
+    // Always return success (security)
     if (users.length === 0) {
       return res.status(200).json({
         success: true,
-        message: 'If an account exists with this email, a reset link has been sent.'
+        message: 'If an account exists with this email, an OTP has been sent.'
       });
     }
 
     const user = users[0];
 
-    // Generate reset token
-    const resetToken = uuidv4();
-    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate OTP (5 minutes)
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
     await db.query(
-      'UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
-      [resetToken, resetExpiry, user.id]
+      'UPDATE users SET otp_code = ?, otp_expires = ? WHERE id = ?',
+      [otp, otpExpiry, user.id]
     );
 
-    await sendPasswordResetEmail(email, user.username, resetToken);
+    await sendPasswordResetEmail(email, user.username, otp);
 
     res.status(200).json({
       success: true,
-      message: 'Password reset link sent to your email!'
+      message: 'OTP sent to your email!'
     });
 
   } catch (error) {
@@ -261,50 +318,120 @@ const forgotPassword = async (req, res) => {
 };
 
 // ============================================
-// RESET PASSWORD
-// POST /api/auth/reset-password/:token
+// VERIFY RESET OTP
+// POST /api/auth/verify-reset-otp
 // ============================================
-const resetPassword = async (req, res) => {
+export const verifyResetOtp = async (req, res) => {
   try {
-    const { token } = req.params;
-    const { password } = req.body;
+    const { email, otp } = req.body;
 
-    if (!password) {
-      return res.status(400).json({ success: false, message: 'New password is required' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
     }
 
     const [users] = await db.query(
-      'SELECT id, reset_password_expires FROM users WHERE reset_password_token = ?',
-      [token]
+      'SELECT id, otp_code, otp_expires FROM users WHERE email = ?',
+      [email]
     );
 
     if (users.length === 0) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset link' });
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email'
+      });
     }
 
     const user = users[0];
 
-    if (new Date() > new Date(user.reset_password_expires)) {
-      return res.status(400).json({ success: false, message: 'Reset link has expired. Please request a new one.' });
+    // Check OTP exists
+    if (!user.otp_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'No OTP found. Please request a new one.'
+      });
     }
+
+    // Check OTP expiry
+    if (new Date() > new Date(user.otp_expires)) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // Check OTP match
+    if (user.otp_code !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP. Please try again.'
+      });
+    }
+
+    // OTP valid — generate reset token for next step
+    const resetToken = `${user.id}-${Date.now()}`;
+
+    await db.query(
+      'UPDATE users SET reset_password_token = ?, otp_code = NULL, otp_expires = NULL WHERE id = ?',
+      [resetToken, user.id]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified! You can now reset your password.',
+      resetToken  // frontend uses this to reset password
+    });
+
+  } catch (error) {
+    console.error('Verify Reset OTP Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// ============================================
+// RESET PASSWORD
+// POST /api/auth/reset-password
+// ============================================
+export const resetPassword = async (req, res) => {
+  try {
+    const { resetToken, password } = req.body;
+
+    if (!resetToken || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset token and new password are required'
+      });
+    }
+
+    const [users] = await db.query(
+      'SELECT id FROM users WHERE reset_password_token = ?',
+      [resetToken]
+    );
+
+    if (users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    const user = users[0];
 
     // Hash new password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Update password and clear reset token
+    // Update password + clear reset token
     await db.query(
-      'UPDATE users SET password = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?',
+      'UPDATE users SET password = ?, reset_password_token = NULL WHERE id = ?',
       [hashedPassword, user.id]
     );
 
     res.status(200).json({
       success: true,
-      message: 'Password reset successful! You can now log in with your new password.'
+      message: 'Password reset successful! You can now log in.'
     });
 
   } catch (error) {
@@ -314,22 +441,13 @@ const resetPassword = async (req, res) => {
 };
 
 // ============================================
-// CHANGE PASSWORD (logged in user)
+// CHANGE PASSWORD
 // POST /api/auth/change-password
 // ============================================
-const changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Current and new password are required' });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
-    }
-
-    // Get user with password
     const [users] = await db.query(
       'SELECT id, password FROM users WHERE id = ?',
       [req.user.id]
@@ -337,13 +455,14 @@ const changePassword = async (req, res) => {
 
     const user = users[0];
 
-    // Check current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
     }
 
-    // Hash new password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
@@ -364,54 +483,52 @@ const changePassword = async (req, res) => {
 };
 
 // ============================================
-// UPDATE EMAIL (logged in user)
+// UPDATE EMAIL
 // PUT /api/auth/update-email
 // ============================================
-const updateEmail = async (req, res) => {
+export const updateEmail = async (req, res) => {
   try {
     const { newEmail, password } = req.body;
 
-    if (!newEmail || !password) {
-      return res.status(400).json({ success: false, message: 'New email and password are required' });
-    }
-
-    // Check if new email already exists
     const [existing] = await db.query(
       'SELECT id FROM users WHERE email = ?',
       [newEmail]
     );
-
     if (existing.length > 0) {
-      return res.status(409).json({ success: false, message: 'This email is already in use' });
+      return res.status(409).json({
+        success: false,
+        message: 'This email is already in use'
+      });
     }
 
-    // Verify password
     const [users] = await db.query(
-      'SELECT id, password FROM users WHERE id = ?',
+      'SELECT id, username, password FROM users WHERE id = ?',
       [req.user.id]
     );
 
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Password is incorrect' });
+      return res.status(401).json({
+        success: false,
+        message: 'Password is incorrect'
+      });
     }
 
-    // Generate new verification token for new email
-    const verificationToken = uuidv4();
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Generate OTP for new email verification (5 minutes)
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
     await db.query(
-      'UPDATE users SET email = ?, is_verified = FALSE, verification_token = ?, verification_token_expires = ? WHERE id = ?',
-      [newEmail, verificationToken, tokenExpiry, req.user.id]
+      'UPDATE users SET email = ?, is_verified = FALSE, otp_code = ?, otp_expires = ? WHERE id = ?',
+      [newEmail, otp, otpExpiry, req.user.id]
     );
 
-    // Send verification to new email
-    await sendVerificationEmail(newEmail, req.user.username, verificationToken);
+    await sendVerificationEmail(newEmail, user.username, otp);
 
     res.status(200).json({
       success: true,
-      message: 'Email updated! Please verify your new email address.'
+      message: 'Email updated! Please check your new email for OTP to verify.'
     });
 
   } catch (error) {
@@ -424,7 +541,7 @@ const updateEmail = async (req, res) => {
 // GET ME
 // GET /api/auth/me
 // ============================================
-const getMe = async (req, res) => {
+export const getMe = async (req, res) => {
   try {
     const [users] = await db.query(
       'SELECT id, username, email, role, is_verified, created_at FROM users WHERE id = ?',
@@ -432,7 +549,10 @@ const getMe = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
     }
 
     res.status(200).json({ success: true, user: users[0] });
@@ -447,88 +567,86 @@ const getMe = async (req, res) => {
 // LOGOUT
 // POST /api/auth/logout
 // ============================================
-const logout = (req, res) => {
-  res.status(200).json({ success: true, message: 'Logged out successfully' });
+export const logout = (req, res) => {
+  // ✅ Clear cookie on logout
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 };
 
 // ============================================
-// CHANGE USER ROLE (Admin only)
-// PUT /api/auth/change-role
+// GET ALL USERS (Admin only)
+// GET /api/auth/users
 // ============================================
-const changeUserRole = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
-    const { userId, newRole } = req.body;
-
-    // Validate
-    if (!userId || !newRole) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'userId and newRole are required' 
-      });
-    }
-
-    const allowedRoles = ['admin', 'gamer', 'organizer', 'sponsor'];
-    if (!allowedRoles.includes(newRole)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid role. Choose: admin, gamer, organizer, sponsor' 
-      });
-    }
-
-    // Check if user exists
     const [users] = await db.query(
-      'SELECT id, username, role FROM users WHERE id = ?',
-      [userId]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    // Prevent admin changing their own role
-    if (users[0].id === req.user.id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'You cannot change your own role' 
-      });
-    }
-
-    // Update role
-    await db.query(
-      'UPDATE users SET role = ? WHERE id = ?',
-      [newRole, userId]
+      `SELECT id, username, email, role, is_verified, is_active, created_at
+       FROM users ORDER BY created_at DESC`
     );
 
     res.status(200).json({
       success: true,
-      message: `Role updated successfully!`,
-      data: {
-        userId: users[0].id,
-        username: users[0].username,
-        oldRole: users[0].role,
-        newRole: newRole
-      }
+      total: users.length,
+      users
     });
 
   } catch (error) {
-    console.error('Change Role Error:', error);
+    console.error('Get All Users Error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-module.exports = {
-  register,
-  verifyEmail,
-  resendVerification,
-  login,
-  forgotPassword,
-  resetPassword,
-  changePassword,
-  updateEmail,
-  getMe,
-  logout,
-  changeUserRole   
+// ============================================
+// EDIT USER ROLE (Admin only)
+// PUT /api/auth/users/:id/role
+// ============================================
+export const editUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    const [users] = await db.query(
+      'SELECT id, username, email, role FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot change your own role'
+      });
+    }
+
+    await db.query('UPDATE users SET role = ? WHERE id = ?', [role, id]);
+
+    res.status(200).json({
+      success: true,
+      message: 'User role updated successfully!',
+      user: {
+        id: users[0].id,
+        username: users[0].username,
+        email: users[0].email,
+        role: role
+      }
+    });
+
+  } catch (error) {
+    console.error('Edit User Role Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };

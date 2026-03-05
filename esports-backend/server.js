@@ -1,25 +1,24 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-
-dotenv.config();
-
-const db = require('./config/db');
-const authRoutes = require('./routes/auth.routes');
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import 'dotenv/config';
+import db from './config/db.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true  // ← cookies allow செய்ய must!
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // ← add this!
 
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ message: 'E-Sports API is running!' });
+  res.json({ message: '🎮 E-Sports API is running!' });
 });
 
 app.use((req, res) => {

@@ -1,43 +1,69 @@
-const express = require('express');
+import express from 'express';
+import {
+  register, verifyEmail, resendVerification,
+  login, forgotPassword, verifyResetOtp,
+  resetPassword, changePassword, updateEmail,
+  getMe, logout, getAllUsers, editUserRole
+} from '../controllers/auth.controller.js';
+import { protect, authorize } from '../middleware/auth.middleware.js';
+import {
+  validateRegister, validateLogin,
+  validateForgotPassword, validateResetPassword,
+  validateChangePassword, validateUpdateEmail
+} from '../middleware/validate.middleware.js';
+
 const router = express.Router();
 
-const {
-  register,
-  verifyEmail,
-  resendVerification,
-  login,
-  forgotPassword,
-  resetPassword,
-  changePassword,
-  updateEmail,
-  getMe,
-  logout,
-  changeUserRole    
-} = require('../controllers/auth.controller');
-
-const { protect, authorize } = require('../middleware/auth.middleware');
-
 // ============================================
-// PUBLIC ROUTES (no token needed)
+// PUBLIC ROUTES
 // ============================================
-router.post('/register', register);
-router.get('/verify-email/:token', verifyEmail);
+router.post('/register', validateRegister, register);
+router.post('/verify-email', verifyEmail);              // ← POST now (OTP)
 router.post('/resend-verification', resendVerification);
-router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password/:token', resetPassword);
+router.post('/login', validateLogin, login);
+router.post('/forgot-password', validateForgotPassword, forgotPassword);
+router.post('/verify-reset-otp', verifyResetOtp);       // ← NEW
+router.post('/reset-password', validateResetPassword, resetPassword); // ← no :token now
 
 // ============================================
-// PROTECTED ROUTES (token required)
+// PROTECTED ROUTES
 // ============================================
 router.get('/me', protect, getMe);
 router.post('/logout', protect, logout);
-router.post('/change-password', protect, changePassword);
-router.put('/update-email', protect, updateEmail);
+router.post('/change-password', protect, validateChangePassword, changePassword);
+router.put('/update-email', protect, validateUpdateEmail, updateEmail);
 
 // ============================================
-// ADMIN ONLY ROUTES
+// ADMIN ONLY
 // ============================================
-router.put('/change-role', protect, authorize('admin'), changeUserRole);
+router.get('/users', protect, authorize('admin'), getAllUsers);
+router.put('/users/:id/role', protect, authorize('admin'), editUserRole);
 
-module.exports = router;
+export default router;
+
+
+// ---
+
+// ### Complete OTP Flow:
+
+// **Email Verification:**
+// ```
+// Register → OTP sent to email
+// POST /api/auth/verify-email
+// { "email": "roni@gmail.com", "otp": "123456" }
+// → Account verified ✅
+// ```
+
+// **Forgot Password:**
+// ```
+// POST /api/auth/forgot-password
+// { "email": "roni@gmail.com" }
+// → OTP sent to email
+
+// POST /api/auth/verify-reset-otp
+// { "email": "roni@gmail.com", "otp": "123456" }
+// → resetToken received
+
+// POST /api/auth/reset-password
+// { "resetToken": "...", "password": "NewPass@123" }
+// → Password changed ✅
