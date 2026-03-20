@@ -1,0 +1,168 @@
+.about { background: #0A0A0F; }
+
+.hero {
+  padding: 6rem 0 4rem;
+  text-align: center;
+  background: radial-gradient(ellipse at center, rgba(0,245,255,0.06) 0%, transparent 60%);
+
+  &__title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  &__sub {
+    color: #8892A4;
+    font-size: 1.1rem;
+    max-width: 36rem;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+}
+
+.mission {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  &__text {
+    color: #8892A4;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  &__card {
+    background: #12121A;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: rgba(0,245,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    &_icon { font-size: 1.5rem; }
+    &_title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    &_desc { color: #8892A4; font-size: 0.85rem; }
+  }
+}
+
+.ps {
+  background: rgba(0,0,0,0.2);
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__card_problem,
+  &__card_solution {
+    background: #12121A;
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  &__card_problem { border: 1px solid rgba(255,0,110,0.2); }
+  &__card_solution { border: 1px solid rgba(0,245,255,0.2); }
+
+  &__heading {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+  }
+
+  &__item {
+    color: #8892A4;
+    font-size: 0.95rem;
+    padding: 0.4rem 0;
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+
+    &:last-child { border-bottom: none; }
+  }
+}
+
+.tech {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  &__card {
+    background: #12121A;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    &:hover {
+      border-color: rgba(0,245,255,0.3);
+      transform: translateY(-2px);
+    }
+  }
+
+  &__name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  &__type {
+    color: #00F5FF;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}

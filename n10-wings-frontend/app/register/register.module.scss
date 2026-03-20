@@ -1,0 +1,199 @@
+.register {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0,245,255,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(139,0,255,0.06) 0%, transparent 50%),
+    #0A0A0F;
+
+  &__box {
+    width: 100%;
+    max-width: 460px;
+    background: #12121A;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+  }
+
+  &__title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 1rem;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid;
+    border-radius: 50px;
+    padding: 0.4rem 1.2rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  &__switch {
+    color: #8892A4;
+    font-size: 0.8rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+
+    a {
+      color: #00F5FF;
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  &__error {
+    background: rgba(255,0,110,0.1);
+    border: 1px solid rgba(255,0,110,0.3);
+    color: #FF006E;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  &__form { display: flex; flex-direction: column; }
+
+  &__group { margin-bottom: 1rem; }
+
+  &__label {
+    display: block;
+    color: #8892A4;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  &__input {
+    width: 100%;
+    background: #0A0A0F;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    font-family: 'Rajdhani', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+
+    &:focus {
+      border-color: #00F5FF;
+      box-shadow: 0 0 0 2px rgba(0,245,255,0.1);
+    }
+
+    &::placeholder { color: #4B5563; }
+  }
+
+  &__btn {
+    width: 100%;
+    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    color: #0A0A0F;
+    border: none;
+    border-radius: 6px;
+    padding: 0.9rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(0,245,255,0.3);
+    }
+
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.25rem 0;
+
+    &::before, &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    span { color: #8892A4; font-size: 0.75rem; letter-spacing: 0.1em; }
+  }
+
+  &__google {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 0.8rem;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+
+    &:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.05);
+    }
+  }
+
+  &__login {
+    color: #8892A4;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 1.25rem;
+
+    a {
+      color: #00F5FF;
+      text-decoration: none;
+      font-weight: 600;
+      &:hover { text-decoration: underline; }
+    }
+  }
+}

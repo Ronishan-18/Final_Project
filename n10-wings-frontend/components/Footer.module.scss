@@ -1,0 +1,127 @@
+.footer {
+  background: #0D0D14;
+  border-top: 1px solid rgba(0,245,255,0.15);
+  margin-top: auto;
+
+  &__divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg, transparent, #00F5FF, #FF006E, transparent
+    );
+    opacity: 0.3;
+  }
+
+  &__inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    text-decoration: none;
+
+    &-icon { font-size: 1.2rem; }
+
+    &-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #00F5FF, #8B00FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  &__desc {
+    color: #8892A4;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 28rem;
+  }
+
+  &__heading {
+    font-family: 'Orbitron', sans-serif;
+    color: #00F5FF;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  &__links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    &-item {
+      color: #8892A4;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: #00F5FF;
+        padding-left: 0.25rem;
+      }
+    }
+  }
+
+  &__contact {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    &-item {
+      color: #8892A4;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  &__bottom {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    &-text {
+      color: #4B5563;
+      font-size: 0.85rem;
+    }
+
+    &-glow {
+      color: #00F5FF;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+  }
+}

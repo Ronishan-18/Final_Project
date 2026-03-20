@@ -1,0 +1,207 @@
+.avatar {
+  position: relative;
+  display: inline-block;
+
+  &__frame {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid rgba(0,245,255,0.4);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    background: rgba(0,245,255,0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #00F5FF;
+      box-shadow: 0 0 20px rgba(0,245,255,0.3);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-family: 'Orbitron', sans-serif;
+    color: #00F5FF;
+    font-weight: 700;
+  }
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 50%;
+
+    .avatar__frame:hover & {
+      opacity: 1;
+    }
+  }
+
+  &__camera { font-size: 1.5rem; }
+
+  &__menu {
+    position: absolute;
+    top: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #12121A;
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 100;
+    min-width: 180px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+    &_item {
+      width: 100%;
+      padding: 0.8rem 1.2rem;
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+
+      &:last-child { border-bottom: none; }
+
+      &:hover { background: rgba(0,245,255,0.08); }
+
+      &--delete {
+        color: #FF006E;
+        &:hover { background: rgba(255,0,110,0.08); }
+      }
+
+      &--cancel {
+        color: #8892A4;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+// Modal
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+
+  &__box {
+    background: #12121A;
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  &__title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #00F5FF;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  &__crop {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    background: #0A0A0F;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  &__control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    label {
+      color: #8892A4;
+      font-size: 0.85rem;
+      min-width: 70px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #00F5FF;
+    }
+  }
+
+  &__error {
+    color: #FF006E;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  &__btns {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  &__cancel {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #8892A4;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover { border-color: rgba(255,255,255,0.3); color: #ffffff; }
+  }
+
+  &__save {
+    flex: 2;
+    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    border: none;
+    color: #0A0A0F;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+    &:hover:not(:disabled) { opacity: 0.85; }
+  }
+}
