@@ -9,11 +9,13 @@ import styles from './game-identities.module.scss';
 interface Game {
   id: string;
   name: string;
-  type: 'api' | 'manual';
+  category: 'api' | 'manual';
   icon: string;
   color: string;
+  platform: string;
   placeholder: string;
   hint: string;
+  stats_info?: string;
 }
 
 interface Identity {
@@ -26,13 +28,32 @@ interface Identity {
   api_stats: string | null;
 }
 
+const GAME_ICONS: Record<string, string> = {
+  'PUBG PC': '🎯', 'PUBG Mobile': '📱',
+  'Valorant': '⚡', 'League of Legends': '🗡️',
+  'Free Fire': '🔥', 'Mobile Legends': '⚔️',
+  'COD Mobile': '💥', 'Fortnite': '🌀',
+  'Minecraft': '⛏️',
+};
+
+const GAME_COLORS: Record<string, string> = {
+  'PUBG PC': '#F5A623', 'PUBG Mobile': '#F5A623',
+  'Valorant': '#FF4655', 'League of Legends': '#C89B3C',
+  'Free Fire': '#FF6B00', 'Mobile Legends': '#1890FF',
+  'COD Mobile': '#4CAF50', 'Fortnite': '#9C27B0',
+  'Minecraft': '#8B6914',
+};
+
 export default function GameIdentitiesPage() {
   const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
   const [identities, setIdentities] = useState<Identity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [isCustom, setIsCustom] = useState(false);
   const [username, setUsername] = useState('');
+  const [customGameName, setCustomGameName] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState('');
   const [message, setMessage] = useState('');
@@ -43,65 +64,77 @@ export default function GameIdentitiesPage() {
       const gamesRes = await api.get('/game-identities/games');
       setGames(gamesRes.data.games || []);
       try {
-        const identitiesRes = await api.get('/game-identities/me');
-        setIdentities(identitiesRes.data.identities || []);
-      } catch {
-        setIdentities([]);
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setGames([]);
-    } finally {
-      setLoading(false);
-    }
+        const idRes = await api.get('/game-identities/me');
+        setIdentities(idRes.data.identities || []);
+      } catch { setIdentities([]); }
+    } catch { setGames([]); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    if (!token) { router.push('/login'); return; }
     fetchData();
   }, [fetchData, router]);
 
-  const getIdentityForGame = (gameName: string) => {
-    return identities.find(i => i.game_name === gameName);
-  };
+  const getIdentity = (gameName: string) =>
+    identities.find(i => i.game_name === gameName);
 
-  const handleAddGame = (game: Game) => {
-    const existing = getIdentityForGame(game.name);
+  const openModal = (game: Game) => {
+    const existing = getIdentity(game.name);
     setSelectedGame(game);
+    setIsCustom(false);
     setUsername(existing?.game_username || '');
+    setCustomGameName('');
+    setShowModal(true);
     setMessage('');
     setError('');
+  };
+
+  const openCustomModal = () => {
+    setSelectedGame(null);
+    setIsCustom(true);
+    setUsername('');
+    setCustomGameName('');
+    setShowModal(true);
+    setMessage('');
+    setError('');
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedGame(null);
+    setIsCustom(false);
+    setUsername('');
+    setCustomGameName('');
+    setError('');
+    setMessage('');
   };
 
   const handleSave = async () => {
-    if (!selectedGame || !username.trim()) {
-      setError('Please enter your username!');
-      return;
+    if (!username.trim()) { setError('Please enter your username!'); return; }
+    if (isCustom && !customGameName.trim()) {
+      setError('Please enter the game name!'); return;
     }
+
     setSaving(true);
     setError('');
-    setMessage('');
+
     try {
       await api.post('/game-identities', {
-        game_id: selectedGame.id,
-        game_name: selectedGame.name,
-        game_type: selectedGame.type,
+        game_id: selectedGame?.id || 'other',
+        game_name: selectedGame?.name || customGameName.trim(),
         game_username: username.trim(),
+        custom_game_name: customGameName.trim(),
       });
-      setMessage(`${selectedGame.name} identity saved!`);
-      if (selectedGame.type === 'api') {
+
+      if (selectedGame?.category === 'api') {
         await handleSync(selectedGame, username.trim());
+      } else {
+        setMessage('Game identity saved!');
+        await fetchData();
+        setTimeout(() => { closeModal(); setMessage(''); }, 1500);
       }
-      await fetchData();
-      setTimeout(() => {
-        setSelectedGame(null);
-        setUsername('');
-        setMessage('');
-      }, 2000);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message || 'Failed to save!');
@@ -111,21 +144,29 @@ export default function GameIdentitiesPage() {
   };
 
   const handleSync = async (game: Game, gameUsername?: string) => {
-    const uname = gameUsername || getIdentityForGame(game.name)?.game_username;
+    const uname = gameUsername || getIdentity(game.name)?.game_username;
     if (!uname) return;
+
     setSyncing(game.name);
     setError('');
-    setMessage('');
+
     try {
-      const endpoint = game.id === 'pubg'
-        ? '/game-identities/sync/pubg'
-        : '/game-identities/sync/valorant';
+      const endpoints: Record<string, string> = {
+        'pubg_pc': '/game-identities/sync/pubg',
+        'valorant': '/game-identities/sync/valorant',
+        'league_of_legends': '/game-identities/sync/lol',
+      };
+
+      const endpoint = endpoints[game.id];
+      if (!endpoint) return;
+
       const res = await api.post(endpoint, { game_username: uname });
       setMessage(res.data.message);
       await fetchData();
+      setTimeout(() => { closeModal(); setMessage(''); }, 2000);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || 'Sync failed!');
+      setError(e.response?.data?.message || 'Sync failed! Check your username.');
     } finally {
       setSyncing('');
     }
@@ -136,237 +177,316 @@ export default function GameIdentitiesPage() {
     try {
       await api.delete(`/game-identities/${id}`);
       await fetchData();
-    } catch {
-      setError('Failed to remove!');
-    }
+    } catch { setError('Failed to remove!'); }
   };
 
-  const parseStats = (statsStr: string | null) => {
-    if (!statsStr) return null;
-    try {
-      return typeof statsStr === 'string' ? JSON.parse(statsStr) : statsStr;
-    } catch { return null; }
+  const parseStats = (s: string | null) => {
+    if (!s) return null;
+    try { return typeof s === 'string' ? JSON.parse(s) : s; }
+    catch { return null; }
   };
 
-  if (loading) {
-    return (
-      <div className={styles.loading}>
-        <div className={styles.loading__spinner} />
-        <p>Loading game identities...</p>
-      </div>
-    );
-  }
+  const apiGames = games.filter(g => g.category === 'api');
+  const manualGames = games.filter(g => g.category === 'manual');
+
+  if (loading) return (
+    <div className={styles.loading}>
+      <div className={styles.loading__spinner} />
+      <p>Loading game identities...</p>
+    </div>
+  );
 
   return (
     <div className={styles.page}>
+
+      {/* Header */}
       <div className={styles.header}>
-        <Link href="/dashboard" className={styles.header__back}>
-          ← Back to Dashboard
-        </Link>
-        <h1 className={styles.header__title}>
-          GAME <span className={styles.header__gradient}>IDENTITIES</span>
-        </h1>
-        <p className={styles.header__sub}>
-          Link your gaming accounts to showcase on your profile
-        </p>
+        <Link href="/dashboard" className={styles.header__back}>← Dashboard</Link>
+        <div className={styles.header__content}>
+          <div>
+            <h1 className={styles.header__title}>
+              🎮 GAME <span className={styles.header__cyan}>IDENTITIES</span>
+            </h1>
+            <p className={styles.header__sub}>
+              Link your gaming accounts — API games auto-sync stats!
+            </p>
+          </div>
+          <button className={styles.header__add_btn} onClick={openCustomModal}>
+            ➕ Add Custom Game
+          </button>
+        </div>
       </div>
 
+      {/* Messages */}
       {message && <div className={styles.success}>✅ {message}</div>}
-      {error && <div className={styles.error}>❌ {error}</div>}
+      {error && !showModal && <div className={styles.error}>❌ {error}</div>}
 
-      {selectedGame && (
-        <div className={styles.modal}>
-          <div className={styles.modal__box}>
+      {/* Linked Games */}
+      {identities.length > 0 && (
+        <div className={styles.section}>
+          <h2 className={styles.section__title}>MY LINKED GAMES</h2>
+          <div className={styles.linked}>
+            {identities.map(identity => {
+              const game = games.find(g => g.name === identity.game_name);
+              const stats = parseStats(identity.api_stats);
+              const color = GAME_COLORS[identity.game_name] || game?.color || '#8892A4';
+              const icon = GAME_ICONS[identity.game_name] || game?.icon || '🎮';
+
+              return (
+                <div key={identity.id} className={styles.card}
+                  style={{ '--game-color': color } as React.CSSProperties}>
+                  <div className={styles.card__top}>
+                    <div className={styles.card__game}>
+                      <span className={styles.card__icon}>{icon}</span>
+                      <div>
+                        <h3 className={styles.card__name} style={{ color }}>
+                          {identity.game_name}
+                        </h3>
+                        <p className={styles.card__username}>@{identity.game_username}</p>
+                      </div>
+                    </div>
+                    <div className={styles.card__badges}>
+                      {identity.is_verified && (
+                        <span className={styles.badge__verified}>✅ Verified</span>
+                      )}
+                      <span className={`${styles.badge__type} ${identity.game_type === 'api' ? styles['badge__type--api'] : styles['badge__type--manual']}`}>
+                        {identity.game_type === 'api' ? '⚡ API' : '📝 Manual'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  {stats && identity.game_type === 'api' && (
+                    <div className={styles.card__stats}>
+                      {identity.game_name === 'PUBG PC' && (
+                        <>
+                          {[
+                            { l: 'K/D', v: stats.kd_ratio || '0.00', c: '#F5A623' },
+                            { l: 'Kills', v: stats.kills || 0, c: '#FF006E' },
+                            { l: 'Wins', v: stats.wins || 0, c: '#00FF88' },
+                            { l: 'Matches', v: stats.matches || 0, c: '#00F5FF' },
+                            { l: 'Win Rate', v: `${stats.win_rate || 0}%`, c: '#FFD700' },
+                          ].map(s => (
+                            <div key={s.l} className={styles.stat}>
+                              <span style={{ color: s.c }}>{s.v}</span>
+                              <span>{s.l}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {identity.game_name === 'Valorant' && (
+                        <>
+                          <div className={styles.stat}>
+                            <span style={{ color: '#FF4655' }}>{stats.gameName}#{stats.tagLine}</span>
+                            <span>Riot ID</span>
+                          </div>
+                          <div className={styles.stat}>
+                            <span style={{ color: '#00F5FF' }}>Verified ✅</span>
+                            <span>Status</span>
+                          </div>
+                        </>
+                      )}
+                      {identity.game_name === 'League of Legends' && (
+                        <>
+                          {[
+                            { l: 'Rank', v: `${stats.tier || 'Unranked'} ${stats.rank || ''}`.trim(), c: '#C89B3C' },
+                            { l: 'LP', v: stats.lp || 0, c: '#FFD700' },
+                            { l: 'Wins', v: stats.wins || 0, c: '#00FF88' },
+                            { l: 'Losses', v: stats.losses || 0, c: '#FF006E' },
+                            { l: 'Win Rate', v: `${stats.win_rate || 0}%`, c: '#00F5FF' },
+                            { l: 'Level', v: stats.summoner_level || 0, c: '#8B00FF' },
+                          ].map(s => (
+                            <div key={s.l} className={styles.stat}>
+                              <span style={{ color: s.c }}>{s.v}</span>
+                              <span>{s.l}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {identity.last_synced && (
+                    <p className={styles.card__synced}>
+                      🕐 Synced: {new Date(identity.last_synced).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  <div className={styles.card__actions}>
+                    {game?.category === 'api' && (
+                      <button
+                        className={styles.btn__sync}
+                        style={{ borderColor: color, color }}
+                        onClick={() => game && handleSync(game)}
+                        disabled={!!syncing}
+                      >
+                        {syncing === identity.game_name ? '⏳ Syncing...' : '🔄 Sync'}
+                      </button>
+                    )}
+                    <button className={styles.btn__edit}
+                      onClick={() => game ? openModal(game) : openCustomModal()}>
+                      ✏️ Edit
+                    </button>
+                    <button className={styles.btn__delete}
+                      onClick={() => handleDelete(identity.id)}>
+                      🗑️ Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* API Games */}
+      <div className={styles.section}>
+        <div className={styles.section__header}>
+          <h2 className={styles.section__title}>⚡ AUTO-SYNC GAMES</h2>
+          <span className={styles.section__badge}>Stats fetched automatically!</span>
+        </div>
+        <div className={styles.games__grid}>
+          {apiGames.map(game => {
+            const linked = getIdentity(game.name);
+            return (
+              <button key={game.id}
+                className={`${styles.game__tile} ${linked ? styles['game__tile--linked'] : ''}`}
+                style={linked ? { borderColor: `${game.color}60`, background: `${game.color}10` } : {}}
+                onClick={() => openModal(game)}
+              >
+                <span className={styles.game__tile_icon}>{game.icon}</span>
+                <span className={styles.game__tile_name} style={{ color: linked ? game.color : '#ffffff' }}>
+                  {game.name}
+                </span>
+                <span className={styles.game__tile_platform}>{game.platform}</span>
+                <span className={styles.game__tile_badge}
+                  style={{ background: `${game.color}20`, color: game.color }}>
+                  ⚡ {game.stats_info}
+                </span>
+                {linked
+                  ? <span className={styles.game__tile_linked}>✅ Linked</span>
+                  : <span className={styles.game__tile_add}>+ Link Account</span>
+                }
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Manual Games */}
+      <div className={styles.section}>
+        <div className={styles.section__header}>
+          <h2 className={styles.section__title}>📝 SHOWCASE GAMES</h2>
+          <span className={styles.section__badge}>Show your username/ID only</span>
+        </div>
+        <div className={styles.games__grid}>
+          {manualGames.map(game => {
+            const linked = getIdentity(game.name);
+            return (
+              <button key={game.id}
+                className={`${styles.game__tile} ${linked ? styles['game__tile--linked'] : ''}`}
+                style={linked ? { borderColor: `${game.color}60`, background: `${game.color}10` } : {}}
+                onClick={() => openModal(game)}
+              >
+                <span className={styles.game__tile_icon}>{game.icon}</span>
+                <span className={styles.game__tile_name} style={{ color: linked ? game.color : '#ffffff' }}>
+                  {game.name}
+                </span>
+                <span className={styles.game__tile_platform}>{game.platform}</span>
+                {linked
+                  ? <span className={styles.game__tile_linked}>✅ {linked.game_username}</span>
+                  : <span className={styles.game__tile_add}>+ Add ID</span>
+                }
+              </button>
+            );
+          })}
+          <button className={styles.game__tile} onClick={openCustomModal}>
+            <span className={styles.game__tile_icon}>🎮</span>
+            <span className={styles.game__tile_name}>Other Game</span>
+            <span className={styles.game__tile_platform}>Any</span>
+            <span className={styles.game__tile_add}>+ Add Custom</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className={styles.modal} onClick={closeModal}>
+          <div className={styles.modal__box} onClick={e => e.stopPropagation()}>
             <div className={styles.modal__header}>
-              <span style={{ fontSize: '2rem' }}>{selectedGame.icon}</span>
+              <span style={{ fontSize: '2rem' }}>{selectedGame?.icon || '🎮'}</span>
               <div>
-                <h3 className={styles.modal__title} style={{ color: selectedGame.color }}>
-                  {selectedGame.name}
+                <h3 className={styles.modal__title}
+                  style={{ color: selectedGame?.color || '#00F5FF' }}>
+                  {isCustom ? 'Add Custom Game' : selectedGame?.name}
                 </h3>
-                <p className={styles.modal__type}>
-                  {selectedGame.type === 'api' ? '⚡ Auto-sync stats' : '📝 Manual identity'}
+                <p className={styles.modal__subtitle}>
+                  {selectedGame?.category === 'api'
+                    ? `⚡ Stats: ${selectedGame.stats_info}`
+                    : '📝 Username will be showcased on profile'}
                 </p>
               </div>
             </div>
-            <div className={styles.modal__form}>
+
+            {isCustom && (
+              <div className={styles.modal__group}>
+                <label className={styles.modal__label}>Game Name</label>
+                <input
+                  className={styles.modal__input}
+                  placeholder="e.g. Apex Legends, GTA V..."
+                  value={customGameName}
+                  onChange={e => setCustomGameName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            )}
+
+            <div className={styles.modal__group}>
               <label className={styles.modal__label}>
-                {selectedGame.id === 'valorant' ? 'Riot ID (Name#Tag)' : 'Username / Player ID'}
+                {selectedGame?.id === 'valorant' || selectedGame?.id === 'league_of_legends'
+                  ? 'Riot ID (Name#Tag)'
+                  : 'Username / Player ID'}
               </label>
               <input
-                type="text"
                 className={styles.modal__input}
-                placeholder={selectedGame.placeholder}
+                placeholder={selectedGame?.placeholder || 'Enter your username or ID'}
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                autoFocus
+                onChange={e => setUsername(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                autoFocus={!isCustom}
               />
-              <p className={styles.modal__hint}>💡 {selectedGame.hint}</p>
+              <p className={styles.modal__hint}>
+                💡 {selectedGame?.hint || 'Enter your username or Player ID'}
+              </p>
             </div>
+
+            {error && <p className={styles.modal__error}>❌ {error}</p>}
+            {message && <p className={styles.modal__success}>✅ {message}</p>}
+
             <div className={styles.modal__btns}>
-              <button
-                className={styles.modal__cancel}
-                onClick={() => { setSelectedGame(null); setUsername(''); setError(''); }}
-              >
+              <button className={styles.modal__cancel} onClick={closeModal}>
                 Cancel
               </button>
               <button
                 className={styles.modal__save}
                 onClick={handleSave}
-                disabled={saving}
-                style={{ background: `linear-gradient(90deg, ${selectedGame.color}, #8B00FF)` }}
+                disabled={saving || !!syncing}
+                style={{
+                  background: selectedGame?.color
+                    ? `linear-gradient(90deg, ${selectedGame.color}, #8B00FF)`
+                    : 'linear-gradient(90deg, #00F5FF, #8B00FF)'
+                }}
               >
-                {saving ? 'Saving...' : selectedGame.type === 'api' ? '⚡ Save & Sync' : '💾 Save'}
+                {saving || syncing
+                  ? '⏳ Processing...'
+                  : selectedGame?.category === 'api'
+                  ? '⚡ Save & Sync Stats'
+                  : '💾 Save'}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      <div className={styles.content}>
-        {identities.length > 0 && (
-          <div className={styles.section}>
-            <h2 className={styles.section__title}>MY LINKED GAMES</h2>
-            <div className={styles.identities}>
-              {identities.map((identity) => {
-                const game = games.find(g => g.name === identity.game_name);
-                const stats = parseStats(identity.api_stats);
-                return (
-                  <div
-                    key={identity.id}
-                    className={styles.identity__card}
-                    style={{ borderColor: game?.color ? `${game.color}40` : undefined }}
-                  >
-                    <div className={styles.identity__header}>
-                      <div className={styles.identity__game_info}>
-                        <span className={styles.identity__icon}>{game?.icon || '🎮'}</span>
-                        <div>
-                          <h3 className={styles.identity__name} style={{ color: game?.color }}>
-                            {identity.game_name}
-                          </h3>
-                          <p className={styles.identity__username}>@{identity.game_username}</p>
-                        </div>
-                      </div>
-                      <div className={styles.identity__badges}>
-                        {identity.is_verified && (
-                          <span className={styles.identity__verified}>✅ Verified</span>
-                        )}
-                        {identity.game_type === 'api' && (
-                          <span className={styles.identity__api}>⚡ API</span>
-                        )}
-                      </div>
-                    </div>
-                    {stats && identity.game_type === 'api' && (
-                      <div className={styles.identity__stats}>
-                        {identity.game_name === 'PUBG' && (
-                          <>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#F5A623' }}>{stats.kills || 0}</span>
-                              <span>Kills</span>
-                            </div>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#00FF88' }}>{stats.wins || 0}</span>
-                              <span>Wins</span>
-                            </div>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#00F5FF' }}>{stats.kd_ratio || '0.00'}</span>
-                              <span>K/D</span>
-                            </div>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#8B00FF' }}>{stats.matches || 0}</span>
-                              <span>Matches</span>
-                            </div>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#FFD700' }}>{stats.win_rate || '0.0'}%</span>
-                              <span>Win Rate</span>
-                            </div>
-                          </>
-                        )}
-                        {identity.game_name === 'Valorant' && (
-                          <>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#FF4655' }}>{stats.gameName}#{stats.tagLine}</span>
-                              <span>Riot ID</span>
-                            </div>
-                            <div className={styles.identity__stat}>
-                              <span style={{ color: '#00F5FF' }}>{stats.rank || 'Unranked'}</span>
-                              <span>Rank</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    {identity.last_synced && (
-                      <p className={styles.identity__synced}>
-                        Last synced: {new Date(identity.last_synced).toLocaleDateString()}
-                      </p>
-                    )}
-                    <div className={styles.identity__actions}>
-                      {game?.type === 'api' && (
-                        <button
-                          className={styles.identity__sync_btn}
-                          onClick={() => game && handleSync(game)}
-                          disabled={syncing === identity.game_name}
-                          style={{ borderColor: game?.color, color: game?.color }}
-                        >
-                          {syncing === identity.game_name ? 'Syncing...' : '🔄 Sync Stats'}
-                        </button>
-                      )}
-                      <button
-                        className={styles.identity__edit_btn}
-                        onClick={() => game && handleAddGame(game)}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className={styles.identity__delete_btn}
-                        onClick={() => handleDelete(identity.id)}
-                      >
-                        🗑️ Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className={styles.section}>
-          <h2 className={styles.section__title}>
-            {identities.length > 0 ? 'ADD MORE GAMES' : 'LINK YOUR GAMES'}
-          </h2>
-          <div className={styles.games__grid}>
-            {games.map((game) => {
-              const linked = getIdentityForGame(game.name);
-              return (
-                <button
-                  key={game.id}
-                  className={`${styles.game__card} ${linked ? styles['game__card--linked'] : ''}`}
-                  style={{
-                    borderColor: linked ? `${game.color}60` : undefined,
-                    background: linked ? `${game.color}08` : undefined,
-                  }}
-                  onClick={() => handleAddGame(game)}
-                >
-                  <span className={styles.game__icon}>{game.icon}</span>
-                  <span className={styles.game__name} style={{ color: linked ? game.color : undefined }}>
-                    {game.name}
-                  </span>
-                  {game.type === 'api' && (
-                    <span className={styles.game__api_badge}>⚡ Auto Stats</span>
-                  )}
-                  {linked ? (
-                    <span className={styles.game__linked}>✅ Linked</span>
-                  ) : (
-                    <span className={styles.game__add}>+ Add</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

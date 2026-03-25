@@ -6,21 +6,23 @@ import {
   upsertGameIdentity,
   deleteGameIdentity,
   syncPUBG,
-  syncValorant
+  syncValorant,
+  syncLoL
 } from '../controllers/gameIdentity.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// ── SPECIFIC ROUTES FIRST ──
+// ── Specific routes FIRST ──
 router.get('/games', getSupportedGames);
 router.get('/me', protect, getMyGameIdentities);
 router.post('/sync/pubg', protect, syncPUBG);
 router.post('/sync/valorant', protect, syncValorant);
+router.post('/sync/lol', protect, syncLoL);
 router.post('/', protect, upsertGameIdentity);
 router.delete('/:id', protect, deleteGameIdentity);
 
-// ── DYNAMIC ROUTES LAST ──
+// ── Dynamic routes LAST ──
 router.get('/:userId', getUserGameIdentities);
 
 export default router;

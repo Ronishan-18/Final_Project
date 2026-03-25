@@ -26,7 +26,6 @@
   background: #0A0A0F;
 }
 
-// ── Sidebar ──
 .sidebar {
   width: 260px;
   min-height: 100vh;
@@ -132,7 +131,6 @@
   }
 }
 
-// ── Main ──
 .main {
   flex: 1;
   padding: 2rem;
@@ -178,7 +176,6 @@
   }
 }
 
-// ── Tabs ──
 .tabs {
   display: flex;
   gap: 0;
@@ -213,7 +210,6 @@
   }
 }
 
-// ── Stats ──
 .stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -258,7 +254,6 @@
   }
 }
 
-// ── Content ──
 .content {
   display: grid;
   grid-template-columns: 1fr;
@@ -269,7 +264,6 @@
   }
 }
 
-// ── Card ──
 .card {
   background: #12121A;
   border: 1px solid rgba(255,255,255,0.08);

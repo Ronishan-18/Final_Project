@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  Users, Trophy, Zap, Gamepad2, Crown,
+  Briefcase, Shield, TrendingUp, ChevronRight
+} from 'lucide-react';
+import IconTile from '../components/IconTile';
 import api from '../lib/api';
 import styles from './page.module.scss';
 
@@ -22,9 +27,7 @@ function TopPlayers() {
   useEffect(() => {
     api.get('/profile/search')
       .then(res => {
-        if (res.data.success) {
-          setGamers(res.data.gamers.slice(0, 6));
-        }
+        if (res.data.success) setGamers(res.data.gamers.slice(0, 6));
       })
       .catch(() => {});
   }, []);
@@ -32,41 +35,76 @@ function TopPlayers() {
   if (gamers.length === 0) return (
     <div style={{ color: '#8892A4', textAlign: 'center', padding: '2rem' }}>
       No players yet.{' '}
-      <Link href="/register?role=gamer" style={{ color: '#00F5FF' }}>
-        Be the first! →
-      </Link>
+      <Link href="/register" style={{ color: '#00F5FF' }}>Be the first! →</Link>
     </div>
   );
 
   return (
     <div className={styles.topplayers__grid}>
       {gamers.map((gamer) => (
-        <Link
-          key={gamer.id}
-          href={`/profile/${gamer.id}`}
-          className={styles.topplayers__card}
-        >
+        <Link key={gamer.id} href={`/profile/${gamer.id}`} className={styles.topplayers__card}>
           <div className={styles.topplayers__avatar}>
             {gamer.avatar
               ? <img src={gamer.avatar} alt={gamer.username} />
-              : <span>🎮</span>
+              : <Gamepad2 size={24} color="#00F5FF" strokeWidth={1.75} />
             }
           </div>
-          <div className={styles.topplayers__name}>
-            {gamer.full_name || gamer.username}
-          </div>
+          <div className={styles.topplayers__name}>{gamer.full_name || gamer.username}</div>
           <div className={styles.topplayers__handle}>@{gamer.username}</div>
           {gamer.player_rank && (
-            <div className={styles.topplayers__rank}>⭐ {gamer.player_rank}</div>
+            <div className={styles.topplayers__rank}>
+              <Shield size={11} strokeWidth={2} style={{ display: 'inline', marginRight: 3 }} />
+              {gamer.player_rank}
+            </div>
           )}
           <div className={styles.topplayers__points}>
-            ⚡ {gamer.points ?? 0} pts
+            <Zap size={11} strokeWidth={2} style={{ display: 'inline', marginRight: 3 }} />
+            {gamer.points ?? 0} pts
           </div>
         </Link>
       ))}
     </div>
   );
 }
+
+const statsData = [
+  { icon: Users, label: 'Active Players', num: '50K+', color: '#00F5FF' },
+  { icon: Trophy, label: 'Tournaments', num: '1,200+', color: '#8B00FF' },
+  { icon: Zap, label: 'Prize Pool', num: '$2.5M+', color: '#FF006E' },
+];
+
+const featuresData = [
+  {
+    icon: Gamepad2,
+    title: 'FOR GAMERS',
+    desc: 'Showcase skills, join teams, register for tournaments and climb leaderboards.',
+    color: '#00F5FF',
+  },
+  {
+    icon: Trophy,
+    title: 'FOR ORGANIZERS',
+    desc: 'Create tournaments, manage brackets, set prize pools and update results.',
+    color: '#8B00FF',
+  },
+  {
+    icon: Briefcase,
+    title: 'FOR SPONSORS',
+    desc: 'Find talented players, browse verified stats, sponsor tournaments.',
+    color: '#FF006E',
+  },
+  {
+    icon: Crown,
+    title: 'FOR ADMINS',
+    desc: 'Full platform control, user management, analytics and reporting.',
+    color: '#FFD700',
+  },
+];
+
+const tournamentsData = [
+  { name: 'Pro League Season 3', game: 'Valorant', prize: '$5,000', teams: '28', max: '32', status: 'LIVE', color: '#FF006E' },
+  { name: 'Summer Cup 2026', game: 'PUBG', prize: '$2,000', teams: '8', max: '16', status: 'OPEN', color: '#00F5FF' },
+  { name: 'Champions Bowl', game: 'Free Fire', prize: '$10,000', teams: '4', max: '64', status: 'SOON', color: '#8B00FF' },
+];
 
 export default function Home() {
   return (
@@ -77,7 +115,8 @@ export default function Home() {
         <div className={styles.hero__overlay} />
         <div className={styles.hero__content}>
           <div className="badge">
-            ⚡ The Future of E-Sports Management
+            <Zap size={12} strokeWidth={2.5} />
+            The Future of E-Sports Management
           </div>
           <h1 className={styles.hero__title}>
             DOMINATE THE
@@ -91,7 +130,7 @@ export default function Home() {
           </p>
           <div className={styles.hero__btns}>
             <Link href="/register" className="btn-primary">
-              Get Started →
+              Get Started <ChevronRight size={16} strokeWidth={2.5} />
             </Link>
             <Link href="/tournaments" className="btn-outline">
               Browse Tournaments
@@ -100,20 +139,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── DIVIDER ── */}
       <div className="divider" />
 
       {/* ── STATS ── */}
       <section className={styles.stats}>
         <div className="container">
           <div className={styles.stats__grid}>
-            {[
-              { icon: '👥', num: '50K+', label: 'Active Players' },
-              { icon: '🏆', num: '1,200+', label: 'Tournaments' },
-              { icon: '⚡', num: '$2.5M+', label: 'Prize Pool' },
-            ].map((s) => (
+            {statsData.map((s) => (
               <div key={s.label} className={styles.stats__card}>
-                <span className={styles.stats__icon}>{s.icon}</span>
+                <IconTile icon={s.icon} color={s.color} size={26} tileSize={56} radius={14} />
                 <span className={styles.stats__num}>{s.num}</span>
                 <span className={styles.stats__label}>{s.label}</span>
               </div>
@@ -122,17 +156,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── DIVIDER ── */}
       <div className="divider" />
 
       {/* ── TOP PLAYERS ── */}
       <section className={`${styles.topplayers} section`}>
         <div className="container">
           <div className={styles.topplayers__header}>
-            <h2
-              className="section-title"
-              style={{ textAlign: 'left', marginBottom: 0 }}
-            >
+            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: 0 }}>
               TOP <span className="gradient-text">PLAYERS</span>
             </h2>
             <Link href="/players" className={styles.topplayers__viewall}>
@@ -143,7 +173,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── DIVIDER ── */}
       <div className="divider" />
 
       {/* ── FEATURES ── */}
@@ -153,47 +182,14 @@ export default function Home() {
             EVERYTHING YOU NEED TO{' '}
             <span className="gradient-text">DOMINATE</span>
           </h2>
-          <p className="section-sub">
-            One platform for all your E-Sports needs
-          </p>
+          <p className="section-sub">One platform for all your E-Sports needs</p>
           <div className={styles.features__grid}>
-            {[
-              {
-                icon: '🎮',
-                title: 'FOR GAMERS',
-                desc: 'Showcase skills, join teams, register for tournaments and climb leaderboards.',
-                color: '#00F5FF',
-              },
-              {
-                icon: '🏆',
-                title: 'FOR ORGANIZERS',
-                desc: 'Create tournaments, manage brackets, set prize pools and update results.',
-                color: '#8B00FF',
-              },
-              {
-                icon: '💼',
-                title: 'FOR SPONSORS',
-                desc: 'Find talented players, browse verified stats, sponsor tournaments.',
-                color: '#FF006E',
-              },
-              {
-                icon: '👑',
-                title: 'FOR ADMINS',
-                desc: 'Full platform control, user management, analytics and reporting.',
-                color: '#00F5FF',
-              },
-            ].map((f) => (
+            {featuresData.map((f) => (
               <div key={f.title} className={styles.features__card}>
-                <div
-                  className={styles.features__icon}
-                  style={{ color: f.color }}
-                >
-                  {f.icon}
+                <div className={styles.features__icon}>
+                  <IconTile icon={f.icon} color={f.color} size={28} tileSize={60} radius={14} />
                 </div>
-                <h3
-                  className={styles.features__title}
-                  style={{ color: f.color }}
-                >
+                <h3 className={styles.features__title} style={{ color: f.color }}>
                   {f.title}
                 </h3>
                 <p className={styles.features__desc}>{f.desc}</p>
@@ -203,17 +199,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── DIVIDER ── */}
       <div className="divider" />
 
       {/* ── TOURNAMENTS ── */}
       <section className={`${styles.tournaments} section`}>
         <div className="container">
           <div className={styles.tournaments__header}>
-            <h2
-              className="section-title"
-              style={{ textAlign: 'left', marginBottom: 0 }}
-            >
+            <h2 className="section-title" style={{ textAlign: 'left', marginBottom: 0 }}>
               FEATURED <span className="gradient-text">TOURNAMENTS</span>
             </h2>
             <Link href="/tournaments" className={styles.tournaments__viewall}>
@@ -221,38 +213,13 @@ export default function Home() {
             </Link>
           </div>
           <div className={styles.tournaments__grid}>
-            {[
-              {
-                name: 'Pro League Season 3',
-                game: 'Valorant',
-                prize: '$5,000',
-                teams: '28',
-                max: '32',
-                status: 'LIVE',
-                color: '#FF006E',
-              },
-              {
-                name: 'Summer Cup 2026',
-                game: 'PUBG',
-                prize: '$2,000',
-                teams: '8',
-                max: '16',
-                status: 'OPEN',
-                color: '#00F5FF',
-              },
-              {
-                name: 'Champions Bowl',
-                game: 'Free Fire',
-                prize: '$10,000',
-                teams: '4',
-                max: '64',
-                status: 'SOON',
-                color: '#8B00FF',
-              },
-            ].map((t) => (
+            {tournamentsData.map((t) => (
               <div key={t.name} className={styles.tournaments__card}>
                 <div className={styles.tournaments__top}>
-                  <span className={styles.tournaments__game}>{t.game}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Gamepad2 size={14} color="#8892A4" strokeWidth={1.75} />
+                    <span className={styles.tournaments__game}>{t.game}</span>
+                  </div>
                   <span
                     className={styles.tournaments__status}
                     style={{ color: t.color, borderColor: t.color }}
@@ -264,18 +231,13 @@ export default function Home() {
                 <div className={styles.tournaments__info}>
                   <div>
                     <div className={styles.tournaments__info_label}>Prize Pool</div>
-                    <div
-                      className={styles.tournaments__info_val}
-                      style={{ color: t.color }}
-                    >
+                    <div className={styles.tournaments__info_val} style={{ color: t.color }}>
                       {t.prize}
                     </div>
                   </div>
                   <div>
                     <div className={styles.tournaments__info_label}>Teams</div>
-                    <div className={styles.tournaments__info_val}>
-                      {t.teams}/{t.max}
-                    </div>
+                    <div className={styles.tournaments__info_val}>{t.teams}/{t.max}</div>
                   </div>
                 </div>
                 <div className={styles.tournaments__bar}>
@@ -305,7 +267,7 @@ export default function Home() {
               Create your account today and start your E-Sports journey!
             </p>
             <Link href="/register" className="btn-primary">
-              Join Now — It&apos;s Free! →
+              Join Now — It&apos;s Free! <ChevronRight size={16} strokeWidth={2.5} />
             </Link>
           </div>
         </div>

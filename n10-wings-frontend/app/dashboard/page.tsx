@@ -3,8 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {
+  LayoutDashboard, Pencil, Gamepad2, Users, Trophy,
+  Search, LogOut, Trophy as TrophyIcon, CheckCircle,
+  XCircle, Zap, TrendingUp, User, Link as LinkIcon,
+  Rocket, Lock, Shield, Building2, Globe, ChevronRight
+} from 'lucide-react';
 import api from '../../lib/api';
 import AvatarUpload from '../../components/AvatarUpload';
+import IconTile from '../../components/IconTile';
 import styles from './dashboard.module.scss';
 
 interface Profile {
@@ -64,7 +71,6 @@ export default function Dashboard() {
       try {
         const token = localStorage.getItem('token');
         if (!token) { router.push('/login'); return; }
-
         const res = await api.get('/profile/me');
         if (res.data.success) {
           setUser(res.data.user);
@@ -119,65 +125,93 @@ export default function Dashboard() {
     ? Math.round((gamerProfile.wins / (gamerProfile.wins + gamerProfile.losses)) * 100)
     : 0;
 
+  const getRoleIcon = () => {
+    if (user?.role === 'admin') return <Shield size={13} strokeWidth={2} style={{ display:'inline', marginRight:4 }} />;
+    if (user?.role === 'sponsor') return <Building2 size={13} strokeWidth={2} style={{ display:'inline', marginRight:4 }} />;
+    if (user?.is_organizer) return <Trophy size={13} strokeWidth={2} style={{ display:'inline', marginRight:4 }} />;
+    return <Gamepad2 size={13} strokeWidth={2} style={{ display:'inline', marginRight:4 }} />;
+  };
+
+  const getRoleLabel = () => {
+    if (user?.role === 'admin') return 'ADMIN';
+    if (user?.role === 'sponsor') return 'SPONSOR';
+    if (user?.is_organizer) return 'ORGANIZER';
+    return 'GAMER';
+  };
+
+  const navItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: null, active: true, color: '#00F5FF' },
+    { icon: Pencil, label: 'Edit Profile', href: '/profile/edit', color: '#8B00FF' },
+    { icon: Gamepad2, label: 'Game Identities', href: '/dashboard/game-identities', color: '#FF006E' },
+    { icon: Users, label: 'My Team', href: '/teams', color: '#00F5FF' },
+    { icon: Trophy, label: 'Tournaments', href: '/tournaments', color: '#FFD700' },
+    { icon: Search, label: 'Find Players', href: '/players', color: '#00FF88' },
+  ];
+
+  const statsData = [
+    { icon: Trophy, label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
+    { icon: CheckCircle, label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
+    { icon: XCircle, label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
+    { icon: Zap, label: 'Points', value: gamerProfile?.points ?? 0, color: '#8B00FF' },
+    { icon: TrendingUp, label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
+  ];
+
   return (
     <div className={styles.dashboard}>
 
       {/* ── Sidebar ── */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebar__logo}>
-          <Link href="/">🎮 N-10 WINGS</Link>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Gamepad2 size={18} color="#00F5FF" strokeWidth={1.75} />
+            <span>N-10 WINGS</span>
+          </Link>
         </div>
 
-        {/* Avatar */}
         <div className={styles.sidebar__avatar}>
           <AvatarUpload
             currentAvatar={profile?.avatar || ''}
             username={user?.username}
-            onUpdate={(newAvatar) =>
-              setProfile(prev => ({ ...prev, avatar: newAvatar }))
-            }
+            onUpdate={(newAvatar) => setProfile(prev => ({ ...prev, avatar: newAvatar }))}
           />
-          <div className={styles.sidebar__name}>
-            {profile?.full_name || user?.username}
-          </div>
+          <div className={styles.sidebar__name}>{profile?.full_name || user?.username}</div>
           <div className={styles.sidebar__role}>
-            {user?.role === 'admin' ? '👑 ADMIN' :
-             user?.role === 'sponsor' ? '💼 SPONSOR' :
-             user?.is_organizer ? '🏆 ORGANIZER' : '🎮 GAMER'}
+            {getRoleIcon()}{getRoleLabel()}
           </div>
         </div>
 
-        {/* Nav */}
         <nav className={styles.sidebar__nav}>
-          <span className={`${styles.sidebar__link} ${styles['sidebar__link--active']}`}>
-            📊 Dashboard
-          </span>
-          <Link href="/profile/edit" className={styles.sidebar__link}>
-            ✏️ Edit Profile
-          </Link>
-          <Link href="/dashboard/game-identities" className={styles.sidebar__link}>
-            🎮 Game Identities
-          </Link>
-          <Link href="/teams" className={styles.sidebar__link}>
-            👥 My Team
-          </Link>
-          <Link href="/tournaments" className={styles.sidebar__link}>
-            🏆 Tournaments
-          </Link>
-          <Link href="/players" className={styles.sidebar__link}>
-            🔍 Find Players
-          </Link>
+          {navItems.map((item) => (
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={styles.sidebar__link}
+              >
+                <IconTile icon={item.icon} color={item.color} size={14} tileSize={28} radius={7} />
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                key={item.label}
+                className={`${styles.sidebar__link} ${styles['sidebar__link--active']}`}
+              >
+                <IconTile icon={item.icon} color={item.color} size={14} tileSize={28} radius={7} />
+                {item.label}
+              </span>
+            )
+          ))}
         </nav>
 
         <button onClick={handleLogout} className={styles.sidebar__logout}>
-          🚪 Logout
+          <LogOut size={15} strokeWidth={2} />
+          Logout
         </button>
       </aside>
 
       {/* ── Main ── */}
       <main className={styles.main}>
 
-        {/* Header */}
         <div className={styles.main__header}>
           <div>
             <h1 className={styles.main__title}>
@@ -186,59 +220,56 @@ export default function Dashboard() {
                 {user?.username?.toUpperCase()}!
               </span>
             </h1>
-            <p className={styles.main__sub}>
-              Manage your E-Sports profile and activities
-            </p>
+            <p className={styles.main__sub}>Manage your E-Sports profile and activities</p>
           </div>
           <Link href="/profile/edit" className={styles.main__edit_btn}>
-            ✏️ Edit Profile
+            <Pencil size={13} strokeWidth={2} style={{ marginRight: 4 }} />
+            Edit Profile
           </Link>
         </div>
 
-        {/* Toggle Tabs */}
+        {/* Tabs */}
         <div className={styles.tabs}>
           <button
             className={`${styles.tabs__btn} ${activeTab === 'player' ? styles['tabs__btn--active'] : ''}`}
             onClick={() => setActiveTab('player')}
           >
-            🎮 PLAYER PROFILE
+            <Gamepad2 size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+            PLAYER PROFILE
           </button>
           <button
             className={`${styles.tabs__btn} ${activeTab === 'organizer' ? styles['tabs__btn--active'] : ''} ${!user?.is_organizer ? styles['tabs__btn--locked'] : ''}`}
             onClick={() => user?.is_organizer && setActiveTab('organizer')}
           >
-            {user?.is_organizer ? '🏆' : '🔒'} ORGANIZER PROFILE
+            {user?.is_organizer
+              ? <Trophy size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+              : <Lock size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+            }
+            ORGANIZER PROFILE
           </button>
         </div>
 
         {/* ── PLAYER TAB ── */}
         {activeTab === 'player' && (
           <>
-            {/* Stats */}
             <div className={styles.stats}>
-              {[
-                { icon: '🏆', label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
-                { icon: '✅', label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
-                { icon: '❌', label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
-                { icon: '⚡', label: 'Points', value: gamerProfile?.points ?? 0, color: '#8B00FF' },
-                { icon: '📈', label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
-              ].map((stat) => (
+              {statsData.map((stat) => (
                 <div key={stat.label} className={styles.stats__card}>
-                  <span className={styles.stats__icon}>{stat.icon}</span>
-                  <span className={styles.stats__value} style={{ color: stat.color }}>
-                    {stat.value}
-                  </span>
+                  <IconTile icon={stat.icon} color={stat.color} size={20} tileSize={44} radius={10} />
+                  <span className={styles.stats__value} style={{ color: stat.color }}>{stat.value}</span>
                   <span className={styles.stats__label}>{stat.label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Info Grid */}
             <div className={styles.content}>
 
               {/* Personal Info */}
               <div className={styles.card}>
-                <h2 className={styles.card__title}>👤 PERSONAL INFO</h2>
+                <h2 className={styles.card__title}>
+                  <IconTile icon={User} color="#00F5FF" size={12} tileSize={22} radius={5} />
+                  <span style={{ marginLeft: 8 }}>PERSONAL INFO</span>
+                </h2>
                 <div className={styles.card__grid}>
                   {[
                     { label: 'Username', value: user?.username },
@@ -264,7 +295,10 @@ export default function Dashboard() {
 
               {/* Gaming Info */}
               <div className={styles.card}>
-                <h2 className={styles.card__title}>🎮 GAMING INFO</h2>
+                <h2 className={styles.card__title}>
+                  <IconTile icon={Gamepad2} color="#8B00FF" size={12} tileSize={22} radius={5} />
+                  <span style={{ marginLeft: 8 }}>GAMING INFO</span>
+                </h2>
                 <div className={styles.card__grid}>
                   {[
                     { label: 'Rank', value: gamerProfile?.player_rank || '—' },
@@ -289,13 +323,16 @@ export default function Dashboard() {
 
               {/* Social Links */}
               <div className={styles.card}>
-                <h2 className={styles.card__title}>🔗 SOCIAL LINKS</h2>
+                <h2 className={styles.card__title}>
+                  <IconTile icon={LinkIcon} color="#FF006E" size={12} tileSize={22} radius={5} />
+                  <span style={{ marginLeft: 8 }}>SOCIAL LINKS</span>
+                </h2>
                 <div className={styles.card__socials}>
                   {[
-                    { label: '📘 Facebook', value: profile?.social_facebook },
-                    { label: '📸 Instagram', value: profile?.social_instagram },
-                    { label: '▶️ YouTube', value: profile?.social_youtube },
-                    { label: '🐦 Twitter', value: profile?.social_twitter },
+                    { label: 'Facebook', value: profile?.social_facebook },
+                    { label: 'Instagram', value: profile?.social_instagram },
+                    { label: 'YouTube', value: profile?.social_youtube },
+                    { label: 'Twitter / X', value: profile?.social_twitter },
                   ].map((item) => (
                     <div key={item.label} className={styles.card__social_item}>
                       <span className={styles.card__item_label}>{item.label}</span>
@@ -311,32 +348,36 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Organizer Apply Card */}
+              {/* Become Organizer */}
               {!user?.is_organizer && (
                 <div className={styles.card}>
-                  <h2 className={styles.card__title}>🏆 BECOME AN ORGANIZER</h2>
+                  <h2 className={styles.card__title}>
+                    <IconTile icon={Trophy} color="#FFD700" size={12} tileSize={22} radius={5} />
+                    <span style={{ marginLeft: 8 }}>BECOME AN ORGANIZER</span>
+                  </h2>
                   <p className={styles.card__desc}>
                     Apply to become an organizer and start hosting tournaments!
                   </p>
                   {user?.organizer_status === 'pending' ? (
                     <div className={styles.card__pending}>
-                      ⏳ Application pending — Admin will review soon!
+                      <Zap size={14} strokeWidth={2} style={{ marginRight: 6, display: 'inline' }} />
+                      Application pending — Admin will review soon!
                     </div>
                   ) : user?.organizer_status === 'rejected' ? (
                     <div className={styles.card__rejected}>
-                      ❌ Application rejected. Contact admin for more info.
+                      <XCircle size={14} strokeWidth={2} style={{ marginRight: 6, display: 'inline' }} />
+                      Application rejected. Contact admin for more info.
                     </div>
                   ) : (
                     <>
-                      {applyMsg && (
-                        <div className={styles.card__apply_msg}>{applyMsg}</div>
-                      )}
+                      {applyMsg && <div className={styles.card__apply_msg}>{applyMsg}</div>}
                       <button
                         className={styles.card__apply_btn}
                         onClick={handleApplyOrganizer}
                         disabled={applyLoading}
                       >
-                        {applyLoading ? 'Applying...' : '🚀 Apply for Organizer'}
+                        <Rocket size={15} strokeWidth={2} style={{ marginRight: 6, display: 'inline' }} />
+                        {applyLoading ? 'Applying...' : 'Apply for Organizer'}
                       </button>
                     </>
                   )}
@@ -350,7 +391,10 @@ export default function Dashboard() {
         {activeTab === 'organizer' && user?.is_organizer && (
           <div className={styles.content}>
             <div className={styles.card}>
-              <h2 className={styles.card__title}>🏆 ORGANIZER INFO</h2>
+              <h2 className={styles.card__title}>
+                <IconTile icon={Trophy} color="#FFD700" size={12} tileSize={22} radius={5} />
+                <span style={{ marginLeft: 8 }}>ORGANIZER INFO</span>
+              </h2>
               <div className={styles.card__grid}>
                 {[
                   { label: 'Organization', value: organizerProfile?.organization_name || '—' },
@@ -367,19 +411,23 @@ export default function Dashboard() {
             </div>
 
             <div className={styles.card}>
-              <h2 className={styles.card__title}>⚡ QUICK ACTIONS</h2>
+              <h2 className={styles.card__title}>
+                <IconTile icon={Zap} color="#00F5FF" size={12} tileSize={22} radius={5} />
+                <span style={{ marginLeft: 8 }}>QUICK ACTIONS</span>
+              </h2>
               <div className={styles.card__actions}>
                 <Link href="/tournaments/create" className={styles.card__action_btn}>
-                  ➕ Create Tournament
+                  <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
+                  Create Tournament
                 </Link>
                 <Link href="/tournaments/my" className={styles.card__action_btn}>
-                  📋 My Tournaments
+                  <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
+                  My Tournaments
                 </Link>
               </div>
             </div>
           </div>
         )}
-
       </main>
     </div>
   );

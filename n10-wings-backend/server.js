@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import gameIdentityRoutes from './routes/gameIdentity.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+app.use('/api/admin', adminRoutes);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -23,23 +23,34 @@
 .page {
   min-height: 100vh;
   background: #0A0A0F;
-  padding: 2rem 1rem;
-  max-width: 900px;
+  padding: 2rem;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
+// Header
 .header {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 
   &__back {
     color: #00F5FF;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-decoration: none;
     display: inline-block;
     margin-bottom: 1rem;
-    &:hover { text-decoration: underline; }
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    &:hover { opacity: 1; }
+  }
+
+  &__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
   &__title {
@@ -47,23 +58,38 @@
     font-size: 1.8rem;
     font-weight: 900;
     color: #ffffff;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
   }
 
-  &__gradient {
+  &__cyan {
     background: linear-gradient(90deg, #00F5FF, #8B00FF);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  &__sub { color: #8892A4; font-size: 0.95rem; }
+  &__sub { color: #8892A4; font-size: 0.9rem; }
+
+  &__add_btn {
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.3);
+    color: #00F5FF;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+
+    &:hover { background: rgba(0,245,255,0.2); }
+  }
 }
 
 .success {
-  background: rgba(0,245,255,0.1);
-  border: 1px solid rgba(0,245,255,0.3);
+  background: rgba(0,245,255,0.08);
+  border: 1px solid rgba(0,245,255,0.25);
   color: #00F5FF;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -72,8 +98,8 @@
 }
 
 .error {
-  background: rgba(255,0,110,0.1);
-  border: 1px solid rgba(255,0,110,0.3);
+  background: rgba(255,0,110,0.08);
+  border: 1px solid rgba(255,0,110,0.25);
   color: #FF006E;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -81,156 +107,67 @@
   font-size: 0.9rem;
 }
 
-// Modal
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-
-  &__box {
-    background: #12121A;
-    border: 1px solid rgba(0,245,255,0.2);
-    border-radius: 16px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 420px;
-  }
+// Section
+.section {
+  margin-bottom: 2.5rem;
 
   &__header {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
   }
 
-  &__title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    margin-bottom: 0.2rem;
-  }
-
-  &__type {
-    color: #8892A4;
-    font-size: 0.8rem;
-  }
-
-  &__form { margin-bottom: 1.5rem; }
-
-  &__label {
-    display: block;
-    color: #8892A4;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-  }
-
-  &__input {
-    width: 100%;
-    background: #0A0A0F;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px;
-    color: #ffffff;
-    padding: 0.8rem 1rem;
-    font-size: 0.95rem;
-    font-family: 'Rajdhani', sans-serif;
-    outline: none;
-    transition: all 0.3s ease;
-    margin-bottom: 0.5rem;
-
-    &:focus {
-      border-color: #00F5FF;
-      box-shadow: 0 0 0 2px rgba(0,245,255,0.1);
-    }
-
-    &::placeholder { color: #4B5563; }
-  }
-
-  &__hint {
-    color: #8892A4;
-    font-size: 0.8rem;
-    line-height: 1.5;
-  }
-
-  &__btns {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  &__cancel {
-    flex: 1;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #8892A4;
-    padding: 0.8rem;
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    &:hover { color: #ffffff; border-color: rgba(255,255,255,0.3); }
-  }
-
-  &__save {
-    flex: 2;
-    border: none;
-    color: #0A0A0F;
-    padding: 0.8rem;
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    &:hover:not(:disabled) { opacity: 0.85; }
-    &:disabled { opacity: 0.6; cursor: not-allowed; }
-  }
-}
-
-.content { display: flex; flex-direction: column; gap: 2rem; }
-
-.section {
   &__title {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
     font-weight: 700;
     color: #8892A4;
     letter-spacing: 0.15em;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+  }
+
+  &__badge {
+    background: rgba(0,245,255,0.08);
+    color: #00F5FF;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.05em;
   }
 }
 
-// Linked identities
-.identities {
-  display: flex;
-  flex-direction: column;
+// Linked identity cards
+.linked {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 1rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.identity {
-  &__card {
-    background: #12121A;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 1.25rem;
-    transition: all 0.3s ease;
-  }
+.card {
+  background: #12121A;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  border-left: 3px solid var(--game-color, #00F5FF);
 
-  &__header {
+  &:hover { transform: translateY(-2px); }
+
+  &__top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
   }
 
-  &__game_info {
+  &__game {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -245,10 +182,7 @@
     margin-bottom: 0.2rem;
   }
 
-  &__username {
-    color: #8892A4;
-    font-size: 0.85rem;
-  }
+  &__username { color: #8892A4; font-size: 0.82rem; }
 
   &__badges {
     display: flex;
@@ -257,59 +191,19 @@
     align-items: flex-end;
   }
 
-  &__verified {
-    background: rgba(0,255,136,0.1);
-    color: #00FF88;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 600;
-  }
-
-  &__api {
-    background: rgba(0,245,255,0.1);
-    color: #00F5FF;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 600;
-  }
-
   &__stats {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     padding: 0.75rem 0;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     margin-bottom: 0.75rem;
     flex-wrap: wrap;
   }
 
-  &__stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.2rem;
-
-    span:first-child {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-    }
-
-    span:last-child {
-      color: #8892A4;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-  }
-
   &__synced {
     color: #4B5563;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     margin-bottom: 0.75rem;
   }
 
@@ -318,114 +212,268 @@
     gap: 0.5rem;
     flex-wrap: wrap;
   }
+}
 
-  &__sync_btn {
-    background: transparent;
-    border: 1px solid;
-    padding: 0.4rem 0.8rem;
+.badge {
+  &__verified {
+    background: rgba(0,255,136,0.1);
+    color: #00FF88;
+    font-size: 0.62rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 4px;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.65rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    &:hover { opacity: 0.8; }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
 
-  &__edit_btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #8892A4;
-    padding: 0.4rem 0.8rem;
+  &__type {
+    font-size: 0.62rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 4px;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.65rem;
+    font-weight: 600;
+
+    &--api { background: rgba(0,245,255,0.1); color: #00F5FF; }
+    &--manual { background: rgba(255,255,255,0.05); color: #8892A4; }
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 50px;
+
+  span:first-child {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  span:last-child {
+    color: #8892A4;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+// Action buttons
+.btn {
+  &__sync {
+    background: transparent;
+    border: 1px solid;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.62rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
+    &:hover { opacity: 0.75; }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+
+  &__edit {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #8892A4;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
     &:hover { color: #ffffff; }
   }
 
-  &__delete_btn {
+  &__delete {
     background: rgba(255,0,110,0.05);
     border: 1px solid rgba(255,0,110,0.2);
     color: #FF006E;
-    padding: 0.4rem 0.8rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 4px;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    &:hover { background: rgba(255,0,110,0.1); }
+    transition: all 0.2s;
+    &:hover { background: rgba(255,0,110,0.12); }
   }
 }
 
-// Games Grid
+// Games grid
 .games__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0.75rem;
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: 768px) { grid-template-columns: repeat(4, 1fr); }
 }
 
-.game {
-  &__card {
-    background: #12121A;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
+.game__tile {
+  background: #12121A;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 1.1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
 
-    &:hover {
-      border-color: rgba(0,245,255,0.3);
-      transform: translateY(-2px);
-    }
-
-    &--linked {
-      &:hover { transform: translateY(-2px); }
-    }
+  &:hover {
+    border-color: rgba(0,245,255,0.25);
+    transform: translateY(-2px);
+    background: rgba(0,245,255,0.03);
   }
 
-  &__icon { font-size: 2rem; }
+  &_icon { font-size: 1.75rem; }
 
-  &__name {
+  &_name {
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: #ffffff;
   }
 
-  &__api_badge {
-    background: rgba(0,245,255,0.1);
-    color: #00F5FF;
-    font-size: 0.6rem;
+  &_badge {
+    font-size: 0.58rem;
     padding: 0.15rem 0.4rem;
     border-radius: 3px;
     font-family: 'Orbitron', sans-serif;
     font-weight: 600;
   }
 
-  &__linked {
+  &_linked {
     color: #00FF88;
-    font-size: 0.7rem;
+    font-size: 0.62rem;
     font-family: 'Orbitron', sans-serif;
     font-weight: 600;
   }
 
-  &__add {
-    color: #8892A4;
-    font-size: 0.7rem;
+  &_add {
+    color: #4B5563;
+    font-size: 0.65rem;
     font-family: 'Orbitron', sans-serif;
+    transition: color 0.2s;
+
+    .game__tile:hover & { color: #00F5FF; }
+  }
+}
+
+// Modal
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+
+  &__box {
+    background: #12121A;
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+  }
+
+  &__subtitle { color: #8892A4; font-size: 0.8rem; }
+
+  &__group { margin-bottom: 1.25rem; }
+
+  &__label {
+    display: block;
+    color: #8892A4;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  &__input {
+    width: 100%;
+    background: #0A0A0F;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    font-family: 'Rajdhani', sans-serif;
+    outline: none;
+    transition: all 0.3s;
+
+    &:focus {
+      border-color: #00F5FF;
+      box-shadow: 0 0 0 2px rgba(0,245,255,0.08);
+    }
+
+    &::placeholder { color: #4B5563; }
+  }
+
+  &__hint {
+    color: #8892A4;
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    line-height: 1.5;
+  }
+
+  &__error { color: #FF006E; font-size: 0.82rem; margin-bottom: 0.75rem; }
+  &__success { color: #00F5FF; font-size: 0.82rem; margin-bottom: 0.75rem; }
+
+  &__btns { display: flex; gap: 0.75rem; }
+
+  &__cancel {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #8892A4;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover { color: #ffffff; border-color: rgba(255,255,255,0.25); }
+  }
+
+  &__save {
+    flex: 2;
+    border: none;
+    color: #0A0A0F;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
 }

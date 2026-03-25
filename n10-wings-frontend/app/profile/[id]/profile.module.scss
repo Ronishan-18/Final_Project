@@ -7,15 +7,15 @@
   background: #0A0A0F;
   gap: 1rem;
   color: #8892A4;
+}
 
-  &__spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(0,245,255,0.2);
-    border-top-color: #00F5FF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0,245,255,0.2);
+  border-top-color: #00F5FF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -31,15 +31,8 @@
   text-align: center;
 
   span { font-size: 4rem; }
-
-  h2 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.5rem;
-    color: #ffffff;
-  }
-
+  h2 { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #ffffff; }
   p { color: #8892A4; }
-
   a {
     color: #00F5FF;
     text-decoration: none;
@@ -47,81 +40,82 @@
     font-size: 0.8rem;
     font-weight: 600;
     margin-top: 1rem;
-
     &:hover { text-decoration: underline; }
   }
 }
 
-.profile {
+.page {
   min-height: 100vh;
   background: #0A0A0F;
   padding: 2rem 1rem;
-
-  &__inner {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  &__back {
-    display: inline-block;
-    color: #00F5FF;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-decoration: none;
-    margin-bottom: 2rem;
-
-    &:hover { text-decoration: underline; }
-  }
 }
 
+.inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.back {
+  display: inline-block;
+  color: #00F5FF;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  &:hover { opacity: 1; }
+}
+
+// ── Hero ──
 .hero {
   background: #12121A;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
   padding: 2rem;
   display: flex;
-  gap: 2rem;
+  gap: 1.75rem;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 
-  @media (max-width: 640px) {
+  @media (max-width: 600px) {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
 
   &__avatar {
-    width: 100px;
-    height: 100px;
+    width: 110px;
+    height: 110px;
     border-radius: 50%;
-    background: rgba(0,245,255,0.1);
-    border: 3px solid rgba(0,245,255,0.3);
+    background: rgba(0,245,255,0.08);
+    border: 3px solid rgba(0,245,255,0.25);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
+    font-size: 2.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: #00F5FF;
     flex-shrink: 0;
     overflow: hidden;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    img { width: 100%; height: 100%; object-fit: cover; }
   }
 
+  &__info { flex: 1; }
+
   &__role {
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
     border: 1px solid;
     border-radius: 50px;
-    padding: 0.2rem 0.75rem;
+    padding: 0.2rem 0.8rem;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.1em;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.6rem;
   }
 
   &__name {
@@ -129,121 +123,302 @@
     font-size: 1.5rem;
     font-weight: 900;
     color: #ffffff;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
   }
 
   &__username {
     color: #8892A4;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     margin-bottom: 0.5rem;
   }
 
-  &__country {
-    color: #8892A4;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+  &__meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.65rem;
+
+    span { color: #8892A4; font-size: 0.82rem; }
   }
 
   &__bio {
     color: #D1D5DB;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    max-width: 500px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    max-width: 520px;
   }
 }
 
+// ── Stats Row ──
 .stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(5, 1fr);
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  &__card {
-    background: #12121A;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 1.25rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-  }
+.stat {
+  background: #12121A;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s;
 
-  &__icon { font-size: 1.5rem; }
+  &:hover { transform: translateY(-2px); border-color: rgba(0,245,255,0.15); }
 
-  &__value {
+  span:first-child { font-size: 1.3rem; }
+
+  &__val {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 900;
   }
 
   &__label {
     color: #8892A4;
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
+    font-size: 0.6rem;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 }
 
+// ── Grid ──
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
 
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
   }
 }
 
+// ── Card ──
 .card {
   background: #12121A;
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.4rem;
+
+  &--full { grid-column: 1 / -1; }
 
   &__title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #00F5FF;
     letter-spacing: 0.08em;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.65rem;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 
-  &__list {
+  &__rows {
     display: flex;
     flex-direction: column;
+    gap: 0;
+  }
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+
+  &:last-child { border-bottom: none; }
+
+  &__label {
+    color: #8892A4;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__value {
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: right;
+  }
+}
+
+// ── API Games ──
+.api_games {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.api_card {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 1.1rem;
+  transition: all 0.2s;
+
+  &:hover { filter: brightness(1.05); }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.85rem;
+  }
+
+  &__game {
+    display: flex;
+    align-items: center;
     gap: 0.75rem;
   }
 
-  &__item {
+  &__icon { font-size: 1.75rem; }
+
+  &__name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-
-    &:last-child { border-bottom: none; padding-bottom: 0; }
-
-    &_label {
-      color: #8892A4;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    &_value {
-      color: #ffffff;
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-align: right;
-    }
+    gap: 0.4rem;
   }
+
+  &__username { color: #8892A4; font-size: 0.8rem; }
+
+  &__synced {
+    color: #4B5563;
+    font-size: 0.7rem;
+    margin-top: 0.65rem;
+  }
+}
+
+.verified { font-size: 0.75rem; }
+
+.api_badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.api_stats {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+
+.api_stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 55px;
+
+  span:first-child {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  span:last-child {
+    color: #8892A4;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+}
+
+// ── Manual Games ──
+.manual_games {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  @media (min-width: 640px) { grid-template-columns: repeat(3, 1fr); }
+}
+
+.manual_card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  transition: all 0.2s;
+
+  &:hover { background: rgba(255,255,255,0.05); }
+
+  &__icon { font-size: 1.75rem; }
+
+  &__name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  &__username { color: #8892A4; font-size: 0.78rem; }
+}
+
+.manual_badge {
+  color: #8892A4;
+  font-size: 0.58rem;
+  font-family: 'Orbitron', sans-serif;
+}
+
+// ── Social Links ──
+.socials {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  @media (min-width: 640px) { grid-template-columns: repeat(4, 1fr); }
+}
+
+.social {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255,255,255,0.06);
+    transform: translateY(-1px);
+  }
+
+  span:first-child { font-size: 1.2rem; }
+
+  &__label {
+    color: #ffffff;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  &__arrow { color: #8892A4; font-size: 0.8rem; }
 }
