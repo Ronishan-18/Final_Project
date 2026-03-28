@@ -21,6 +21,12 @@ export default function LoginPage() {
       const role = data?.role;
       const is_organizer = data?.is_organizer;
 
+
+
+
+
+      
+
       // Save to localStorage
       if (token) {
         localStorage.setItem('token', token);
@@ -31,6 +37,7 @@ export default function LoginPage() {
       // Redirect based on role
     if (role === 'admin') router.push('/dashboard/admin');
     else if (role === 'sponsor') router.push('/dashboard/sponsor');
+    else if (is_organizer) router.push('/dashboard/organizer');
     else router.push('/dashboard');
 
     } catch (err: unknown) {

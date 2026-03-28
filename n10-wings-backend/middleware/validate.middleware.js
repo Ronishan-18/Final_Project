@@ -1,3 +1,5 @@
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
 export const validateRegister = (req, res, next) => {
   const { username, email, password } = req.body;
 
@@ -15,7 +17,6 @@ export const validateRegister = (req, res, next) => {
     });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
       success: false,
@@ -49,6 +50,13 @@ export const validateForgotPassword = (req, res, next) => {
     });
   }
 
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid email format!'
+    });
+  }
+
   next();
 };
 
@@ -59,6 +67,13 @@ export const validateResetPassword = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: 'Email, OTP and new password are required!'
+    });
+  }
+
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid email format!'
     });
   }
 
@@ -102,7 +117,6 @@ export const validateUpdateEmail = (req, res, next) => {
     });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({
       success: false,

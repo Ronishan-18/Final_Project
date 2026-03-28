@@ -22,14 +22,14 @@ export const getPlatformStats = async (req, res) => {
       `SELECT COUNT(*) as new_users_30d FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
     );
 
-    // Monthly growth - last 6 months
+    // Monthly growth - last 6 months (GROUP BY must include SELECT expression)
     const [monthly_growth] = await db.query(`
       SELECT
         DATE_FORMAT(created_at, '%b %Y') as month,
         COUNT(*) as count
       FROM users
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-      GROUP BY YEAR(created_at), MONTH(created_at)
+      GROUP BY DATE_FORMAT(created_at, '%b %Y'), YEAR(created_at), MONTH(created_at)
       ORDER BY YEAR(created_at), MONTH(created_at)
     `);
 

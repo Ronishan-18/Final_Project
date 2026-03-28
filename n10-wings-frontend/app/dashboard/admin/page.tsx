@@ -88,8 +88,14 @@ export default function AdminDashboard() {
     try {
       const res = await api.get('/admin/stats');
       if (res.data.success) setStats(res.data.stats);
-    } catch {
-      router.push('/login');
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number } };
+      // Only redirect on 401/403 — not on 500 server errors
+      if (e.response?.status === 401 || e.response?.status === 403) {
+        router.push('/login');
+        return;
+      }
+      console.error('Stats fetch failed:', err);
     } finally {
       setLoading(false);
     }
@@ -232,7 +238,11 @@ export default function AdminDashboard() {
               {tab === 'applications' && `${stats?.pending_applications || 0} pending review`}
             </p>
           </div>
-          <button className={styles.header__refresh} onClick={fetchStats}>
+          <button className={styles.header__refresh} onClick={() => {
+            fetchStats();
+            if (tab === 'users') fetchUsers();
+            if (tab === 'applications') fetchApplications();
+          }}>
             <RefreshCw size={15} strokeWidth={2} />
             Refresh
           </button>

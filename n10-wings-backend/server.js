@@ -9,6 +9,7 @@ import profileRoutes from './routes/profile.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import gameIdentityRoutes from './routes/gameIdentity.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import tournamentRoutes from './routes/tournament.routes.js';
 
 
 const app = express();
@@ -21,11 +22,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use('/api/admin', adminRoutes);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 // ── Static files ──
 app.use('/uploads', express.static('uploads'));
