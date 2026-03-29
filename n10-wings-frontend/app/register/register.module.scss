@@ -4,34 +4,99 @@
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(0,245,255,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(139,0,255,0.06) 0%, transparent 50%),
-    #0A0A0F;
+  position: relative;
+  overflow: hidden;
+  background: #070709;
+
+  // Background effects
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(0,245,255,0.05) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 50%, rgba(255,107,0,0.05) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  // Grid
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+    pointer-events: none;
+  }
 
   &__box {
     width: 100%;
-    max-width: 460px;
-    background: #12121A;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
+    max-width: 480px;
+    background: rgba(13,13,18,0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 20px;
     padding: 2.5rem 2rem;
+    position: relative;
+    z-index: 1;
+    box-shadow:
+      0 25px 60px rgba(0,0,0,0.5),
+      0 0 40px rgba(0,245,255,0.04);
+
+    // Top glow bar
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #00F5FF, #FF6B00);
+      border-radius: 20px 20px 0 0;
+    }
   }
 
   &__logo {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1rem;
-    font-weight: 800;
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     margin-bottom: 1.5rem;
-    justify-content: center;
+
+    &_icon {
+      width: 36px; height: 36px;
+      background: rgba(0,245,255,0.08);
+      border: 1px solid rgba(0,245,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    &_text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+
+      span:first-child {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 900;
+        color: #00F5FF;
+        letter-spacing: 0.1em;
+      }
+
+      span:last-child {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: #FF6B00;
+        letter-spacing: 0.2em;
+      }
+    }
   }
 
   &__title {

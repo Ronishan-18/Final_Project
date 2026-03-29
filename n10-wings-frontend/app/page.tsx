@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
+import {
+  Gamepad2, Trophy, Coins, Handshake, UserPlus, Link as LinkIcon,
+  Swords, Crosshair, Zap, Sword, Users, Briefcase
+} from 'lucide-react';
 import api from '../lib/api';
 import styles from './page.module.scss';
 
@@ -199,26 +203,26 @@ export default function HomePage() {
   }, []);
 
   const stats = [
-    { value: liveStats.activePlayers, suffix: '+', label: 'Active Players', icon: '🎮', color: '#00F5FF' },
-    { value: liveStats.tournaments, suffix: '+', label: 'Tournaments', icon: '🏆', color: '#FF6B00' },
-    { value: liveStats.prizePool, suffix: liveStats.poolSuffix, label: 'Prize Pool LKR', icon: '💰', color: '#8B00FF' },
-    { value: liveStats.sponsors, suffix: '+', label: 'Sponsors', icon: '🤝', color: '#FF006E' },
+    { value: liveStats.activePlayers, suffix: '+', label: 'Active Players', icon: <Gamepad2 size={24} />, color: '#00F5FF' },
+    { value: liveStats.tournaments, suffix: '+', label: 'Tournaments', icon: <Trophy size={24} />, color: '#FF6B00' },
+    { value: liveStats.prizePool, suffix: liveStats.poolSuffix, label: 'Prize Pool LKR', icon: <Coins size={24} />, color: '#8B00FF' },
+    { value: liveStats.sponsors, suffix: '+', label: 'Sponsors', icon: <Handshake size={24} />, color: '#FF006E' },
   ];
 
   const howItWorks = [
-    { step: '001', icon: '👤', title: 'CREATE PROFILE', desc: 'Register and build your gamer identity with your details, gaming style and preferences', color: '#00F5FF' },
-    { step: '002', icon: '🎮', title: 'LINK GAMES', desc: 'Connect PUBG PC, Valorant or League of Legends to automatically sync your stats', color: '#FF6B00' },
-    { step: '003', icon: '⚔️', title: 'JOIN TOURNAMENTS', desc: 'Browse and register for tournaments matching your game and skill level', color: '#8B00FF' },
-    { step: '004', icon: '🏆', title: 'WIN & DOMINATE', desc: 'Compete for prize pools, build your reputation and get discovered by sponsors', color: '#FF006E' },
+    { step: '001', icon: <UserPlus size={24} />, title: 'CREATE PROFILE', desc: 'Register and build your gamer identity with your details, gaming style and preferences', color: '#00F5FF' },
+    { step: '002', icon: <Gamepad2 size={24} />, title: 'LINK GAMES', desc: 'Connect PUBG PC, Valorant or League of Legends to automatically sync your stats', color: '#FF6B00' },
+    { step: '003', icon: <Swords size={24} />, title: 'JOIN TOURNAMENTS', desc: 'Browse and register for tournaments matching your game and skill level', color: '#8B00FF' },
+    { step: '004', icon: <Trophy size={24} />, title: 'WIN & DOMINATE', desc: 'Compete for prize pools, build your reputation and get discovered by sponsors', color: '#FF006E' },
   ];
 
   const features = [
-    { icon: '🎯', title: 'PUBG PC STATS', desc: 'Auto-sync K/D, kills, wins from Krafton API', color: '#F5A623', bg: 'rgba(245,166,35,0.08)' },
-    { icon: '⚡', title: 'VALORANT', desc: 'Link Riot ID and verify your account instantly', color: '#FF4655', bg: 'rgba(255,70,85,0.08)' },
-    { icon: '🗡️', title: 'LEAGUE OF LEGENDS', desc: 'Display tier, LP, wins and win rate automatically', color: '#C89B3C', bg: 'rgba(200,155,60,0.08)' },
-    { icon: '🏆', title: 'TOURNAMENTS', desc: 'Join or create competitive events with real prize pools', color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
-    { icon: '👥', title: 'TEAM SYSTEM', desc: 'Build squads, manage rosters, compete as a team', color: '#00F5FF', bg: 'rgba(0,245,255,0.08)' },
-    { icon: '💼', title: 'SPONSOR CONNECT', desc: 'Get discovered by gaming brands and organizations', color: '#8B00FF', bg: 'rgba(139,0,255,0.08)' },
+    { icon: <Crosshair size={24} />, title: 'PUBG PC STATS', desc: 'Auto-sync K/D, kills, wins from Krafton API', color: '#F5A623', bg: 'rgba(245,166,35,0.08)' },
+    { icon: <Zap size={24} />, title: 'VALORANT', desc: 'Link Riot ID and verify your account instantly', color: '#FF4655', bg: 'rgba(255,70,85,0.08)' },
+    { icon: <Sword size={24} />, title: 'LEAGUE OF LEGENDS', desc: 'Display tier, LP, wins and win rate automatically', color: '#C89B3C', bg: 'rgba(200,155,60,0.08)' },
+    { icon: <Trophy size={24} />, title: 'TOURNAMENTS', desc: 'Join or create competitive events with real prize pools', color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
+    { icon: <Users size={24} />, title: 'TEAM SYSTEM', desc: 'Build squads, manage rosters, compete as a team', color: '#00F5FF', bg: 'rgba(0,245,255,0.08)' },
+    { icon: <Briefcase size={24} />, title: 'SPONSOR CONNECT', desc: 'Get discovered by gaming brands and organizations', color: '#8B00FF', bg: 'rgba(139,0,255,0.08)' },
   ];
 
   return (

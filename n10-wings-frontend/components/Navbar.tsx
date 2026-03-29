@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Gamepad2, LogIn, LogOut, Menu, X,
-  LayoutDashboard, User, ChevronDown, Shield, Trophy
+  LayoutDashboard, User, ChevronDown, Shield, Trophy, Building2
 } from 'lucide-react';
 import styles from './Navbar.module.scss';
 
@@ -111,10 +111,10 @@ export default function Navbar() {
   };
 
   const getRoleLabel = () => {
-    if (user?.role === 'admin') return '👑 ADMIN';
-    if (user?.role === 'sponsor') return '💼 SPONSOR';
-    if (user?.is_organizer) return '🏆 ORGANIZER';
-    return '🎮 GAMER';
+    if (user?.role === 'admin') return <><Shield size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> ADMIN</>;
+    if (user?.role === 'sponsor') return <><Building2 size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> SPONSOR</>;
+    if (user?.is_organizer) return <><Trophy size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> ORGANIZER</>;
+    return <><Gamepad2 size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> GAMER</>;
   };
 
   return (
@@ -344,33 +344,33 @@ export default function Navbar() {
                 <Link href="/dashboard"
                   className={styles.navbar__mobile_link}
                   onClick={() => setIsOpen(false)}>
-                  📊 Player Dashboard
+                  <LayoutDashboard size={14} style={{ marginRight: 6, display: 'inline' }} /> Player Dashboard
                 </Link>
                 {user.role === 'admin' && (
                   <Link href="/dashboard/admin"
                     className={styles.navbar__mobile_link}
                     onClick={() => setIsOpen(false)}>
-                    🛡️ Admin Panel
+                    <Shield size={14} style={{ marginRight: 6, display: 'inline' }} /> Admin Panel
                   </Link>
                 )}
                 {user.is_organizer && (
                   <Link href="/dashboard/organizer"
                     className={styles.navbar__mobile_link}
                     onClick={() => setIsOpen(false)}>
-                    🏆 Organizer Dashboard
+                    <Trophy size={14} style={{ marginRight: 6, display: 'inline' }} /> Organizer Dashboard
                   </Link>
                 )}
                 {user.role === 'sponsor' && (
                   <Link href="/dashboard/sponsor"
                     className={styles.navbar__mobile_link}
                     onClick={() => setIsOpen(false)}>
-                    💼 Sponsor Dashboard
+                    <Building2 size={14} style={{ marginRight: 6, display: 'inline' }} /> Sponsor Dashboard
                   </Link>
                 )}
                 <button
                   className={styles.navbar__mobile_logout}
                   onClick={() => { handleLogout(); setIsOpen(false); }}>
-                  🚪 Logout
+                  <LogOut size={14} style={{ marginRight: 6, display: 'inline' }} /> Logout
                 </button>
               </>
             ) : (
