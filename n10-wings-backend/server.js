@@ -10,6 +10,8 @@ import uploadRoutes from './routes/upload.routes.js';
 import gameIdentityRoutes from './routes/gameIdentity.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import tournamentRoutes from './routes/tournament.routes.js';
+import teamRoutes from './routes/team.routes.js';
+import publicRoutes from './routes/public.routes.js';
 
 
 const app = express();
@@ -27,7 +29,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
 
 
 // ── Static files ──

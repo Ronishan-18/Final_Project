@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
+import api from '../lib/api';
 import styles from './page.module.scss';
 
 // ── Gaming Icons SVG Components ──
@@ -148,8 +149,47 @@ function FadeIn({ children, delay = 0, className = '' }: {
 
 export default function HomePage() {
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const [liveStats, setLiveStats] = useState({
+    activePlayers: 1200,
+    tournaments: 48,
+    prizePool: 350,
+    sponsors: 25,
+    poolSuffix: 'K'
+  });
+  const [featuredTournament, setFeaturedTournament] = useState<any>(null);
 
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/public/landing-stats');
+        if (res.data.success) {
+          const s = res.data.stats;
+          
+          let pool = s.prizePool || 0;
+          let poolSuffix = '';
+          if (pool >= 1000000) {
+            pool = Math.floor(pool / 100000) / 10;
+            poolSuffix = 'M';
+          } else if (pool >= 1000) {
+            pool = Math.floor(pool / 1000);
+            poolSuffix = 'K';
+          }
+
+          setLiveStats({
+            activePlayers: s.activePlayers || 0,
+            tournaments: s.tournaments || 0,
+            prizePool: parseFloat(pool as unknown as string),
+            sponsors: s.sponsors || 0,
+            poolSuffix
+          });
+          setFeaturedTournament(res.data.featuredTournament);
+        }
+      } catch (e) {
+        console.error("Failed to load live stats", e);
+      }
+    };
+    fetchStats();
+
     const handle = (e: MouseEvent) => setMousePos({
       x: e.clientX / window.innerWidth,
       y: e.clientY / window.innerHeight,
@@ -159,10 +199,10 @@ export default function HomePage() {
   }, []);
 
   const stats = [
-    { value: 1200, suffix: '+', label: 'Active Players', icon: '🎮', color: '#00F5FF' },
-    { value: 48, suffix: '+', label: 'Tournaments', icon: '🏆', color: '#FF6B00' },
-    { value: 350, suffix: 'K', label: 'Prize Pool LKR', icon: '💰', color: '#8B00FF' },
-    { value: 25, suffix: '+', label: 'Sponsors', icon: '🤝', color: '#FF006E' },
+    { value: liveStats.activePlayers, suffix: '+', label: 'Active Players', icon: '🎮', color: '#00F5FF' },
+    { value: liveStats.tournaments, suffix: '+', label: 'Tournaments', icon: '🏆', color: '#FF6B00' },
+    { value: liveStats.prizePool, suffix: liveStats.poolSuffix, label: 'Prize Pool LKR', icon: '💰', color: '#8B00FF' },
+    { value: liveStats.sponsors, suffix: '+', label: 'Sponsors', icon: '🤝', color: '#FF006E' },
   ];
 
   const howItWorks = [
@@ -307,32 +347,68 @@ export default function HomePage() {
             {/* Main card */}
             <div className={styles.hero__card}>
               <div className={styles.hero__card_bar} />
-              <div className={styles.hero__card_header}>
-                <div className={styles.hero__card_avatar}>🎮</div>
-                <div>
-                  <p className={styles.hero__card_name}>Pro Gamer LK</p>
-                  <p className={styles.hero__card_rank}>💎 Diamond Rank</p>
-                </div>
-                <motion.span
-                  className={styles.hero__card_live}
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  ● LIVE
-                </motion.span>
-              </div>
-              <div className={styles.hero__card_stats}>
-                {[
-                  { v: '4.8', l: 'K/D', c: '#F5A623' },
-                  { v: '234', l: 'Wins', c: '#00FF88' },
-                  { v: '1.2K', l: 'Kills', c: '#00F5FF' },
-                ].map(s => (
-                  <div key={s.l} className={styles.hero__card_stat}>
-                    <span style={{ color: s.c }}>{s.v}</span>
-                    <span>{s.l}</span>
+              
+              {featuredTournament ? (
+                <>
+                  <div className={styles.hero__card_header}>
+                    <div className={styles.hero__card_avatar}>🏆</div>
+                    <div>
+                      <p className={styles.hero__card_name}>{featuredTournament.title.length > 15 ? featuredTournament.title.substring(0, 15) + '...' : featuredTournament.title}</p>
+                      <p className={styles.hero__card_rank}>By {featuredTournament.organizer_username}</p>
+                    </div>
+                    {featuredTournament.status === 'ongoing' && (
+                      <motion.span
+                        className={styles.hero__card_live}
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        ● LIVE
+                      </motion.span>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className={styles.hero__card_stats}>
+                    {[
+                      { v: featuredTournament.game, l: 'Game', c: '#F5A623' },
+                      { v: `LKR ${Number(featuredTournament.prize_pool).toLocaleString()}`, l: 'Prize', c: '#00FF88' },
+                      { v: `${featuredTournament.max_teams}`, l: 'Max Teams', c: '#00F5FF' },
+                    ].map(s => (
+                      <div key={s.l} className={styles.hero__card_stat}>
+                        <span style={{ color: s.c, fontSize: s.v.length > 8 ? '0.8rem' : '1rem' }}>{s.v}</span>
+                        <span>{s.l}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.hero__card_header}>
+                    <div className={styles.hero__card_avatar}>🎮</div>
+                    <div>
+                      <p className={styles.hero__card_name}>Pro Gamer LK</p>
+                      <p className={styles.hero__card_rank}>💎 Diamond Rank</p>
+                    </div>
+                    <motion.span
+                      className={styles.hero__card_live}
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      ● LIVE
+                    </motion.span>
+                  </div>
+                  <div className={styles.hero__card_stats}>
+                    {[
+                      { v: '4.8', l: 'K/D', c: '#F5A623' },
+                      { v: '234', l: 'Wins', c: '#00FF88' },
+                      { v: '1.2K', l: 'Kills', c: '#00F5FF' },
+                    ].map(s => (
+                      <div key={s.l} className={styles.hero__card_stat}>
+                        <span style={{ color: s.c }}>{s.v}</span>
+                        <span>{s.l}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               {/* Decorative controller in card */}
               <div className={styles.hero__card_deco}>
                 <ControllerIcon size={80} color="#00F5FF" opacity={0.06} />

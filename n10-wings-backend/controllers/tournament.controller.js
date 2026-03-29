@@ -156,6 +156,29 @@ export const registerForTournament = async (req, res) => {
   }
 };
 
+// ── REGISTER TEAM FOR TOURNAMENT ──
+export const registerTeamForTournament = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { team_id } = req.body;
+    if (!team_id) return res.status(400).json({ success: false, message: 'Team ID is required!' });
+    
+    const [rows] = await db.query("SELECT * FROM tournaments WHERE id = ? AND status = 'open'", [id]);
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Tournament not open!' });
+    
+    const [existing] = await db.query('SELECT id FROM tournament_registrations WHERE tournament_id = ? AND team_id = ?', [id, team_id]);
+    if (existing.length) return res.status(400).json({ success: false, message: 'Team already registered!' });
+    
+    const [[{ count }]] = await db.query("SELECT COUNT(*) as count FROM tournament_registrations WHERE tournament_id = ? AND status = 'approved'", [id]);
+    if (count >= rows[0].max_teams) return res.status(400).json({ success: false, message: 'Tournament is full!' });
+    
+    await db.query('INSERT INTO tournament_registrations (tournament_id, team_id) VALUES (?, ?)', [id, team_id]);
+    res.status(201).json({ success: true, message: 'Team registered! Waiting for organizer approval.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // ── HANDLE REGISTRATION ──
 export const handleRegistration = async (req, res) => {
   try {

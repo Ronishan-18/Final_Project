@@ -141,6 +141,7 @@ export default function Dashboard() {
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: null, active: true, color: '#00F5FF' },
+    ...(user?.is_organizer ? [{ icon: Trophy, label: 'Organizer Panel', href: '/dashboard/organizer', color: '#FFD700' }] : []),
     { icon: Pencil, label: 'Edit Profile', href: '/profile/edit', color: '#8B00FF' },
     { icon: Gamepad2, label: 'Game Identities', href: '/dashboard/game-identities', color: '#FF006E' },
     { icon: Users, label: 'My Team', href: '/teams', color: '#00F5FF' },
@@ -416,6 +417,10 @@ export default function Dashboard() {
                 <span style={{ marginLeft: 8 }}>QUICK ACTIONS</span>
               </h2>
               <div className={styles.card__actions}>
+                <Link href="/dashboard/organizer" className={styles.card__action_btn}>
+                  <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
+                  Organizer Panel
+                </Link>
                 <Link href="/tournaments/create" className={styles.card__action_btn}>
                   <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
                   Create Tournament
