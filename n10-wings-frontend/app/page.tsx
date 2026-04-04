@@ -50,7 +50,7 @@ function TrophyIcon({ size = 50, color = '#FF6B00', opacity = 0.15 }: {
   );
 }
 
-function CrosshairIcon({ size = 45, color = '#8B00FF', opacity = 0.15 }: {
+function CrosshairIcon({ size = 45, color = '#FF6B00', opacity = 0.15 }: {
   size?: number; color?: string; opacity?: number;
 }) {
   return (
@@ -205,14 +205,14 @@ export default function HomePage() {
   const stats = [
     { value: liveStats.activePlayers, suffix: '+', label: 'Active Players', icon: <Gamepad2 size={24} />, color: '#00F5FF' },
     { value: liveStats.tournaments, suffix: '+', label: 'Tournaments', icon: <Trophy size={24} />, color: '#FF6B00' },
-    { value: liveStats.prizePool, suffix: liveStats.poolSuffix, label: 'Prize Pool LKR', icon: <Coins size={24} />, color: '#8B00FF' },
+    { value: liveStats.prizePool, suffix: liveStats.poolSuffix, label: 'Prize Pool LKR', icon: <Coins size={24} />, color: '#FF6B00' },
     { value: liveStats.sponsors, suffix: '+', label: 'Sponsors', icon: <Handshake size={24} />, color: '#FF006E' },
   ];
 
   const howItWorks = [
     { step: '001', icon: <UserPlus size={24} />, title: 'CREATE PROFILE', desc: 'Register and build your gamer identity with your details, gaming style and preferences', color: '#00F5FF' },
     { step: '002', icon: <Gamepad2 size={24} />, title: 'LINK GAMES', desc: 'Connect PUBG PC, Valorant or League of Legends to automatically sync your stats', color: '#FF6B00' },
-    { step: '003', icon: <Swords size={24} />, title: 'JOIN TOURNAMENTS', desc: 'Browse and register for tournaments matching your game and skill level', color: '#8B00FF' },
+    { step: '003', icon: <Swords size={24} />, title: 'JOIN TOURNAMENTS', desc: 'Browse and register for tournaments matching your game and skill level', color: '#FF6B00' },
     { step: '004', icon: <Trophy size={24} />, title: 'WIN & DOMINATE', desc: 'Compete for prize pools, build your reputation and get discovered by sponsors', color: '#FF006E' },
   ];
 
@@ -222,7 +222,7 @@ export default function HomePage() {
     { icon: <Sword size={24} />, title: 'LEAGUE OF LEGENDS', desc: 'Display tier, LP, wins and win rate automatically', color: '#C89B3C', bg: 'rgba(200,155,60,0.08)' },
     { icon: <Trophy size={24} />, title: 'TOURNAMENTS', desc: 'Join or create competitive events with real prize pools', color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
     { icon: <Users size={24} />, title: 'TEAM SYSTEM', desc: 'Build squads, manage rosters, compete as a team', color: '#00F5FF', bg: 'rgba(0,245,255,0.08)' },
-    { icon: <Briefcase size={24} />, title: 'SPONSOR CONNECT', desc: 'Get discovered by gaming brands and organizations', color: '#8B00FF', bg: 'rgba(139,0,255,0.08)' },
+    { icon: <Briefcase size={24} />, title: 'SPONSOR CONNECT', desc: 'Get discovered by gaming brands and organizations', color: '#FF6B00', bg: 'rgba(255,107,0,0.08)' },
   ];
 
   return (
@@ -262,7 +262,7 @@ export default function HomePage() {
         </FloatingGamingIcon>
 
         <FloatingGamingIcon bottom="20%" left="2%" duration={8} delay={2} rotateAmount={8}>
-          <CrosshairIcon size={50} color="#8B00FF" opacity={0.18} />
+          <CrosshairIcon size={50} color="#FF6B00" opacity={0.18} />
         </FloatingGamingIcon>
 
         <FloatingGamingIcon bottom="15%" right="3%" duration={7} delay={0.5} rotateAmount={10}>
@@ -285,14 +285,14 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.span
+            {/* <motion.span
               className={styles.hero__badge}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               ⚡ SRI LANKA&apos;S #1 E-SPORTS PLATFORM
-            </motion.span>
+            </motion.span> */}
 
             <motion.h1
               className={styles.hero__title}
@@ -300,9 +300,9 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.8 }}
             >
-              <span className={styles.hero__title_white}>ELEVATE YOUR</span>
-              <span className={styles.hero__title_gradient}>GAME.</span>
-              <span className={styles.hero__title_white}>WIN. <span className={styles.hero__title_orange}>DOMINATE.</span></span>
+              <span className={styles.hero__title_white}>FORGE YOUR</span>
+              <span className={styles.hero__title_gradient}>Legacy.</span>
+              <span className={styles.hero__title_white}><span className={styles.hero__title_orange}> Command The Arena</span></span>
             </motion.h1>
 
             <motion.p
@@ -311,8 +311,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              The ultimate E-Sports management platform for Sri Lankan gamers.
-              Link accounts, showcase stats, join tournaments, get noticed by sponsors.
+              Our goal is to take gaming from being just a hobby and turn it into a respected professional industry in Sri Lanka
             </motion.p>
 
             <motion.div
@@ -322,14 +321,14 @@ export default function HomePage() {
               transition={{ delay: 0.65 }}
             >
               <Link href="/register" className={styles.hero__btn_primary}>
-                🎮 START PLAYING NOW →
+                START PLAYING NOW →
               </Link>
               <Link href="/players" className={styles.hero__btn_secondary}>
-                👥 VIEW PLAYERS ↗
+                VIEW PLAYERS ↗
               </Link>
             </motion.div>
 
-            <motion.div
+            {/* <motion.div
               className={styles.hero__games}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -338,7 +337,7 @@ export default function HomePage() {
               {['🎯 PUBG PC', '⚡ Valorant', '🗡️ League of Legends', '🏆 Live Tournaments'].map(g => (
                 <span key={g} className={styles.hero__game_tag}>{g}</span>
               ))}
-            </motion.div>
+            </motion.div> */}
           </motion.div>
 
           {/* Hero Card Visual */}
@@ -355,7 +354,7 @@ export default function HomePage() {
               {featuredTournament ? (
                 <>
                   <div className={styles.hero__card_header}>
-                    <div className={styles.hero__card_avatar}>🏆</div>
+                    <div className={styles.hero__card_avatar}></div>
                     <div>
                       <p className={styles.hero__card_name}>{featuredTournament.title.length > 15 ? featuredTournament.title.substring(0, 15) + '...' : featuredTournament.title}</p>
                       <p className={styles.hero__card_rank}>By {featuredTournament.organizer_username}</p>
@@ -482,7 +481,7 @@ export default function HomePage() {
         <div className="container">
           <FadeIn>
             <p className={`badge-orange badge ${styles.center_badge}`}>
-              ⚙️ HOW IT WORKS
+              HOW IT WORKS
             </p>
             <h2 className="section-title gradient-text">YOUR PATH TO GLORY</h2>
             <p className="section-sub">

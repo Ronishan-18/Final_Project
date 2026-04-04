@@ -38,6 +38,13 @@ export const register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
+    if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters, include an uppercase letter, a number, and a symbol.'
+      });
+    }
+
     // Check email exists
     const [existingEmail] = await db.query(
       'SELECT id FROM users WHERE email = ?', [email]
@@ -65,35 +72,17 @@ export const register = async (req, res) => {
 
     // OTP
     const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+    const hashedOtp = await bcrypt.hash(otp, 10);
 
     // Valid roles
     const validRoles = ['user', 'sponsor', 'admin'];
     const userRole = validRoles.includes(role) ? role : 'user';
 
-    // Insert user
-    const [result] = await db.query(
-      `INSERT INTO users
-       (username, email, password, role, otp_code, otp_expires)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [username, email, hashedPassword, userRole, otp, otpExpires]
+    const pendingToken = jwt.sign(
+      { username, email, hashedPassword, role: userRole, otpHash: hashedOtp },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
     );
-
-    const userId = result.insertId;
-
-    // Create profiles
-    await db.query(
-      'INSERT INTO profiles (user_id) VALUES (?)', [userId]
-    );
-    await db.query(
-      'INSERT INTO gamer_profiles (user_id) VALUES (?)', [userId]
-    );
-
-    if (userRole === 'sponsor') {
-      await db.query(
-        'INSERT INTO sponsor_profiles (user_id) VALUES (?)', [userId]
-      );
-    }
 
     // Send OTP email
     await sendVerificationEmail(email, username, otp);
@@ -101,7 +90,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Registration successful! Please check your email for OTP.',
-      data: { id: userId, username, email, role: userRole }
+      pendingToken
     });
 
   } catch (error) {
@@ -119,55 +108,100 @@ export const register = async (req, res) => {
 // ============================================
 export const verifyEmail = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, pendingToken } = req.body;
 
-    const [users] = await db.query(
-      'SELECT * FROM users WHERE email = ?', [email]
-    );
+    if (pendingToken) {
+      // New Stateless Verification Flow
+      let decoded;
+      try {
+        decoded = jwt.verify(pendingToken, process.env.JWT_SECRET);
+      } catch (err) {
+        return res.status(400).json({ success: false, message: 'Registration session expired or invalid. Please register again.' });
+      }
 
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found!'
+      if (decoded.email !== email) {
+        return res.status(400).json({ success: false, message: 'Email mismatch!' });
+      }
+
+      const isOtpValid = await bcrypt.compare(otp, decoded.otpHash);
+      if (!isOtpValid) {
+        return res.status(400).json({ success: false, message: 'Invalid OTP!' });
+      }
+
+      // Ensure user doesn't exist already in case multiple verifications happen
+      const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existing.length > 0) {
+        return res.status(400).json({ success: false, message: 'User already verified/registered.' });
+      }
+
+      const [result] = await db.query(
+        `INSERT INTO users (username, email, password, role, is_verified) VALUES (?, ?, ?, ?, ?)`,
+        [decoded.username, decoded.email, decoded.hashedPassword, decoded.role, true]
+      );
+
+      const userId = result.insertId;
+      await db.query('INSERT INTO profiles (user_id) VALUES (?)', [userId]);
+      await db.query('INSERT INTO gamer_profiles (user_id) VALUES (?)', [userId]);
+      
+      if (decoded.role === 'sponsor') {
+        await db.query('INSERT INTO sponsor_profiles (user_id) VALUES (?)', [userId]);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Email verified successfully! You can now login.'
+      });
+
+    } else {
+      // Old DB Verification Flow (Fallback)
+      const [users] = await db.query(
+        'SELECT * FROM users WHERE email = ?', [email]
+      );
+
+      if (users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found!'
+        });
+      }
+
+      const user = users[0];
+
+      if (user.is_verified) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already verified!'
+        });
+      }
+
+      if (user.otp_code !== otp) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid OTP!'
+        });
+      }
+
+      if (new Date() > new Date(user.otp_expires)) {
+        return res.status(400).json({
+          success: false,
+          message: 'OTP expired! Please request a new one.'
+        });
+      }
+
+      await db.query(
+        `UPDATE users SET
+         is_verified = TRUE,
+         otp_code = NULL,
+         otp_expires = NULL
+         WHERE id = ?`,
+        [user.id]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Email verified successfully! You can now login.'
       });
     }
-
-    const user = users[0];
-
-    if (user.is_verified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email already verified!'
-      });
-    }
-
-    if (user.otp_code !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid OTP!'
-      });
-    }
-
-    if (new Date() > new Date(user.otp_expires)) {
-      return res.status(400).json({
-        success: false,
-        message: 'OTP expired! Please request a new one.'
-      });
-    }
-
-    await db.query(
-      `UPDATE users SET
-       is_verified = TRUE,
-       otp_code = NULL,
-       otp_expires = NULL
-       WHERE id = ?`,
-      [user.id]
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully! You can now login.'
-    });
 
   } catch (error) {
     console.error('Verify Email Error:', error);
@@ -261,9 +295,13 @@ export const login = async (req, res) => {
     }
 
     if (!user.is_active) {
+      // Changed from standard 401 to pass suspension state
       return res.status(401).json({
         success: false,
-        message: 'Account suspended! Contact admin.'
+        message: 'Account suspended! Contact admin.',
+        suspended: true,
+        user_id: user.id,
+        type: 'account'
       });
     }
 
@@ -674,6 +712,12 @@ export const googleCallback = async (req, res) => {
     if (!user) {
       return res.redirect(
         `${process.env.CLIENT_URL}/login?error=google_auth_failed`
+      );
+    }
+
+    if (!user.is_active) {
+      return res.redirect(
+        `${process.env.CLIENT_URL}/suspended?user_id=${user.id}&type=account`
       );
     }
 

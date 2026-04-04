@@ -104,7 +104,7 @@ export default function ManageTournamentPage() {
   const rejected = registrations.filter(r => r.status === 'rejected');
 
   const statusColor: Record<string, string> = {
-    open: '#00F5FF', ongoing: '#00FF88', completed: '#8B00FF', draft: '#8892A4', cancelled: '#FF006E',
+    open: '#00F5FF', ongoing: '#00FF88', completed: '#00F5FF', draft: '#8892A4', cancelled: '#FF006E',
   };
 
   const challongeParticipants: Record<number, string> = {};

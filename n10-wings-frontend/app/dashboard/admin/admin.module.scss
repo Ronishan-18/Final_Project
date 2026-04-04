@@ -1,22 +1,12 @@
 // ── Admin Dashboard ──
 .loading {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #0A0A0F;
-  gap: 1rem;
-  color: #8892A4;
-
-  &__spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid rgba(0,245,255,0.15);
-    border-top-color: #00F5FF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
+  background: #070709;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -48,14 +38,29 @@
 .admin {
   display: flex;
   min-height: 100vh;
-  background: #07070D;
+  background: #070709;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg_grid {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
 }
 
 // ── Sidebar ──
 .sidebar {
   width: 240px;
   min-height: 100vh;
-  background: #0D0D16;
+  background: rgba(13, 13, 22, 0.8);
+  backdrop-filter: blur(25px);
   border-right: 1px solid rgba(255,255,255,0.05);
   display: flex;
   flex-direction: column;
@@ -89,7 +94,7 @@
     font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
     font-weight: 800;
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    background: linear-gradient(90deg, #00F5FF, #FF6B00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -234,15 +239,27 @@
 }
 
 .stat_card {
-  background: #0D0D16;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
-  padding: 1.25rem;
-  transition: all 0.2s ease;
+  background: rgba(18, 18, 26, 0.5);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.2), transparent);
+  }
 
   &:hover {
-    border-color: rgba(255,255,255,0.12);
-    transform: translateY(-2px);
+    border-color: rgba(0, 245, 255, 0.3);
+    transform: translateY(-5px);
+    background: rgba(18, 18, 26, 0.7);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
   }
 
   &__top {
@@ -275,10 +292,11 @@
 
 // ── Chart ──
 .chart_card {
-  background: #0D0D16;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
-  padding: 1.5rem;
+  background: rgba(18, 18, 26, 0.4);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 1.75rem;
 
   &__title {
     font-family: 'Orbitron', sans-serif;
@@ -324,7 +342,7 @@
 
   &__bar_fill {
     width: 100%;
-    background: linear-gradient(0deg, #00F5FF, #8B00FF);
+    background: linear-gradient(0deg, #00F5FF, #FF6B00);
     border-radius: 6px;
     transition: height 0.5s ease;
     min-height: 4px;
@@ -421,7 +439,7 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    background: #00F5FF;
     color: #0A0A0F;
     border: none;
     border-radius: 8px;
@@ -443,9 +461,10 @@
 }
 
 .table_wrap {
-  background: #0D0D16;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
+  background: rgba(13, 13, 22, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 20px;
   overflow: hidden;
   overflow-x: auto;
 }
@@ -513,9 +532,9 @@
 }
 
 .role_select {
-  background: rgba(139,0,255,0.08);
-  border: 1px solid rgba(139,0,255,0.25);
-  color: #8B00FF;
+  background: rgba(0, 245, 255, 0.08);
+  border: 1px solid rgba(0, 245, 255, 0.25);
+  color: #00F5FF;
   border-radius: 6px;
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;

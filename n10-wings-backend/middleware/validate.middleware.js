@@ -126,3 +126,15 @@ export const validateUpdateEmail = (req, res, next) => {
 
   next();
 };
+export const validateUpdateProfile = (req, res, next) => {
+  const { full_name } = req.body;
+
+  if (full_name && full_name.length < 3) {
+    return res.status(400).json({
+      success: false,
+      message: 'Full name must be at least 3 characters!'
+    });
+  }
+
+  next();
+};

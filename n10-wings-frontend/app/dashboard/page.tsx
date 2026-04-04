@@ -12,6 +12,7 @@ import {
 import api from '../../lib/api';
 import AvatarUpload from '../../components/AvatarUpload';
 import IconTile from '../../components/IconTile';
+import LoadingScreen from '../../components/LoadingScreen';
 import styles from './dashboard.module.scss';
 
 interface Profile {
@@ -111,12 +112,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.loading}>
-        <div className={styles.loading__spinner} />
-        <p>Loading dashboard...</p>
-      </div>
-    );
+    return <LoadingScreen message="SYNCING PLAYER DATA..." />;
   }
 
   const winRate = gamerProfile?.wins !== undefined &&
@@ -141,24 +137,27 @@ export default function Dashboard() {
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: null, active: true, color: '#00F5FF' },
-    ...(user?.is_organizer ? [{ icon: Trophy, label: 'Organizer Panel', href: '/dashboard/organizer', color: '#FFD700' }] : []),
-    { icon: Pencil, label: 'Edit Profile', href: '/profile/edit', color: '#8B00FF' },
-    { icon: Gamepad2, label: 'Game Identities', href: '/dashboard/game-identities', color: '#FF006E' },
-    { icon: Users, label: 'My Team', href: '/teams', color: '#00F5FF' },
-    { icon: Trophy, label: 'Tournaments', href: '/tournaments', color: '#FFD700' },
-    { icon: Search, label: 'Find Players', href: '/players', color: '#00FF88' },
+    ...(user?.is_organizer && user?.role !== 'admin' ? [{ icon: Trophy, label: 'Organizer Panel', href: '/dashboard/organizer', color: '#FFD700' }] : []),
+    { icon: Pencil, label: 'Edit Profile', href: '/profile/edit', color: '#00F5FF' },
+    ...(user?.role !== 'admin' ? [
+      { icon: Gamepad2, label: 'Game Identities', href: '/dashboard/game-identities', color: '#FF006E' },
+      { icon: Users, label: 'My Teams', href: '/teams?filter=my', color: '#00F5FF' },
+      { icon: Trophy, label: 'My Tournaments', href: '/tournaments?filter=my', color: '#FFD700' },
+      { icon: Search, label: 'Find Players', href: '/players', color: '#00FF88' },
+    ] : []),
   ];
 
   const statsData = [
     { icon: Trophy, label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
     { icon: CheckCircle, label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
     { icon: XCircle, label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
-    { icon: Zap, label: 'Points', value: gamerProfile?.points ?? 0, color: '#8B00FF' },
+    { icon: Zap, label: 'Points', value: gamerProfile?.points ?? 0, color: '#00F5FF' },
     { icon: TrendingUp, label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
   ];
 
   return (
     <div className={styles.dashboard}>
+      <div className={styles.bg_grid} />
 
       {/* ── Sidebar ── */}
       <aside className={styles.sidebar}>
@@ -230,38 +229,42 @@ export default function Dashboard() {
         </div>
 
         {/* Tabs */}
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tabs__btn} ${activeTab === 'player' ? styles['tabs__btn--active'] : ''}`}
-            onClick={() => setActiveTab('player')}
-          >
-            <Gamepad2 size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
-            PLAYER PROFILE
-          </button>
-          <button
-            className={`${styles.tabs__btn} ${activeTab === 'organizer' ? styles['tabs__btn--active'] : ''} ${!user?.is_organizer ? styles['tabs__btn--locked'] : ''}`}
-            onClick={() => user?.is_organizer && setActiveTab('organizer')}
-          >
-            {user?.is_organizer
-              ? <Trophy size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
-              : <Lock size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
-            }
-            ORGANIZER PROFILE
-          </button>
-        </div>
+        {user?.role !== 'admin' && (
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tabs__btn} ${activeTab === 'player' ? styles['tabs__btn--active'] : ''}`}
+              onClick={() => setActiveTab('player')}
+            >
+              <Gamepad2 size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+              PLAYER PROFILE
+            </button>
+            <button
+              className={`${styles.tabs__btn} ${activeTab === 'organizer' ? styles['tabs__btn--active'] : ''} ${!user?.is_organizer ? styles['tabs__btn--locked'] : ''}`}
+              onClick={() => user?.is_organizer && setActiveTab('organizer')}
+            >
+              {user?.is_organizer
+                ? <Trophy size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+                : <Lock size={14} strokeWidth={1.75} style={{ marginRight: 5 }} />
+              }
+              ORGANIZER PROFILE
+            </button>
+          </div>
+        )}
 
         {/* ── PLAYER TAB ── */}
-        {activeTab === 'player' && (
+        {(activeTab === 'player' || user?.role === 'admin') && (
           <>
-            <div className={styles.stats}>
-              {statsData.map((stat) => (
-                <div key={stat.label} className={styles.stats__card}>
-                  <IconTile icon={stat.icon} color={stat.color} size={20} tileSize={44} radius={10} />
-                  <span className={styles.stats__value} style={{ color: stat.color }}>{stat.value}</span>
-                  <span className={styles.stats__label}>{stat.label}</span>
-                </div>
-              ))}
-            </div>
+            {user?.role !== 'admin' && (
+              <div className={styles.stats}>
+                {statsData.map((stat) => (
+                  <div key={stat.label} className={styles.stats__card}>
+                    <IconTile icon={stat.icon} color={stat.color} size={20} tileSize={44} radius={10} />
+                    <span className={styles.stats__value} style={{ color: stat.color }}>{stat.value}</span>
+                    <span className={styles.stats__label}>{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className={styles.content}>
 
@@ -295,32 +298,34 @@ export default function Dashboard() {
               </div>
 
               {/* Gaming Info */}
-              <div className={styles.card}>
-                <h2 className={styles.card__title}>
-                  <IconTile icon={Gamepad2} color="#8B00FF" size={12} tileSize={22} radius={5} />
-                  <span style={{ marginLeft: 8 }}>GAMING INFO</span>
-                </h2>
-                <div className={styles.card__grid}>
-                  {[
-                    { label: 'Rank', value: gamerProfile?.player_rank || '—' },
-                    { label: 'Playstyle', value: gamerProfile?.playstyle || '—' },
-                    { label: 'Games', value: gamerProfile?.game_preferences || '—' },
-                  ].map((item) => (
-                    <div key={item.label} className={styles.card__item}>
-                      <span className={styles.card__item_label}>{item.label}</span>
-                      <span className={styles.card__item_value}>{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-                {!gamerProfile?.player_rank && (
-                  <div className={styles.card__empty}>
-                    <p>Complete your gaming profile!</p>
-                    <Link href="/profile/edit" className={styles.card__empty_btn}>
-                      Add Gaming Info →
-                    </Link>
+              {user?.role !== 'admin' && (
+                <div className={styles.card}>
+                  <h2 className={styles.card__title}>
+                    <IconTile icon={Gamepad2} color="#00F5FF" size={12} tileSize={22} radius={5} />
+                    <span style={{ marginLeft: 8 }}>GAMING INFO</span>
+                  </h2>
+                  <div className={styles.card__grid}>
+                    {[
+                      { label: 'Rank', value: gamerProfile?.player_rank || '—' },
+                      { label: 'Playstyle', value: gamerProfile?.playstyle || '—' },
+                      { label: 'Games', value: gamerProfile?.game_preferences || '—' },
+                    ].map((item) => (
+                      <div key={item.label} className={styles.card__item}>
+                        <span className={styles.card__item_label}>{item.label}</span>
+                        <span className={styles.card__item_value}>{item.value}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                  {!gamerProfile?.player_rank && (
+                    <div className={styles.card__empty}>
+                      <p>Complete your gaming profile!</p>
+                      <Link href="/profile/edit" className={styles.card__empty_btn}>
+                        Add Gaming Info →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Social Links */}
               <div className={styles.card}>
@@ -350,7 +355,7 @@ export default function Dashboard() {
               </div>
 
               {/* Become Organizer */}
-              {!user?.is_organizer && (
+              {!user?.is_organizer && user?.role !== 'admin' && (
                 <div className={styles.card}>
                   <h2 className={styles.card__title}>
                     <IconTile icon={Trophy} color="#FFD700" size={12} tileSize={22} radius={5} />
@@ -425,7 +430,7 @@ export default function Dashboard() {
                   <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
                   Create Tournament
                 </Link>
-                <Link href="/tournaments/my" className={styles.card__action_btn}>
+                <Link href="/tournaments?filter=my" className={styles.card__action_btn}>
                   <ChevronRight size={14} strokeWidth={2} style={{ marginRight: 4, display: 'inline' }} />
                   My Tournaments
                 </Link>

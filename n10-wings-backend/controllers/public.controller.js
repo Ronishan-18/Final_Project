@@ -39,3 +39,46 @@ export const getLandingStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const submitAppeal = async (req, res) => {
+  try {
+    const { user_id, type, note } = req.body;
+    if (!user_id || !type || !note) {
+      return res.status(400).json({ success: false, message: 'All fields are required!' });
+    }
+
+    // Verify user actually is suspended
+    const [users] = await db.query('SELECT is_active, organizer_status FROM users WHERE id = ?', [user_id]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found!' });
+    }
+    
+    const user = users[0];
+    if (type === 'account' && user.is_active) {
+      return res.status(400).json({ success: false, message: 'Your account is not suspended!' });
+    }
+    if (type === 'organizer' && user.organizer_status !== 'suspended') {
+      return res.status(400).json({ success: false, message: 'Your organizer role is not suspended!' });
+    }
+
+    // Check if pending appeal already exists
+    const [existing] = await db.query(
+      "SELECT id FROM suspension_appeals WHERE user_id = ? AND type = ? AND status = 'pending'",
+      [user_id, type]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'You already have a pending appeal!' });
+    }
+
+    await db.query(
+      'INSERT INTO suspension_appeals (user_id, type, note) VALUES (?, ?, ?)',
+      [user_id, type, note]
+    );
+
+    res.status(201).json({ success: true, message: 'Appeal submitted successfully! Admin will review it shortly.' });
+  } catch (error) {
+    console.error('Submit Appeal Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+

@@ -25,7 +25,9 @@ function VerifyForm() {
 
     setLoading(true);
     try {
-      await verifyEmail({ email, otp });
+      const pendingToken = sessionStorage.getItem('pendingToken') || undefined;
+      await verifyEmail({ email, otp, pendingToken });
+      sessionStorage.removeItem('pendingToken');
       setSuccess(true);
       setTimeout(() => router.push('/login'), 2000);
     } catch (err: unknown) {

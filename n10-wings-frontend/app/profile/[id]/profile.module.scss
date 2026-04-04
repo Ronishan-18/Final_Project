@@ -422,3 +422,132 @@
 
   &__arrow { color: #8892A4; font-size: 0.8rem; }
 }
+
+/* ── friends ── */
+
+.friendActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.addFriendBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #00F5FF;
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.pendingBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255, 107, 0, 0.1);
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  border-radius: 8px;
+  color: #FF6B00;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.acceptBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: #00FF88;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover:not(:disabled) { background: rgba(0, 255, 136, 0.18); }
+  &:disabled { opacity: 0.5; }
+}
+
+.declineBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255, 0, 110, 0.1);
+  border: 1px solid rgba(255, 0, 110, 0.3);
+  border-radius: 8px;
+  color: #FF006E;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover:not(:disabled) { background: rgba(255, 0, 110, 0.18); }
+  &:disabled { opacity: 0.5; }
+}
+
+.chatBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(0, 245, 255, 0.1);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 8px;
+  color: #00F5FF;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s;
+  &:hover { background: rgba(0, 245, 255, 0.18); }
+}
+
+.removeFriendBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(255, 0, 110, 0.06);
+  border: 1px solid rgba(255, 0, 110, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 0, 110, 0.6);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover:not(:disabled) { background: rgba(255, 0, 110, 0.14); color: #FF006E; }
+  &:disabled { opacity: 0.5; }
+}
+
+.friendMsgSuccess {
+  margin-top: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: #00FF88;
+}
+
+.friendMsgError {
+  margin-top: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: #FF006E;
+}

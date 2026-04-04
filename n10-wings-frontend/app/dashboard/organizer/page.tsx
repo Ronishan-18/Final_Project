@@ -39,7 +39,7 @@ interface Tournament {
 
 const statusColor: Record<string, string> = {
   open: '#00F5FF', ongoing: '#00FF88',
-  completed: '#8B00FF', draft: '#8892A4', cancelled: '#FF006E',
+  completed: '#00F5FF', draft: '#8892A4', cancelled: '#FF006E',
 };
 
 export default function OrganizerDashboard() {
@@ -106,7 +106,7 @@ export default function OrganizerDashboard() {
     { icon: Trophy, label: 'Total Tournaments', value: stats?.total_tournaments ?? 0, color: '#00F5FF' },
     { icon: PlayCircle, label: 'Active', value: stats?.active_tournaments ?? 0, color: '#00FF88' },
     { icon: Clock, label: 'Open', value: stats?.open_tournaments ?? 0, color: '#FFD700' },
-    { icon: CheckCircle, label: 'Completed', value: stats?.completed_tournaments ?? 0, color: '#8B00FF' },
+    { icon: CheckCircle, label: 'Completed', value: stats?.completed_tournaments ?? 0, color: '#00F5FF' },
     { icon: Users, label: 'Participants', value: stats?.total_participants ?? 0, color: '#FF006E' },
     { icon: AlertTriangle, label: 'Pending Approvals', value: stats?.pending_registrations ?? 0, color: '#FF6B00' },
   ];
@@ -131,7 +131,7 @@ export default function OrganizerDashboard() {
           {[
             { icon: LayoutDashboard, label: 'Overview', href: '/dashboard/organizer', color: '#00F5FF' },
             { icon: Plus, label: 'Create Tournament', href: '/tournaments/create', color: '#00FF88' },
-            { icon: Trophy, label: 'My Tournaments', href: '/tournaments/my', color: '#8B00FF' },
+            { icon: Trophy, label: 'My Tournaments', href: '/tournaments?filter=my', color: '#00F5FF' },
             { icon: Gamepad2, label: 'Player Dashboard', href: '/dashboard', color: '#FFD700' },
           ].map(item => (
             <Link key={item.href} href={item.href} className={styles.sidebar__item}>

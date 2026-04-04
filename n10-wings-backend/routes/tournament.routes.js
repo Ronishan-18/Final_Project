@@ -5,12 +5,12 @@ import {
   registerForTournament,registerTeamForTournament, handleRegistration,
   updateMatchResult, getMyTournaments, getOrganizerStats,
 } from '../controllers/tournament.controller.js';
-import { protect, isOrganizer } from '../middleware/auth.middleware.js';
+import { protect, isOrganizer, optionalProtect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 // ── Public ──
-router.get('/', getTournaments);
+router.get('/', optionalProtect, getTournaments);
 router.get('/my', protect, isOrganizer, getMyTournaments);
 router.get('/organizer-stats', protect, isOrganizer, getOrganizerStats);
 router.get('/:id', getTournament);

@@ -126,7 +126,7 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
           </div>
         )}
         <div className={styles.avatar__overlay}>
-          <span className={styles.avatar__camera}>📷</span>
+          <span className={styles.avatar__camera}></span>
         </div>
       </div>
 
@@ -140,14 +140,14 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
               fileInputRef.current?.click();
             }}
           >
-            📁 Upload Photo
+            Upload Photo
           </button>
           {currentAvatar && (
             <button
               className={`${styles.avatar__menu_item} ${styles['avatar__menu_item--delete']}`}
               onClick={handleDelete}
             >
-              🗑️ Remove Photo
+              Remove Photo
             </button>
           )}
           <button
@@ -191,7 +191,7 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
               />
             </div>
 
-            {/* Controls */}
+            {/* Controls
             <div className={styles.modal__controls}>
               <div className={styles.modal__control}>
                 <label>🔍 Zoom</label>
@@ -215,7 +215,7 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
                   onChange={(e) => setRotation(Number(e.target.value))}
                 />
               </div>
-            </div>
+            </div> */}
 
             {error && <p className={styles.modal__error}>❌ {error}</p>}
 
@@ -236,7 +236,7 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
                 onClick={handleSave}
                 disabled={uploading}
               >
-                {uploading ? 'Saving...' : '✅ Save Photo'}
+                {uploading ? 'Saving...' : 'Save Photo'}
               </button>
             </div>
           </div>

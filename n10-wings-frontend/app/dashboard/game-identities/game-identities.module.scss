@@ -62,7 +62,7 @@
   }
 
   &__cyan {
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    background: linear-gradient(90deg, #00F5FF, #FF6B00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -173,7 +173,20 @@
     gap: 0.75rem;
   }
 
-  &__icon { font-size: 1.75rem; }
+  &__icon { 
+    font-size: 1.75rem; 
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
 
   &__name {
     font-family: 'Orbitron', sans-serif;
@@ -332,7 +345,21 @@
     background: rgba(0,245,255,0.03);
   }
 
-  &_icon { font-size: 1.75rem; }
+  &_icon { 
+    font-size: 1.75rem; 
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.2rem;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
 
   &_name {
     font-family: 'Orbitron', sans-serif;
@@ -404,6 +431,31 @@
 
   &__subtitle { color: #8892A4; font-size: 0.8rem; }
 
+  &__icon_wrap {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
   &__group { margin-bottom: 1.25rem; }
 
   &__label {
@@ -464,6 +516,7 @@
 
   &__save {
     flex: 2;
+    background: #00F5FF;
     border: none;
     color: #0A0A0F;
     padding: 0.8rem;

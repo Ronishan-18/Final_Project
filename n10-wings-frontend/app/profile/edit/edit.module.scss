@@ -83,15 +83,25 @@
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 
+    &_header {
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 1rem;
+    }
+
     &_title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #00F5FF;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #ffffff;
       letter-spacing: 0.08em;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 0.25rem;
+    }
+
+    &_hint {
+      color: #8892A4;
+      font-size: 0.75rem;
+      font-weight: 500;
     }
   }
 
@@ -119,6 +129,15 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
   }
 
   &__input {
@@ -139,6 +158,13 @@
     }
 
     &::placeholder { color: #4B5563; }
+
+    &Disabled {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.05);
+      color: #6B7280;
+      cursor: not-allowed;
+    }
   }
 
   &__textarea {
@@ -148,7 +174,7 @@
 
   &__save {
     width: 100%;
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    background: #00F5FF;
     color: #0A0A0F;
     border: none;
     border-radius: 6px;
@@ -169,6 +195,82 @@
 
     &:disabled { opacity: 0.6; cursor: not-allowed; }
   }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+
+    .edit__save {
+        max-width: 300px;
+        background: #0095FF; // Use the blue color from screenshot
+        color: #ffffff;
+        font-weight: 700;
+        
+        &:hover:not(:disabled) {
+            background: #0084E6;
+            box-shadow: 0 0 20px rgba(0, 149, 255, 0.4);
+        }
+    }
+  }
+}
+
+// ── Custom Style Overrides ──
+.phoneInputContainer {
+  :global {
+    .react-tel-input {
+      font-family: 'Rajdhani', sans-serif !important;
+      
+      .form-control {
+        width: 100% !important;
+        background: #0A0A0F !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 6px !important;
+        color: #ffffff !important;
+        height: 46px !important;
+        font-size: 0.95rem !important;
+
+        &:focus {
+          border-color: #00F5FF !important;
+          box-shadow: 0 0 0 2px rgba(0,245,255,0.1) !important;
+        }
+      }
+
+      .flag-dropdown {
+        background: #0A0A0F !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 6px 0 0 6px !important;
+        
+        &.open, &:hover, &:focus {
+          background: #12121A !important;
+        }
+      }
+
+      .country-list {
+        background: #12121A !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        
+        .country {
+          &:hover {
+            background: rgba(0,245,255,0.1) !important;
+          }
+          &.highlight {
+            background: rgba(0,245,255,0.2) !important;
+          }
+        }
+
+        .search {
+            background: #0A0A0F !important;
+            color: #ffffff !important;
+        }
+      }
+    }
+  }
+}
+
+.selectWrapper {
+  font-family: 'Rajdhani', sans-serif;
 }
 
 // ── Avatar ──

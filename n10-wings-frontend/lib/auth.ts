@@ -13,6 +13,7 @@ export const register = async (data: {
 export const verifyEmail = async (data: {
   email: string;
   otp: string;
+  pendingToken?: string;
 }) => {
   const res = await api.post('/auth/verify-email', data);
   return res.data;

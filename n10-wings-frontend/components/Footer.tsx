@@ -42,7 +42,7 @@ export default function Footer() {
                 ronisonroni0@gmail.com
               </li>
               <li className={styles['footer__contact-item']}>
-                <MapPin size={15} color="#8B00FF" strokeWidth={1.75} />
+                <MapPin size={15} color="#00F5FF" strokeWidth={1.75} />
                 Sri Lanka
               </li>
               <li className={styles['footer__contact-item']}>

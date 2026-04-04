@@ -10,6 +10,10 @@ import {
 } from 'lucide-react';
 import styles from './Navbar.module.scss';
 
+import NotificationBell from './NotificationBell';
+
+
+
 interface AuthUser {
   id: number;
   username: string;
@@ -17,6 +21,7 @@ interface AuthUser {
   role: string;
   is_organizer: boolean;
   avatar?: string;
+  
 }
 
 export default function Navbar() {
@@ -53,7 +58,9 @@ export default function Navbar() {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
       if (token && userStr) {
-        setUser(JSON.parse(userStr));
+        const u = JSON.parse(userStr);
+        setUser(u);
+        localStorage.setItem('userId', u.id.toString());
       } else if (token) {
         fetchUser(token);
       } else {
@@ -71,9 +78,11 @@ export default function Navbar() {
       if (data.success) {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('userId', data.user.id.toString());
       } else {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('userId');
         setUser(null);
       }
     } catch { setUser(null); }
@@ -90,6 +99,7 @@ export default function Navbar() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('role');
+    localStorage.removeItem('userId');
     setUser(null);
     setShowDropdown(false);
     router.push('/');
@@ -101,12 +111,13 @@ export default function Navbar() {
     { href: '/tournaments', label: 'TOURNAMENTS' },
     { href: '/teams', label: 'TEAMS' },
     { href: '/sponsors', label: 'SPONSORS' },
+    { href: '/friends', label: 'FRIENDS' },
   ];
 
   const getRoleColor = () => {
     if (user?.role === 'admin') return '#FFD700';
     if (user?.role === 'sponsor') return '#FF006E';
-    if (user?.is_organizer) return '#8B00FF';
+    if (user?.is_organizer) return '#00F5FF';
     return '#00F5FF';
   };
 
@@ -116,6 +127,8 @@ export default function Navbar() {
     if (user?.is_organizer) return <><Trophy size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> ORGANIZER</>;
     return <><Gamepad2 size={14} style={{ display: 'inline', marginBottom: '-2px', marginRight: 4 }} /> GAMER</>;
   };
+
+  const isLoggedIn = !!user;
 
   return (
     <motion.nav
@@ -132,15 +145,11 @@ export default function Navbar() {
         <Link href="/" className={styles.navbar__logo}>
           <motion.div
             className={styles.navbar__logo_icon}
-            whileHover={{ rotate: 15, scale: 1.1 }}
+            whileHover={{ rotate: 5, scale: 1.05 }}
             transition={{ type: 'spring', stiffness: 300 }}
           >
-            <Gamepad2 size={24} color="#00F5FF" strokeWidth={1.5} />
+            <img src="/images/myLogo_.png" alt="N10 Wings Logo" className={styles.navbar__logo_img} />
           </motion.div>
-          <div className={styles.navbar__logo_text}>
-            <span className={styles.navbar__logo_n10}>N-10</span>
-            <span className={styles.navbar__logo_wings}>WINGS</span>
-          </div>
         </Link>
 
         {/* Desktop Links */}
@@ -171,8 +180,10 @@ export default function Navbar() {
         {/* Auth */}
         <div className={styles.navbar__auth_section}>
           {user ? (
-            <div className={styles.navbar__auth} ref={dropdownRef}>
-              <motion.button
+            <>
+              <NotificationBell />
+              <div className={styles.navbar__auth} ref={dropdownRef}>
+                <motion.button
                 className={styles.navbar__user_btn}
                 onClick={() => setShowDropdown(!showDropdown)}
                 whileHover={{ scale: 1.02 }}
@@ -266,6 +277,7 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </div>
+            </>
           ) : (
             <div className={styles.navbar__guest}>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>

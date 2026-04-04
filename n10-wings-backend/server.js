@@ -12,6 +12,12 @@ import adminRoutes from './routes/admin.routes.js';
 import tournamentRoutes from './routes/tournament.routes.js';
 import teamRoutes from './routes/team.routes.js';
 import publicRoutes from './routes/public.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
+import { createServer } from 'http';
+import { initSocket } from './config/socket.js';
+import friendRoutes from './routes/friend.routes.js';
+import messageRoutes from './routes/message.routes.js';
 
 
 const app = express();
@@ -27,11 +33,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);   
+app.use('/api/friends', friendRoutes);
+app.use('/api/messages', messageRoutes); 
+
 
 
 // ── Static files ──
@@ -79,7 +91,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ N-10 Wings API running on port ${PORT}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
+const httpServer = createServer(app);
+initSocket(httpServer);
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

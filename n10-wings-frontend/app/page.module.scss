@@ -1,6 +1,5 @@
 $cyan: #00F5FF;
 $orange: #FF6B00;
-$purple: #8B00FF;
 $bg: #070709;
 $bg-card: #0D0D12;
 $text-gray: #8892A4;
@@ -21,6 +20,16 @@ $text-gray: #8892A4;
     inset: 0;
     pointer-events: none;
     z-index: 0;
+    background-image: url('/images/hero_bg.png');
+    background-size: cover;
+    background-position: center;
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(7, 7, 9, 0.4) 0%, #070709 95%);
+      z-index: 1;
+    }
   }
 
   &__grid {
@@ -157,7 +166,7 @@ $text-gray: #8892A4;
   }
 
   &__btn_primary {
-    background: linear-gradient(135deg, $cyan, $orange);
+    background: $cyan;
     color: #000;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.72rem;
@@ -403,7 +412,6 @@ $text-gray: #8892A4;
 }
 
 // ── How It Works ──
-.how_section { }
 
 .how_grid {
   display: grid;
@@ -486,10 +494,6 @@ $text-gray: #8892A4;
   @media (max-width: 900px) { display: none; }
 }
 
-// ── Features ──
-.features_section {
-  background: rgba(13,13,18,0.3);
-}
 
 .features_grid {
   display: grid;
@@ -626,7 +630,7 @@ $text-gray: #8892A4;
 }
 
 .cta_btn_primary {
-  background: linear-gradient(135deg, $cyan, $orange);
+  background: $cyan;
   color: #000;
   font-family: 'Orbitron', sans-serif;
   font-size: 0.72rem;

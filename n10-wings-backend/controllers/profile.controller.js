@@ -67,12 +67,16 @@ export const updateMyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      // Common
-      full_name, bio, avatar,
-      date_of_birth, country, phone,
-      social_facebook, social_instagram,
-      social_youtube, social_twitter,
-      // Gamer
+      // Account Info
+      first_name, last_name, gender, nic_passport,
+      // Personal Info
+      full_name, bio, avatar, date_of_birth, country, city, phone, address, nickname,
+      // Social/Game Links & IDs
+      social_facebook, social_instagram, social_youtube, social_twitter,
+      social_google, social_steam, social_discord,
+      arena_of_valor_id, cricket_sixes_id, minecraft_id, krunker_id,
+      fifa_mobile_id, honor_of_kings_id, identity_v_id,
+      // Gamer Specific
       game_preferences, player_rank, playstyle,
       // Organizer
       organization_name, experience_years, website,
@@ -80,31 +84,67 @@ export const updateMyProfile = async (req, res) => {
       company_name, industry, budget_range, interests
     } = req.body;
 
+    // --- PROPER VALIDATION ---
+    if (phone && !/^\+?[0-9]{10,15}$/.test(phone)) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number format!' });
+    }
+
+    if (nic_passport && nic_passport.length < 5) {
+        return res.status(400).json({ success: false, message: 'NIC/Passport should be at least 5 characters!' });
+    }
+
     // Update common profile
     const dateOfBirth = date_of_birth && date_of_birth !== '' ? date_of_birth : null;
-const socialFacebook = social_facebook && social_facebook !== '' ? social_facebook : null;
-const socialInstagram = social_instagram && social_instagram !== '' ? social_instagram : null;
-const socialYoutube = social_youtube && social_youtube !== '' ? social_youtube : null;
-const socialTwitter = social_twitter && social_twitter !== '' ? social_twitter : null;
+    const socialFacebook = social_facebook && social_facebook !== '' ? social_facebook : null;
+    const socialInstagram = social_instagram && social_instagram !== '' ? social_instagram : null;
+    const socialYoutube = social_youtube && social_youtube !== '' ? social_youtube : null;
+    const socialTwitter = social_twitter && social_twitter !== '' ? social_twitter : null;
+    const socialGoogle = social_google && social_google !== '' ? social_google : null;
+    const socialSteam = social_steam && social_steam !== '' ? social_steam : null;
+    const socialDiscord = social_discord && social_discord !== '' ? social_discord : null;
 
-await db.query(
-  `UPDATE profiles SET
-   full_name = COALESCE(?, full_name),
-   bio = COALESCE(?, bio),
-   avatar = COALESCE(?, avatar),
-   date_of_birth = COALESCE(?, date_of_birth),
-   country = COALESCE(?, country),
-   phone = COALESCE(?, phone),
-   social_facebook = COALESCE(?, social_facebook),
-   social_instagram = COALESCE(?, social_instagram),
-   social_youtube = COALESCE(?, social_youtube),
-   social_twitter = COALESCE(?, social_twitter)
-   WHERE user_id = ?`,
-  [full_name || null, bio || null, avatar || null,
-   dateOfBirth, country || null, phone || null,
-   socialFacebook, socialInstagram, socialYoutube, socialTwitter,
-   userId]
-);
+    await db.query(
+      `UPDATE profiles SET
+       full_name = COALESCE(?, full_name),
+       first_name = COALESCE(?, first_name),
+       last_name = COALESCE(?, last_name),
+       bio = COALESCE(?, bio),
+       avatar = COALESCE(?, avatar),
+       date_of_birth = COALESCE(?, date_of_birth),
+       gender = COALESCE(?, gender),
+       nic_passport = COALESCE(?, nic_passport),
+       country = COALESCE(?, country),
+       city = COALESCE(?, city),
+       phone = COALESCE(?, phone),
+       address = COALESCE(?, address),
+       nickname = COALESCE(?, nickname),
+       social_facebook = COALESCE(?, social_facebook),
+       social_instagram = COALESCE(?, social_instagram),
+       social_youtube = COALESCE(?, social_youtube),
+       social_twitter = COALESCE(?, social_twitter),
+       social_google = COALESCE(?, social_google),
+       social_steam = COALESCE(?, social_steam),
+       social_discord = COALESCE(?, social_discord),
+       arena_of_valor_id = COALESCE(?, arena_of_valor_id),
+       cricket_sixes_id = COALESCE(?, cricket_sixes_id),
+       minecraft_id = COALESCE(?, minecraft_id),
+       krunker_id = COALESCE(?, krunker_id),
+       fifa_mobile_id = COALESCE(?, fifa_mobile_id),
+       honor_of_kings_id = COALESCE(?, honor_of_kings_id),
+       identity_v_id = COALESCE(?, identity_v_id)
+       WHERE user_id = ?`,
+      [
+        full_name || null, first_name || null, last_name || null,
+        bio || null, avatar || null, dateOfBirth, gender || null, nic_passport || null,
+        country || null, city || null, phone || null, address || null, nickname || null,
+        socialFacebook, socialInstagram, socialYoutube, socialTwitter,
+        socialGoogle, socialSteam, socialDiscord,
+        arena_of_valor_id || null, cricket_sixes_id || null, minecraft_id || null,
+        krunker_id || null, fifa_mobile_id || null, honor_of_kings_id || null,
+        identity_v_id || null,
+        userId
+      ]
+    );
 
     // Update gamer profile
     await db.query(

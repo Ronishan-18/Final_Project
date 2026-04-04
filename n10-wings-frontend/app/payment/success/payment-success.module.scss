@@ -1,0 +1,94 @@
+.page {
+  min-height: 100vh;
+  background: #0A0A0F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  background: #12121A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.iconWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.3);
+
+  &.success {
+    background: rgba(0, 255, 136, 0.1);
+    color: #00FF88;
+  }
+
+  &.error {
+    background: rgba(255, 0, 110, 0.1);
+    color: #FF006E;
+  }
+
+  &.warn {
+    background: rgba(255, 107, 0, 0.1);
+    color: #FF6B00;
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 12px;
+}
+
+.msg {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.amount {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #00FF88;
+  margin: 0 0 28px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 14px 36px;
+  background: #00F5FF;
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 0.85; }
+}

@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { UserPlus, UserCheck, Clock, MessageCircle, UserX } from 'lucide-react';
 import api from '../../../lib/api';
+import { getFriendshipStatus, sendFriendRequest, respondToRequest, removeFriend } from '../../../lib/friends';
 import styles from './profile.module.scss';
 
 interface User {
@@ -16,15 +18,31 @@ interface User {
 
 interface Profile {
   full_name?: string;
+  first_name?: string;
+  last_name?: string;
   bio?: string;
   avatar?: string;
   country?: string;
+  city?: string;
   phone?: string;
+  gender?: string;
   date_of_birth?: string;
+  address?: string;
+  nickname?: string;
   social_facebook?: string;
   social_instagram?: string;
   social_youtube?: string;
   social_twitter?: string;
+  social_google?: string;
+  social_steam?: string;
+  social_discord?: string;
+  arena_of_valor_id?: string;
+  cricket_sixes_id?: string;
+  minecraft_id?: string;
+  krunker_id?: string;
+  fifa_mobile_id?: string;
+  honor_of_kings_id?: string;
+  identity_v_id?: string;
 }
 
 interface GamerProfile {
@@ -54,6 +72,12 @@ interface GameIdentity {
   api_stats: string | null;
 }
 
+interface FriendshipState {
+  status: 'none' | 'pending' | 'accepted' | 'declined' | 'blocked';
+  friendship_id: number | null;
+  is_requester: boolean;
+}
+
 const GAME_ICONS: Record<string, string> = {
   'PUBG PC': '🎯', 'PUBG Mobile': '📱',
   'Valorant': '⚡', 'League of Legends': '🗡️',
@@ -72,6 +96,7 @@ const GAME_COLORS: Record<string, string> = {
 
 export default function PublicProfilePage() {
   const { id } = useParams();
+
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [gamerProfile, setGamerProfile] = useState<GamerProfile | null>(null);
@@ -80,7 +105,38 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Friend system state
+  const [myId, setMyId] = useState<number | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [friendship, setFriendship] = useState<FriendshipState>({
+    status: 'none',
+    friendship_id: null,
+    is_requester: false,
+  });
+  const [friendBtnLoading, setFriendBtnLoading] = useState(false);
+  const [friendMsg, setFriendMsg] = useState('');
+  const [friendMsgType, setFriendMsgType] = useState<'success' | 'error'>('success');
+
+  const router = useRouter();
+
+  // Step 1: Get logged-in user's ID from /auth/me (most reliable method)
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/register');
+      return;
+    }
+    api.get('/auth/me')
+      .then(res => {
+        if (res.data.success) setMyId(res.data.user.id);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Step 2: Load profile data — runs when BOTH id and myId are ready
+  useEffect(() => {
+    if (!id) return;
+
     const fetchAll = async () => {
       try {
         const [profileRes, gameRes] = await Promise.all([
@@ -89,13 +145,30 @@ export default function PublicProfilePage() {
         ]);
 
         if (profileRes.data.success) {
-          setUser(profileRes.data.user);
+          const profileUser = profileRes.data.user;
+          setUser(profileUser);
           setProfile(profileRes.data.profile);
           setGamerProfile(profileRes.data.gamerProfile);
           setOrganizerProfile(profileRes.data.organizerProfile);
+
+          // Check if viewing own profile
+          if (myId && myId === profileUser.id) {
+            setIsOwnProfile(true);
+          } else if (myId) {
+            // Fetch friendship status with this user
+            try {
+              const fs = await getFriendshipStatus(profileUser.id);
+              setFriendship({
+                status: fs.status,
+                friendship_id: fs.friendship_id,
+                is_requester: fs.is_requester,
+              });
+            } catch {}
+          }
         } else {
           setNotFound(true);
         }
+
         setGameIdentities(gameRes.data.identities || []);
       } catch {
         setNotFound(true);
@@ -103,13 +176,136 @@ export default function PublicProfilePage() {
         setLoading(false);
       }
     };
-    if (id) fetchAll();
-  }, [id]);
+
+    fetchAll();
+  }, [id, myId]); // re-runs when myId loads
+
+  const refreshFriendship = async (userId: number) => {
+    try {
+      const fs = await getFriendshipStatus(userId);
+      setFriendship({
+        status: fs.status,
+        friendship_id: fs.friendship_id,
+        is_requester: fs.is_requester,
+      });
+    } catch {}
+  };
+
+  const handleSendRequest = async () => {
+    if (!user) return;
+    setFriendBtnLoading(true);
+    setFriendMsg('');
+    try {
+      await sendFriendRequest(user.username);
+      setFriendMsg('Friend request sent!');
+      setFriendMsgType('success');
+      await refreshFriendship(user.id);
+    } catch (err: any) {
+      setFriendMsg(err?.response?.data?.message || 'Failed to send request');
+      setFriendMsgType('error');
+    } finally {
+      setFriendBtnLoading(false);
+    }
+  };
+
+  const handleRespond = async (action: 'accept' | 'decline') => {
+    if (!friendship.friendship_id || !user) return;
+    setFriendBtnLoading(true);
+    try {
+      await respondToRequest(friendship.friendship_id, action);
+      setFriendMsg(action === 'accept' ? 'You are now friends!' : 'Request declined.');
+      setFriendMsgType(action === 'accept' ? 'success' : 'error');
+      await refreshFriendship(user.id);
+    } finally {
+      setFriendBtnLoading(false);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!friendship.friendship_id || !user || !confirm('Remove this friend?')) return;
+    setFriendBtnLoading(true);
+    try {
+      await removeFriend(friendship.friendship_id);
+      setFriendship({ status: 'none', friendship_id: null, is_requester: false });
+      setFriendMsg('Friend removed.');
+      setFriendMsgType('error');
+    } finally {
+      setFriendBtnLoading(false);
+    }
+  };
 
   const parseStats = (s: string | null) => {
     if (!s) return null;
     try { return typeof s === 'string' ? JSON.parse(s) : s; }
     catch { return null; }
+  };
+
+  // ── Friend button renderer ──
+  const renderFriendButton = () => {
+    // Not logged in OR viewing own profile → show nothing
+    if (!myId || isOwnProfile) return null;
+
+    if (friendship.status === 'accepted') {
+      return (
+        <div className={styles.friendActions}>
+          <Link href={`/chat/${user?.id}`} className={styles.chatBtn}>
+            <MessageCircle size={15} /> Message
+          </Link>
+          <button
+            className={styles.removeFriendBtn}
+            onClick={handleRemove}
+            disabled={friendBtnLoading}
+          >
+            <UserX size={15} /> Remove Friend
+          </button>
+        </div>
+      );
+    }
+
+    if (friendship.status === 'pending' && friendship.is_requester) {
+      return (
+        <div className={styles.friendActions}>
+          <button className={styles.pendingBtn} disabled>
+            <Clock size={15} /> Request Sent
+          </button>
+        </div>
+      );
+    }
+
+    if (friendship.status === 'pending' && !friendship.is_requester) {
+      return (
+        <div className={styles.friendActions}>
+          <button
+            className={styles.acceptBtn}
+            onClick={() => handleRespond('accept')}
+            disabled={friendBtnLoading}
+          >
+            <UserCheck size={15} /> Accept Request
+          </button>
+          <button
+            className={styles.declineBtn}
+            onClick={() => handleRespond('decline')}
+            disabled={friendBtnLoading}
+          >
+            <UserX size={15} /> Decline
+          </button>
+        </div>
+      );
+    }
+
+    // Default — not friends yet
+    return (
+      <div className={styles.friendActions}>
+        <button
+          className={styles.addFriendBtn}
+          onClick={handleSendRequest}
+          disabled={friendBtnLoading}
+        >
+          <UserPlus size={15} />
+          {friendBtnLoading ? 'Sending...' : 'Add Friend'}
+        </button>
+      </div>
+    );
   };
 
   if (loading) return (
@@ -135,14 +331,19 @@ export default function PublicProfilePage() {
     : 0;
 
   const roleColor = user.role === 'sponsor' ? '#FF006E' :
-    user.is_organizer ? '#8B00FF' : '#00F5FF';
+    user.is_organizer ? '#00F5FF' : '#00F5FF';
   const roleLabel = user.role === 'sponsor' ? '💼 SPONSOR' :
     user.is_organizer ? '🏆 ORGANIZER' : '🎮 GAMER';
 
   const apiGames = gameIdentities.filter(g => g.game_type === 'api');
   const manualGames = gameIdentities.filter(g => g.game_type === 'manual');
   const hasSocials = profile?.social_facebook || profile?.social_instagram ||
-    profile?.social_youtube || profile?.social_twitter;
+    profile?.social_youtube || profile?.social_twitter || profile?.social_google ||
+    profile?.social_steam || profile?.social_discord;
+  
+  const hasGameIds = profile?.arena_of_valor_id || profile?.cricket_sixes_id ||
+    profile?.minecraft_id || profile?.krunker_id || profile?.fifa_mobile_id ||
+    profile?.honor_of_kings_id || profile?.identity_v_id;
 
   return (
     <div className={styles.page}>
@@ -159,8 +360,7 @@ export default function PublicProfilePage() {
             }
           </div>
           <div className={styles.hero__info}>
-            <span className={styles.hero__role}
-              style={{ color: roleColor, borderColor: roleColor }}>
+            <span className={styles.hero__role} style={{ color: roleColor, borderColor: roleColor }}>
               {roleLabel}
             </span>
             <h1 className={styles.hero__name}>{profile?.full_name || user.username}</h1>
@@ -173,6 +373,14 @@ export default function PublicProfilePage() {
               <span>📅 Joined {user.created_at?.split('T')[0]}</span>
             </div>
             {profile?.bio && <p className={styles.hero__bio}>{profile.bio}</p>}
+
+            {/* ── FRIEND BUTTON ── */}
+            {renderFriendButton()}
+            {friendMsg && (
+              <p className={friendMsgType === 'success' ? styles.friendMsgSuccess : styles.friendMsgError}>
+                {friendMsg}
+              </p>
+            )}
           </div>
         </div>
 
@@ -183,7 +391,7 @@ export default function PublicProfilePage() {
               { icon: '🏆', label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
               { icon: '✅', label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
               { icon: '❌', label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
-              { icon: '⚡', label: 'Points', value: gamerProfile?.points ?? 0, color: '#8B00FF' },
+              { icon: '⚡', label: 'Points', value: gamerProfile?.points ?? 0, color: '#00F5FF' },
               { icon: '📈', label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
             ].map(s => (
               <div key={s.label} className={styles.stat}>
@@ -203,8 +411,11 @@ export default function PublicProfilePage() {
             <div className={styles.card__rows}>
               {[
                 { label: 'Username', value: user.username },
-                { label: 'Full Name', value: profile?.full_name || '—' },
+                { label: 'Full Name', value: profile?.full_name || (profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : '—') },
+                { label: 'Nickname', value: profile?.nickname || '—' },
+                { label: 'Gender', value: profile?.gender || '—' },
                 { label: 'Country', value: profile?.country || '—' },
+                { label: 'City', value: profile?.city || '—' },
                 { label: 'Phone', value: profile?.phone || '—' },
                 { label: 'Date of Birth', value: profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : '—' },
                 { label: 'Member Since', value: user.created_at?.split('T')[0] },
@@ -272,7 +483,7 @@ export default function PublicProfilePage() {
                             { label: 'Total Wins', value: stats.wins || 0, color: '#00FF88' },
                             { label: 'Matches', value: stats.matches || 0, color: '#00F5FF' },
                             { label: 'Win Rate', value: `${stats.win_rate || 0}%`, color: '#FFD700' },
-                            { label: 'Damage', value: stats.damage || 0, color: '#8B00FF' },
+                            { label: 'Damage', value: stats.damage || 0, color: '#00F5FF' },
                           ].map(s => (
                             <div key={s.label} className={styles.api_stat}>
                               <span style={{ color: s.color }}>{s.value}</span>
@@ -303,7 +514,7 @@ export default function PublicProfilePage() {
                             { label: 'Wins', value: stats.wins || 0, color: '#00FF88' },
                             { label: 'Losses', value: stats.losses || 0, color: '#FF006E' },
                             { label: 'Win Rate', value: `${stats.win_rate || 0}%`, color: '#00F5FF' },
-                            { label: 'Level', value: stats.summoner_level || 0, color: '#8B00FF' },
+                            { label: 'Level', value: stats.summoner_level || 0, color: '#00F5FF' },
                           ].map(s => (
                             <div key={s.label} className={styles.api_stat}>
                               <span style={{ color: s.color }}>{s.value}</span>
@@ -358,14 +569,43 @@ export default function PublicProfilePage() {
                   { label: 'Instagram', icon: '📸', value: profile?.social_instagram, color: '#E4405F' },
                   { label: 'YouTube', icon: '▶️', value: profile?.social_youtube, color: '#FF0000' },
                   { label: 'Twitter / X', icon: '🐦', value: profile?.social_twitter, color: '#1DA1F2' },
+                  { label: 'Google', icon: '🌐', value: profile?.social_google, color: '#4285F4' },
+                  { label: 'Steam', icon: '🎮', value: profile?.social_steam, color: '#00ADEE' },
+                  { label: 'Discord', icon: '💬', value: profile?.social_discord, color: '#5865F2' },
                 ].filter(s => s.value).map(s => (
-                  <a key={s.label} href={s.value!} target="_blank" rel="noreferrer"
+                  <a key={s.label} href={s.value?.startsWith('http') ? s.value : `https://${s.label.toLowerCase()}.com/${s.value}`} target="_blank" rel="noreferrer"
                     className={styles.social}
                     style={{ borderColor: `${s.color}30` }}>
                     <span>{s.icon}</span>
                     <span className={styles.social__label}>{s.label}</span>
                     <span className={styles.social__arrow}>→</span>
                   </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 7b. GAME IDS */}
+          {hasGameIds && (
+            <div className={`${styles.card} ${styles['card--full']}`}>
+              <h2 className={styles.card__title}>🎮 COMMUNITY GAME IDS</h2>
+              <div className={styles.manual_games}>
+                {[
+                  { label: 'Arena of Valor', value: profile?.arena_of_valor_id, icon: '⚔️' },
+                  { label: 'Cricket Sixes', value: profile?.cricket_sixes_id, icon: '🏏' },
+                  { label: 'Minecraft', value: profile?.minecraft_id, icon: '⛏️' },
+                  { label: 'Krunker', value: profile?.krunker_id, icon: '🎯' },
+                  { label: 'FIFA Mobile', value: profile?.fifa_mobile_id, icon: '⚽' },
+                  { label: 'Honor of Kings', value: profile?.honor_of_kings_id, icon: '👑' },
+                  { label: 'Identity V', value: profile?.identity_v_id, icon: '👻' },
+                ].filter(g => g.value).map(gi => (
+                  <div key={gi.label} className={styles.manual_card}>
+                    <span className={styles.manual_card__icon}>{gi.icon}</span>
+                    <div>
+                      <p className={styles.manual_card__name}>{gi.label}</p>
+                      <p className={styles.manual_card__username}>@{gi.value}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

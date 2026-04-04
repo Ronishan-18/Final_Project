@@ -50,7 +50,6 @@
   &__logo {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
     text-decoration: none;
     flex-shrink: 0;
   }
@@ -59,34 +58,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(0,245,255,0.08);
-    border: 1px solid rgba(0,245,255,0.2);
-    border-radius: 8px;
+    height: 42px;
   }
 
-  &__logo_text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1;
+  &__logo_img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
   }
 
-  &__logo_n10 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 900;
-    color: #00F5FF;
-    letter-spacing: 0.1em;
-  }
-
-  &__logo_wings {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: #FF6B00;
-    letter-spacing: 0.25em;
-  }
 
   // Desktop Nav Links
   &__links {
@@ -164,7 +144,7 @@
   }
 
   &__join {
-    background: linear-gradient(135deg, #00F5FF, #FF6B00);
+    background: #00F5FF;
     color: #000000 !important;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.65rem;
@@ -418,7 +398,7 @@
   }
 
   &__mobile_join {
-    background: linear-gradient(135deg, #00F5FF, #FF6B00);
+    background: #00F5FF;
     color: #000000;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.72rem;

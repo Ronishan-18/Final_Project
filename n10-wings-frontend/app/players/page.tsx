@@ -178,7 +178,7 @@ export default function PlayersPage() {
                       <span>Wins</span>
                     </div>
                     <div className={styles.card__stat}>
-                      <span style={{ color: '#8B00FF' }}>
+                      <span style={{ color: '#00F5FF' }}>
                         {gamer.points ?? 0}
                       </span>
                       <span>Points</span>

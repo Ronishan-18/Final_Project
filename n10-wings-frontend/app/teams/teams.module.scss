@@ -12,7 +12,7 @@
   align-items: flex-start;
   margin-bottom: 2.5rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 
   &__title {
     font-family: 'Orbitron', sans-serif;
@@ -27,13 +27,54 @@
     color: #8892A4;
     font-size: 1rem;
   }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.tabs {
+  display: flex;
+  background: #12121A;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: #8892A4;
+  padding: .6rem 1.25rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: .7rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+
+  &:hover {
+    color: #fff;
+  }
+
+  &_active {
+    background: #00F5FF;
+    color: #0A0A0F;
+
+    &:hover {
+      color: #0A0A0F;
+    }
+  }
 }
 
 .create_btn {
   display: flex;
   align-items: center;
   gap: .5rem;
-  background: linear-gradient(90deg, #00F5FF, #8B00FF);
+  background: #00F5FF;
   color: #0A0A0F;
   border: none;
   border-radius: 10px;
@@ -121,7 +162,7 @@
   display: flex;
   align-items: center;
   gap: .4rem;
-  background: linear-gradient(90deg, #00F5FF, #8B00FF);
+  background: #00F5FF;
   color: #0A0A0F;
   border: none;
   border-radius: 20px;

@@ -29,8 +29,8 @@ interface Identity {
 }
 
 const GAME_ICONS: Record<string, string> = {
-  'PUBG PC': '🎯', 'PUBG Mobile': '📱',
-  'Valorant': '⚡', 'League of Legends': '🗡️',
+  'PUBG PC': '/icons/games/pubg_pc.png', 'PUBG Mobile': '📱',
+  'Valorant': '/icons/games/valorant.png', 'League of Legends': '/icons/games/lol.png',
   'Free Fire': '🔥', 'Mobile Legends': '⚔️',
   'COD Mobile': '💥', 'Fortnite': '🌀',
   'Minecraft': '⛏️',
@@ -42,6 +42,11 @@ const GAME_COLORS: Record<string, string> = {
   'Free Fire': '#FF6B00', 'Mobile Legends': '#1890FF',
   'COD Mobile': '#4CAF50', 'Fortnite': '#9C27B0',
   'Minecraft': '#8B6914',
+};
+const GAME_ICONS_BY_ID: Record<string, string> = {
+  'pubg_pc': '/icons/games/pubg_pc.png',
+  'valorant': '/icons/games/valorant.png',
+  'league_of_legends': '/icons/games/lol.png',
 };
 
 export default function GameIdentitiesPage() {
@@ -237,7 +242,9 @@ export default function GameIdentitiesPage() {
                   style={{ '--game-color': color } as React.CSSProperties}>
                   <div className={styles.card__top}>
                     <div className={styles.card__game}>
-                      <span className={styles.card__icon}>{icon}</span>
+                      <span className={styles.card__icon}>
+                        {icon.startsWith('/') ? <img src={icon} alt={identity.game_name} /> : icon}
+                      </span>
                       <div>
                         <h3 className={styles.card__name} style={{ color }}>
                           {identity.game_name}
@@ -294,7 +301,7 @@ export default function GameIdentitiesPage() {
                             { l: 'Wins', v: stats.wins || 0, c: '#00FF88' },
                             { l: 'Losses', v: stats.losses || 0, c: '#FF006E' },
                             { l: 'Win Rate', v: `${stats.win_rate || 0}%`, c: '#00F5FF' },
-                            { l: 'Level', v: stats.summoner_level || 0, c: '#8B00FF' },
+                            { l: 'Level', v: stats.summoner_level || 0, c: '#00F5FF' },
                           ].map(s => (
                             <div key={s.l} className={styles.stat}>
                               <span style={{ color: s.c }}>{s.v}</span>
@@ -354,7 +361,9 @@ export default function GameIdentitiesPage() {
                 style={linked ? { borderColor: `${game.color}60`, background: `${game.color}10` } : {}}
                 onClick={() => openModal(game)}
               >
-                <span className={styles.game__tile_icon}>{game.icon}</span>
+                <span className={styles.game__tile_icon}>
+                  {game.icon.startsWith('/') ? <img src={game.icon} alt={game.name} /> : game.icon}
+                </span>
                 <span className={styles.game__tile_name} style={{ color: linked ? game.color : '#ffffff' }}>
                   {game.name}
                 </span>
@@ -388,7 +397,9 @@ export default function GameIdentitiesPage() {
                 style={linked ? { borderColor: `${game.color}60`, background: `${game.color}10` } : {}}
                 onClick={() => openModal(game)}
               >
-                <span className={styles.game__tile_icon}>{game.icon}</span>
+                <span className={styles.game__tile_icon}>
+                  {game.icon.startsWith('/') ? <img src={game.icon} alt={game.name} /> : game.icon}
+                </span>
                 <span className={styles.game__tile_name} style={{ color: linked ? game.color : '#ffffff' }}>
                   {game.name}
                 </span>
@@ -414,7 +425,12 @@ export default function GameIdentitiesPage() {
         <div className={styles.modal} onClick={closeModal}>
           <div className={styles.modal__box} onClick={e => e.stopPropagation()}>
             <div className={styles.modal__header}>
-              <span style={{ fontSize: '2rem' }}>{selectedGame?.icon || '🎮'}</span>
+              <span className={styles.modal__icon_wrap}>
+                {selectedGame?.id && selectedGame.id in GAME_ICONS_BY_ID 
+                  ? <img src={GAME_ICONS_BY_ID[selectedGame.id]} alt={selectedGame.name} className={styles.modal__icon} />
+                  : <span className={styles.modal__icon}>{selectedGame?.icon || '🎮'}</span>
+                }
+              </span>
               <div>
                 <h3 className={styles.modal__title}
                   style={{ color: selectedGame?.color || '#00F5FF' }}>
@@ -473,8 +489,8 @@ export default function GameIdentitiesPage() {
                 disabled={saving || !!syncing}
                 style={{
                   background: selectedGame?.color
-                    ? `linear-gradient(90deg, ${selectedGame.color}, #8B00FF)`
-                    : 'linear-gradient(90deg, #00F5FF, #8B00FF)'
+                    ? selectedGame.color
+                    : '#00F5FF'
                 }}
               >
                 {saving || syncing

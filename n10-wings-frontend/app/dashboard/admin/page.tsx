@@ -9,6 +9,7 @@ import {
   Crown, LogOut, RefreshCw, Eye, AlertTriangle
 } from 'lucide-react';
 import IconTile from '../../../components/IconTile';
+import LoadingScreen from '../../../components/LoadingScreen';
 import api from '../../../lib/api';
 import styles from './admin.module.scss';
 
@@ -55,7 +56,7 @@ interface Application {
   created_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'applications';
+type Tab = 'overview' | 'users' | 'applications' | 'appeals';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [appeals, setAppeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -127,7 +129,35 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (tab === 'users') fetchUsers();
     if (tab === 'applications') fetchApplications();
+    if (tab === 'appeals') fetchAppeals();
   }, [tab, fetchUsers]);
+
+  const fetchAppeals = async () => {
+    try {
+      const res = await api.get('/admin/appeals?status=pending');
+      if (res.data.success) setAppeals(res.data.appeals);
+    } catch {}
+  };
+
+  const handleAppealAction = async (appId: number, action: 'approve' | 'reject') => {
+    setActionLoading(appId);
+    try {
+      const res = await api.put(`/admin/appeals/${appId}`, { action });
+      showToast(res.data.message);
+      setAppeals(prev => prev.filter(a => a.id !== appId));
+    } catch { showToast('Action failed!'); }
+    finally { setActionLoading(null); fetchStats(); }
+  };
+
+  const handleOrganizerSuspend = async (userId: number) => {
+    setActionLoading(userId);
+    try {
+      const res = await api.put(`/admin/organizers/${userId}/suspend`);
+      showToast(res.data.message);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, organizer_status: res.data.organizer_status } : u));
+    } catch { showToast('Action failed!'); }
+    finally { setActionLoading(null); }
+  };
 
   const handleSuspend = async (userId: number) => {
     setActionLoading(userId);
@@ -168,21 +198,18 @@ export default function AdminDashboard() {
     router.push('/login');
   };
 
-  if (loading) return (
-    <div className={styles.loading}>
-      <div className={styles.loading__spinner} />
-      <p>Loading admin panel...</p>
-    </div>
-  );
+  if (loading) return <LoadingScreen message="ACCESSING ADMIN SECURE AREA..." />;
 
   const navItems: { key: Tab; icon: any; label: string; badge?: number }[] = [
     { key: 'overview', icon: LayoutDashboard, label: 'Overview' },
     { key: 'users', icon: Users, label: 'Users', badge: stats?.total_users },
     { key: 'applications', icon: ShieldCheck, label: 'Applications', badge: stats?.pending_applications },
+    { key: 'appeals', icon: AlertTriangle, label: 'Appeals' },
   ];
 
   return (
     <div className={styles.admin}>
+      <div className={styles.bg_grid} />
 
       {/* Toast */}
       {toast && <div className={styles.toast}>{toast}</div>}
@@ -231,11 +258,13 @@ export default function AdminDashboard() {
               {tab === 'overview' && 'Platform Overview'}
               {tab === 'users' && 'User Management'}
               {tab === 'applications' && 'Organizer Applications'}
+              {tab === 'appeals' && 'Suspension Appeals'}
             </h1>
             <p className={styles.header__sub}>
               {tab === 'overview' && 'Real-time platform statistics'}
               {tab === 'users' && `${totalUsers || stats?.total_users || 0} total users`}
               {tab === 'applications' && `${stats?.pending_applications || 0} pending review`}
+              {tab === 'appeals' && `${appeals.length} pending appeals`}
             </p>
           </div>
           <button className={styles.header__refresh} onClick={() => {
@@ -256,7 +285,7 @@ export default function AdminDashboard() {
             <div className={styles.cards}>
               {[
                 { icon: Users, label: 'Total Users', value: stats.total_users, color: '#00F5FF', sub: `+${stats.new_users_30d} this month` },
-                { icon: Gamepad2, label: 'Gamers', value: stats.total_gamers, color: '#8B00FF', sub: `${stats.verified_users} verified` },
+                { icon: Gamepad2, label: 'Gamers', value: stats.total_gamers, color: '#00F5FF', sub: `${stats.verified_users} verified` },
                 { icon: Trophy, label: 'Organizers', value: stats.total_organizers, color: '#FFD700', sub: `${stats.pending_applications} pending` },
                 { icon: Briefcase, label: 'Sponsors', value: stats.total_sponsors, color: '#FF006E', sub: 'registered sponsors' },
                 { icon: UserCheck, label: 'Active', value: stats.active_users, color: '#00FF88', sub: 'active accounts' },
@@ -424,20 +453,38 @@ export default function AdminDashboard() {
                           {new Date(u.created_at).toLocaleDateString()}
                         </td>
                         <td>
-                          <button
-                            className={`${styles.action_btn} ${u.is_active ? styles['action_btn--suspend'] : styles['action_btn--activate']}`}
-                            onClick={() => handleSuspend(u.id)}
-                            disabled={actionLoading === u.id}
-                          >
-                            {actionLoading === u.id ? (
-                              <RefreshCw size={13} strokeWidth={2} />
-                            ) : u.is_active ? (
-                              <><UserX size={13} strokeWidth={2} /> Suspend</>
-                            ) : (
-                              <><UserCheck size={13} strokeWidth={2} /> Activate</>
+                          <div className={styles.action_col}>
+                            <button
+                              className={`${styles.action_btn} ${u.is_active ? styles['action_btn--suspend'] : styles['action_btn--activate']}`}
+                              onClick={() => handleSuspend(u.id)}
+                              disabled={actionLoading === u.id}
+                            >
+                              {actionLoading === u.id ? (
+                                <RefreshCw size={13} strokeWidth={2} />
+                              ) : u.is_active ? (
+                                <><UserX size={13} strokeWidth={2} /> Suspend user</>
+                              ) : (
+                                <><UserCheck size={13} strokeWidth={2} /> Activate user</>
+                              )}
+                            </button>
+                            {(u.organizer_status === 'approved' || u.organizer_status === 'suspended') && (
+                              <button
+                                className={`${styles.action_btn} ${u.organizer_status === 'approved' ? styles['action_btn--suspend'] : styles['action_btn--activate']}`}
+                                onClick={() => handleOrganizerSuspend(u.id)}
+                                disabled={actionLoading === u.id}
+                              >
+                                {actionLoading === u.id ? (
+                                  <RefreshCw size={13} strokeWidth={2} />
+                                ) : u.organizer_status === 'approved' ? (
+                                  <><Shield size={13} strokeWidth={2} /> Suspend Org</>
+                                ) : (
+                                  <><ShieldCheck size={13} strokeWidth={2} /> Activate Org</>
+                                )}
+                              </button>
                             )}
-                          </button>
+                          </div>
                         </td>
+
                       </tr>
                     ))}
                   </tbody>
@@ -502,6 +549,64 @@ export default function AdminDashboard() {
                       >
                         <XCircle size={14} strokeWidth={2} />
                         Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── APPEALS TAB ── */}
+        {tab === 'appeals' && (
+          <div className={styles.applications}>
+            {appeals.length === 0 ? (
+              <div className={styles.empty}>
+                <CheckCircle size={40} color="#00FF88" strokeWidth={1.5} />
+                <p>No pending appeals!</p>
+              </div>
+            ) : (
+              <div className={styles.app_grid}>
+                {appeals.map((appeal) => (
+                  <div key={appeal.id} className={styles.app_card}>
+                    <div className={styles.app_card__header}>
+                      <div className={styles.app_card__avatar}>
+                        {appeal.avatar
+                          ? <img src={appeal.avatar} alt={appeal.username} />
+                          : <Gamepad2 size={22} color="#8892A4" strokeWidth={1.75} />
+                        }
+                      </div>
+                      <div>
+                        <div className={styles.app_card__name}>{appeal.full_name || appeal.username}</div>
+                        <div className={styles.app_card__email}>{appeal.email}</div>
+                        <div className={styles.app_card__country} style={{ color: '#FFD700' }}>
+                          Appeal Type: {appeal.type}
+                        </div>
+                      </div>
+                    </div>
+                    <p className={styles.app_card__bio} style={{ borderLeft: '3px solid #FF4500', paddingLeft: '1rem' }}>
+                      &quot;{appeal.note}&quot;
+                    </p>
+                    <div className={styles.app_card__meta}>
+                      Submitted {new Date(appeal.created_at).toLocaleDateString()}
+                    </div>
+                    <div className={styles.app_card__actions}>
+                      <button
+                        className={styles.approve_btn}
+                        onClick={() => handleAppealAction(appeal.id, 'approve')}
+                        disabled={actionLoading === appeal.id}
+                      >
+                        <CheckCircle size={14} strokeWidth={2} />
+                        Restore Access
+                      </button>
+                      <button
+                        className={styles.reject_btn}
+                        onClick={() => handleAppealAction(appeal.id, 'reject')}
+                        disabled={actionLoading === appeal.id}
+                      >
+                        <XCircle size={14} strokeWidth={2} />
+                        Reject Appeal
                       </button>
                     </div>
                   </div>

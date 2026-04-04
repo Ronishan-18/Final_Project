@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Gamepad2, AlertCircle, Building2 } from 'lucide-react';
+import { Gamepad2, AlertCircle, Building2, Eye, EyeOff } from 'lucide-react';
 import { register } from '../../lib/auth';
 import styles from './register.module.scss';
 
@@ -21,8 +21,26 @@ function RegisterForm() {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isSponsor = type === 'sponsor';
+
+  const evaluatePasswordStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return { label: '', color: 'transparent', score: 0 };
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(pass)) score += 1;
+    
+    if (score < 3 || pass.length < 8) return { label: 'Weak', color: '#FF006E', score }; // pink/red
+    if (score === 3) return { label: 'Good', color: '#FBBC05', score }; // yellow
+    return { label: 'Perfect', color: '#00F5FF', score }; // cyan
+  };
+
+  const strength = evaluatePasswordStrength(formData.password);
 
   const handleSubmit = async () => {
     setError('');
@@ -37,19 +55,25 @@ function RegisterForm() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters!');
+    if (strength.score < 4) {
+      setError('Password must be 8+ characters, include uppercase, number & symbol!');
       return;
     }
 
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         username: formData.username,
         email: formData.email,
         password: formData.password,
         role: isSponsor ? 'sponsor' : 'user',
       });
+      
+      // We expect a pendingToken from backend
+      if (result.pendingToken) {
+        sessionStorage.setItem('pendingToken', result.pendingToken);
+      }
+      
       router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -63,20 +87,14 @@ function RegisterForm() {
     <div className={styles.register}>
       <div className={styles.register__box}>
 
-        {/* Logo */}
         <Link href="/" className={styles.register__logo}>
           <div className={styles.register__logo_icon}>
-            <Gamepad2 size={20} color="#00F5FF" strokeWidth={1.5} />
-          </div>
-          <div className={styles.register__logo_text}>
-            <span>N-10</span>
-            <span>WINGS</span>
+            <img src="/images/myLogo_.png" alt="N10 Wings Logo" className={styles.register__logo_img} />
           </div>
         </Link>
 
         <h1 className={styles.register__title}>CREATE ACCOUNT</h1>
 
-        {/* Type Badge */}
         <div
           className={styles.register__badge}
           style={{
@@ -87,80 +105,83 @@ function RegisterForm() {
           {isSponsor ? <><Building2 size={16} style={{display:'inline', marginBottom:'-2px'}}/> Registering as SPONSOR</> : <><Gamepad2 size={16} style={{display:'inline', marginBottom:'-2px'}}/> Registering as GAMER</>}
         </div>
 
-        {/* Switch Type */}
         <p className={styles.register__switch}>
           {isSponsor ? (
-            <>
-              Want to play?{' '}
-              <Link href="/register">Register as Gamer</Link>
-            </>
+            <>Want to play? <Link href="/register">Register as Gamer</Link></>
           ) : (
-            <>
-              Are you a sponsor?{' '}
-              <Link href="/register?type=sponsor">Register as Sponsor</Link>
-            </>
+            <>Are you a sponsor? <Link href="/register?type=sponsor">Register as Sponsor</Link></>
           )}
         </p>
 
-        {/* Error */}
         {error && (
           <div className={styles.register__error}>
             <AlertCircle size={16} color="#FF006E" /> {error}
           </div>
         )}
 
-        {/* Form */}
         <div className={styles.register__form}>
           <div className={styles.register__group}>
             <label className={styles.register__label}>Username</label>
             <input
               type="text"
+              autoComplete="off"
               className={styles.register__input}
               placeholder="Choose a username"
               value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
             />
           </div>
 
           <div className={styles.register__group}>
             <label className={styles.register__label}>Email Address</label>
             <input
-              type="email"
+              type="text"
+              autoComplete="off"
               className={styles.register__input}
               placeholder="Enter your email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
           <div className={styles.register__group}>
             <label className={styles.register__label}>Password</label>
-            <input
-              type="password"
-              className={styles.register__input}
-              placeholder="Min 6 characters"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                className={styles.register__input}
+                placeholder="Min 8 characters, 1 cap, 1 num, 1 symbol"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center' }}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {formData.password && (
+              <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 'bold', color: strength.color, display: 'flex', justifyContent: 'space-between' }}>
+                <span>Strength: {strength.label}</span>
+                <span style={{opacity: 0.6}}>{strength.score}/4</span>
+              </div>
+            )}
           </div>
 
           <div className={styles.register__group}>
             <label className={styles.register__label}>Confirm Password</label>
-            <input
-              type="password"
-              className={styles.register__input}
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmPassword: e.target.value })
-              }
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                className={styles.register__input}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center' }}>
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -175,7 +196,7 @@ function RegisterForm() {
             <span>OR</span>
           </div>
 
-            <a href="http://localhost:5000/api/auth/google"
+           <a href="http://localhost:5000/api/auth/google"
             className={styles.register__google}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

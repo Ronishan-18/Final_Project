@@ -1,4 +1,5 @@
 import db from '../config/db.js';
+import { createNotification } from './notification.controller.js';
 
 // ============================================
 // GET PLATFORM STATS
@@ -231,16 +232,150 @@ export const handleOrganizerApplication = async (req, res) => {
         await db.query('INSERT INTO organizer_profiles (user_id) VALUES (?)', [id]);
       }
 
+      await createNotification(
+        id,
+        'organizer_approval',
+        '🛡️ Organizer Application Approved',
+        'Your request to become an organizer has been approved by the admin! You can now create and manage tournaments.',
+        { target_url: '/dashboard' }
+      );
+
       res.status(200).json({ success: true, message: 'Organizer approved!' });
     } else {
       await db.query(
         `UPDATE users SET organizer_status = 'rejected' WHERE id = ?`,
         [id]
       );
+
+      await createNotification(
+        id,
+        'organizer_rejection',
+        '❌ Organizer Application Rejected',
+        'Unfortunately, your request to become an organizer has been rejected by the admin.'
+      );
+
       res.status(200).json({ success: true, message: 'Application rejected!' });
     }
   } catch (error) {
     console.error('Handle Application Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// ============================================
+// SUSPEND / ACTIVATE ORGANIZER
+// PUT /api/admin/organizers/:id/suspend
+// ============================================
+export const toggleOrganizerSuspension = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [users] = await db.query('SELECT organizer_status FROM users WHERE id = ?', [id]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found!' });
+    }
+
+    const currentStatus = users[0].organizer_status;
+    let newStatus = 'approved';
+    let msg = 'Organizer activated!';
+
+    if (currentStatus === 'approved') {
+      newStatus = 'suspended';
+      msg = 'Organizer suspended!';
+    } else if (currentStatus === 'suspended') {
+      newStatus = 'approved';
+    } else {
+      return res.status(400).json({ success: false, message: 'User is not an approved organizer!' });
+    }
+
+    await db.query('UPDATE users SET organizer_status = ? WHERE id = ?', [newStatus, id]);
+
+    res.status(200).json({
+      success: true,
+      message: msg,
+      organizer_status: newStatus
+    });
+  } catch (error) {
+    console.error('Toggle Organizer Status Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// ============================================
+// GET APPEALS
+// GET /api/admin/appeals
+// ============================================
+export const getAppeals = async (req, res) => {
+  try {
+    const { status = 'pending' } = req.query;
+
+    const [appeals] = await db.query(`
+      SELECT 
+        a.id, a.user_id, a.type, a.note, a.status, a.created_at,
+        u.username, u.email, u.is_active, u.organizer_status,
+        p.avatar, p.full_name
+      FROM suspension_appeals a
+      LEFT JOIN users u ON a.user_id = u.id
+      LEFT JOIN profiles p ON a.user_id = p.user_id
+      WHERE a.status = ?
+      ORDER BY a.created_at DESC
+    `, [status]);
+
+    res.status(200).json({
+      success: true,
+      total: appeals.length,
+      appeals
+    });
+  } catch (error) {
+    console.error('Get Appeals Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// ============================================
+// RESOLVE APPEAL
+// PUT /api/admin/appeals/:id
+// ============================================
+export const resolveAppeal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body; // 'approve' | 'reject'
+
+    const [appeals] = await db.query('SELECT * FROM suspension_appeals WHERE id = ?', [id]);
+    if (appeals.length === 0) {
+      return res.status(404).json({ success: false, message: 'Appeal not found!' });
+    }
+
+    const appeal = appeals[0];
+
+    if (action === 'approve') {
+      if (appeal.type === 'account') {
+        await db.query('UPDATE users SET is_active = TRUE WHERE id = ?', [appeal.user_id]);
+      } else if (appeal.type === 'organizer') {
+        await db.query("UPDATE users SET organizer_status = 'approved' WHERE id = ?", [appeal.user_id]);
+      }
+      
+      await createNotification(
+        appeal.user_id,
+        appeal.type === 'account' ? 'account_restored' : 'organizer_approval',
+        '✅ Appeal Approved',
+        `Your ${appeal.type} suspension appeal has been approved and access is restored.`
+      );
+    } else {
+      await createNotification(
+        appeal.user_id,
+        appeal.type === 'account' ? 'account_rejected' : 'organizer_rejection',
+        '❌ Appeal Rejected',
+        `Your ${appeal.type} suspension appeal was rejected by the administration.`
+      );
+    }
+
+    // Mark as reviewed
+    await db.query("UPDATE suspension_appeals SET status = 'reviewed' WHERE id = ?", [id]);
+
+    res.status(200).json({ success: true, message: `Appeal ${action}d successfully!` });
+  } catch (error) {
+    console.error('Resolve Appeal Error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

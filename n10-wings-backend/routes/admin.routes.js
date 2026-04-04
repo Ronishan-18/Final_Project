@@ -6,6 +6,9 @@ import {
   changeUserRole,
   getOrganizerApplications,
   handleOrganizerApplication,
+  toggleOrganizerSuspension,
+  getAppeals,
+  resolveAppeal,
 } from '../controllers/admin.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -20,5 +23,8 @@ router.put('/users/:id/suspend', toggleUserStatus);
 router.put('/users/:id/role', changeUserRole);
 router.get('/organizer-applications', getOrganizerApplications);
 router.put('/organizer-applications/:id', handleOrganizerApplication);
+router.put('/organizers/:id/suspend', toggleOrganizerSuspension);
+router.get('/appeals', getAppeals);
+router.put('/appeals/:id', resolveAppeal);
 
 export default router;

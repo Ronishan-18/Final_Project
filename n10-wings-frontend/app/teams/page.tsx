@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Users, Gamepad2, Plus, Search, ChevronRight, Crown
@@ -23,36 +24,64 @@ interface Team {
 
 const GAMES = ['All', 'PUBG', 'Valorant', 'Free Fire', 'Mobile Legends', 'COD Mobile', 'CS2', 'Other'];
 
-export default function TeamsPage() {
+function TeamsContent() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [gameFilter, setGameFilter] = useState('All');
+  const [activeTab, setActiveTab] = useState<'all' | 'my'>('all');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter');
+
+  useEffect(() => {
+    if (filterParam === 'my') {
+      setActiveTab('my');
+    }
+  }, [filterParam]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
-    fetchTeams();
   }, []);
+
+  useEffect(() => {
+    fetchTeams();
+  }, [activeTab]);
 
   const fetchTeams = async (params: Record<string, string> = {}) => {
     setLoading(true);
     try {
+      const mergedParams = {
+        search,
+        game: gameFilter !== 'All' ? gameFilter : '',
+        filter: activeTab === 'my' ? 'my' : '',
+        ...params
+      };
       const query = new URLSearchParams(
-        Object.fromEntries(Object.entries(params).filter(([, v]) => v && v !== 'All'))
+        Object.fromEntries(Object.entries(mergedParams).filter(([, v]) => v && v !== 'All'))
       );
       const res = await api.get(`/teams?${query}`);
-      if (res.data.success) setTeams(res.data.teams);
+      if (res.data.success) {
+        setTeams(res.data.teams || []);
+      }
     } catch { setTeams([]); }
     finally { setLoading(false); }
   };
 
   const handleSearch = () => {
-    fetchTeams({
-      search,
-      game: gameFilter !== 'All' ? gameFilter : '',
-    });
+    fetchTeams();
+  };
+
+  const handleCreateTeamClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      router.push('/register');
+    } else {
+      router.push('/teams/create');
+    }
   };
 
   return (
@@ -72,11 +101,27 @@ export default function TeamsPage() {
               Browse top teams, explore rosters, and join the action
             </p>
           </div>
-          {isLoggedIn && (
-            <Link href="/teams/my" className={styles.create_btn}>
-              <Plus size={16} strokeWidth={2.5} /> My Team
-            </Link>
-          )}
+          <div className={styles.header__actions}>
+            {isLoggedIn && (
+              <div className={styles.tabs}>
+                <button 
+                  className={`${styles.tab} ${activeTab === 'all' ? styles.tab_active : ''}`}
+                  onClick={() => setActiveTab('all')}
+                >
+                  All Teams
+                </button>
+                <button 
+                  className={`${styles.tab} ${activeTab === 'my' ? styles.tab_active : ''}`}
+                  onClick={() => setActiveTab('my')}
+                >
+                  My Teams
+                </button>
+              </div>
+            )}
+            <button onClick={handleCreateTeamClick} className={styles.create_btn}>
+              <Plus size={16} strokeWidth={2.5} /> Create Team
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -97,7 +142,7 @@ export default function TeamsPage() {
                 <button
                   key={g}
                   className={`${styles.chip} ${gameFilter === g ? styles['chip--active'] : ''}`}
-                  onClick={() => { setGameFilter(g); fetchTeams({ search, game: g !== 'All' ? g : '' }); }}
+                  onClick={() => { setGameFilter(g); fetchTeams({ game: g }); }}
                 >
                   {g}
                 </button>
@@ -122,11 +167,11 @@ export default function TeamsPage() {
         ) : teams.length === 0 ? (
           <div className={styles.empty}>
             <Users size={48} color="#8892A4" strokeWidth={1.5} />
-            <p>No teams found</p>
-            {isLoggedIn && (
-              <Link href="/teams/create" className={styles.empty__btn}>
+            <p>{activeTab === 'my' ? "You haven't joined or created any teams yet." : "No teams found"}</p>
+            {activeTab !== 'my' && (
+              <button onClick={handleCreateTeamClick} className={styles.empty__btn}>
                 Create the first team →
-              </Link>
+              </button>
             )}
           </div>
         ) : (
@@ -186,5 +231,17 @@ export default function TeamsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TeamsPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' }}>
+        <div className={styles.spinner} />
+      </div>
+    }>
+      <TeamsContent />
+    </Suspense>
   );
 }

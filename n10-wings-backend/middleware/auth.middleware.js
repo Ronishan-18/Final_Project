@@ -64,3 +64,35 @@ export const isOrganizer = (req, res, next) => {
   }
   next();
 };
+export const optionalProtect = async (req, res, next) => {
+  try {
+    let token;
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    } else if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      console.log('--- OPTIONAL PROTECT: No token found ---');
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const [users] = await db.query(
+      "SELECT id, username, email, role, is_organizer, is_active FROM users WHERE id = ?",
+      [decoded.id]
+    );
+
+    if (users.length > 0 && users[0].is_active) {
+      req.user = users[0];
+      console.log('--- OPTIONAL PROTECT: User found ---', req.user.id, req.user.username);
+    } else {
+      console.log('--- OPTIONAL PROTECT: User NOT found or inactive ---', decoded.id);
+    }
+    next();
+  } catch (error) {
+    console.log('--- OPTIONAL PROTECT: Token error ---', error.message);
+    next();
+  }
+};

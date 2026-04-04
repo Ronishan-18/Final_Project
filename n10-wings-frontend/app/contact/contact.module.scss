@@ -3,7 +3,7 @@
 .hero {
   padding: 6rem 0 4rem;
   text-align: center;
-  background: radial-gradient(ellipse at center, rgba(139,0,255,0.06) 0%, transparent 60%);
+  background: radial-gradient(ellipse at center, rgba(0,245,255,0.06) 0%, transparent 60%);
 
   &__title {
     font-family: 'Orbitron', sans-serif;
@@ -132,7 +132,7 @@
 
   &__btn {
     width: 100%;
-    background: linear-gradient(90deg, #00F5FF, #8B00FF);
+    background: #00F5FF;
     color: #0A0A0F;
     border: none;
     border-radius: 6px;
