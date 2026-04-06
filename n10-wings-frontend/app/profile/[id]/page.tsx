@@ -3,7 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { UserPlus, UserCheck, Clock, MessageCircle, UserX } from 'lucide-react';
+import { 
+  UserPlus, UserCheck, Clock, MessageCircle, UserX, 
+  Globe, Calendar, Trophy, CheckCircle, XCircle, Zap, TrendingUp, 
+  User, Gamepad2, Link as LinkIcon, ShieldCheck, Mail, MapPin, 
+  Star, Info
+} from 'lucide-react';
+import { 
+  SiFacebook, SiInstagram, SiYoutube, SiX, SiGoogle, SiSteam, SiDiscord,
+  SiLeagueoflegends, SiValorant
+} from 'react-icons/si';
+import { 
+  GiCrossedSwords, GiCrosshair, GiFire, GiBullets, GiSoccerBall, GiGhost, GiCrown, GiBroadsword
+} from 'react-icons/gi';
+import { FaMobile } from 'react-icons/fa6';
 import api from '../../../lib/api';
 import { getFriendshipStatus, sendFriendRequest, respondToRequest, removeFriend } from '../../../lib/friends';
 import styles from './profile.module.scss';
@@ -78,12 +91,20 @@ interface FriendshipState {
   is_requester: boolean;
 }
 
-const GAME_ICONS: Record<string, string> = {
-  'PUBG PC': '🎯', 'PUBG Mobile': '📱',
-  'Valorant': '⚡', 'League of Legends': '🗡️',
-  'Free Fire': '🔥', 'Mobile Legends': '⚔️',
-  'COD Mobile': '💥', 'Fortnite': '🌀',
-  'Minecraft': '⛏️',
+const GameIcon = ({ name, size = 16, color }: { name: string; size?: number; color?: string }) => {
+  const props = { size, style: { color } };
+  switch (name) {
+    case 'PUBG PC': return <GiCrosshair {...props} />;
+    case 'PUBG Mobile': return <FaMobile {...props} />;
+    case 'Valorant': return <SiValorant {...props} />;
+    case 'League of Legends': return <SiLeagueoflegends {...props} />;
+    case 'Free Fire': return <GiFire {...props} />;
+    case 'Mobile Legends': return <GiCrossedSwords {...props} />;
+    case 'COD Mobile': return <GiBullets {...props} />;
+    case 'Fortnite': return <GiBullets {...props} />;
+    case 'Minecraft': return <Gamepad2 {...props} />;
+    default: return <Gamepad2 {...props} />;
+  }
 };
 
 const GAME_COLORS: Record<string, string> = {
@@ -366,11 +387,19 @@ export default function PublicProfilePage() {
             <h1 className={styles.hero__name}>{profile?.full_name || user.username}</h1>
             <p className={styles.hero__username}>@{user.username}</p>
             <div className={styles.hero__meta}>
-              {profile?.country && <span>🌍 {profile.country}</span>}
-              {profile?.date_of_birth && (
-                <span>🎂 {new Date(profile.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              {profile?.country && (
+                <span>
+                  <Globe size={14} className={styles.metaIcon} /> {profile.country}
+                </span>
               )}
-              <span>📅 Joined {user.created_at?.split('T')[0]}</span>
+              {profile?.date_of_birth && (
+                <span>
+                  <Calendar size={14} className={styles.metaIcon} /> {new Date(profile.date_of_birth).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+              )}
+              <span>
+                <UserPlus size={14} className={styles.metaIcon} /> Joined {user.created_at?.split('T')[0]}
+              </span>
             </div>
             {profile?.bio && <p className={styles.hero__bio}>{profile.bio}</p>}
 
@@ -388,14 +417,14 @@ export default function PublicProfilePage() {
         {user.role !== 'sponsor' && (
           <div className={styles.stats}>
             {[
-              { icon: '🏆', label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
-              { icon: '✅', label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
-              { icon: '❌', label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
-              { icon: '⚡', label: 'Points', value: gamerProfile?.points ?? 0, color: '#00F5FF' },
-              { icon: '📈', label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
+              { icon: <Trophy size={18} />, label: 'Tournaments', value: gamerProfile?.tournaments_played ?? 0, color: '#00F5FF' },
+              { icon: <CheckCircle size={18} />, label: 'Wins', value: gamerProfile?.wins ?? 0, color: '#00FF88' },
+              { icon: <XCircle size={18} />, label: 'Losses', value: gamerProfile?.losses ?? 0, color: '#FF006E' },
+              { icon: <Zap size={18} />, label: 'Points', value: gamerProfile?.points ?? 0, color: '#00F5FF' },
+              { icon: <TrendingUp size={18} />, label: 'Win Rate', value: `${winRate}%`, color: '#FFD700' },
             ].map(s => (
               <div key={s.label} className={styles.stat}>
-                <span>{s.icon}</span>
+                <span style={{ color: s.color }}>{s.icon}</span>
                 <span className={styles.stat__val} style={{ color: s.color }}>{s.value}</span>
                 <span className={styles.stat__label}>{s.label}</span>
               </div>
@@ -407,7 +436,9 @@ export default function PublicProfilePage() {
 
           {/* 3. BASIC INFO */}
           <div className={styles.card}>
-            <h2 className={styles.card__title}>👤 BASIC INFO</h2>
+            <h2 className={styles.card__title}>
+              <User size={18} className={styles.titleIcon} /> BASIC INFO
+            </h2>
             <div className={styles.card__rows}>
               {[
                 { label: 'Username', value: user.username },
@@ -431,7 +462,9 @@ export default function PublicProfilePage() {
           {/* 4. GAMING INFO */}
           {user.role !== 'sponsor' && (
             <div className={styles.card}>
-              <h2 className={styles.card__title}>🎮 GAMING INFO</h2>
+              <h2 className={styles.card__title}>
+                <Gamepad2 size={18} className={styles.titleIcon} /> GAMING INFO
+              </h2>
               <div className={styles.card__rows}>
                 {[
                   { label: 'Rank', value: gamerProfile?.player_rank || '—' },
@@ -450,22 +483,27 @@ export default function PublicProfilePage() {
           {/* 5. API GAME STATS */}
           {apiGames.length > 0 && (
             <div className={`${styles.card} ${styles['card--full']}`}>
-              <h2 className={styles.card__title}>⚡ API GAME STATS</h2>
+              <h2 className={styles.card__title}>
+                <Zap size={18} className={styles.titleIcon} /> API GAME STATS
+              </h2>
               <div className={styles.api_games}>
                 {apiGames.map(gi => {
                   const stats = parseStats(gi.api_stats);
                   const color = GAME_COLORS[gi.game_name] || '#8892A4';
-                  const icon = GAME_ICONS[gi.game_name] || '🎮';
                   return (
                     <div key={gi.id} className={styles.api_card}
                       style={{ borderColor: `${color}40`, background: `${color}06` }}>
                       <div className={styles.api_card__header}>
                         <div className={styles.api_card__game}>
-                          <span className={styles.api_card__icon}>{icon}</span>
+                          <span className={styles.api_card__icon}>
+                            <GameIcon name={gi.game_name} size={24} color={color} />
+                          </span>
                           <div>
                             <h3 className={styles.api_card__name} style={{ color }}>
                               {gi.game_name}
-                              {gi.is_verified && <span className={styles.verified}> ✅</span>}
+                              {gi.is_verified && (
+                                <ShieldCheck size={14} style={{ color: '#00FF88', marginLeft: 4, display: 'inline' }} color="#00FF88" />
+                              )}
                             </h3>
                             <p className={styles.api_card__username}>@{gi.game_username}</p>
                           </div>
@@ -539,19 +577,24 @@ export default function PublicProfilePage() {
           {/* 6. OTHER GAMES */}
           {manualGames.length > 0 && (
             <div className={`${styles.card} ${styles['card--full']}`}>
-              <h2 className={styles.card__title}>🎮 OTHER GAMES</h2>
+              <h2 className={styles.card__title}>
+                <Gamepad2 size={18} className={styles.titleIcon} /> OTHER GAMES
+              </h2>
               <div className={styles.manual_games}>
                 {manualGames.map(gi => {
                   const color = GAME_COLORS[gi.game_name] || '#8892A4';
-                  const icon = GAME_ICONS[gi.game_name] || '🎮';
                   return (
                     <div key={gi.id} className={styles.manual_card}>
-                      <span className={styles.manual_card__icon}>{icon}</span>
+                      <span className={styles.manual_card__icon}>
+                        <GameIcon name={gi.game_name} size={20} color={color} />
+                      </span>
                       <div>
                         <p className={styles.manual_card__name} style={{ color }}>{gi.game_name}</p>
                         <p className={styles.manual_card__username}>@{gi.game_username}</p>
                       </div>
-                      <span className={styles.manual_badge}>📝</span>
+                      <span className={styles.manual_badge} title="Manual Entry">
+                        <Info size={12} color="#8892A4" />
+                      </span>
                     </div>
                   );
                 })}
@@ -562,21 +605,23 @@ export default function PublicProfilePage() {
           {/* 7. SOCIAL LINKS */}
           {hasSocials && (
             <div className={`${styles.card} ${styles['card--full']}`}>
-              <h2 className={styles.card__title}>🔗 SOCIAL LINKS</h2>
+              <h2 className={styles.card__title}>
+                <LinkIcon size={18} className={styles.titleIcon} /> SOCIAL LINKS
+              </h2>
               <div className={styles.socials}>
                 {[
-                  { label: 'Facebook', icon: '📘', value: profile?.social_facebook, color: '#1877F2' },
-                  { label: 'Instagram', icon: '📸', value: profile?.social_instagram, color: '#E4405F' },
-                  { label: 'YouTube', icon: '▶️', value: profile?.social_youtube, color: '#FF0000' },
-                  { label: 'Twitter / X', icon: '🐦', value: profile?.social_twitter, color: '#1DA1F2' },
-                  { label: 'Google', icon: '🌐', value: profile?.social_google, color: '#4285F4' },
-                  { label: 'Steam', icon: '🎮', value: profile?.social_steam, color: '#00ADEE' },
-                  { label: 'Discord', icon: '💬', value: profile?.social_discord, color: '#5865F2' },
+                  { label: 'Facebook', icon: <SiFacebook />, value: profile?.social_facebook, color: '#1877F2' },
+                  { label: 'Instagram', icon: <SiInstagram />, value: profile?.social_instagram, color: '#E4405F' },
+                  { label: 'YouTube', icon: <SiYoutube />, value: profile?.social_youtube, color: '#FF0000' },
+                  { label: 'Twitter / X', icon: <SiX />, value: profile?.social_twitter, color: '#FFFFFF' },
+                  { label: 'Google', icon: <SiGoogle />, value: profile?.social_google, color: '#4285F4' },
+                  { label: 'Steam', icon: <SiSteam />, value: profile?.social_steam, color: '#00ADEE' },
+                  { label: 'Discord', icon: <SiDiscord />, value: profile?.social_discord, color: '#5865F2' },
                 ].filter(s => s.value).map(s => (
                   <a key={s.label} href={s.value?.startsWith('http') ? s.value : `https://${s.label.toLowerCase()}.com/${s.value}`} target="_blank" rel="noreferrer"
                     className={styles.social}
                     style={{ borderColor: `${s.color}30` }}>
-                    <span>{s.icon}</span>
+                    <span style={{ color: s.color }}>{s.icon}</span>
                     <span className={styles.social__label}>{s.label}</span>
                     <span className={styles.social__arrow}>→</span>
                   </a>
@@ -588,16 +633,18 @@ export default function PublicProfilePage() {
           {/* 7b. GAME IDS */}
           {hasGameIds && (
             <div className={`${styles.card} ${styles['card--full']}`}>
-              <h2 className={styles.card__title}>🎮 COMMUNITY GAME IDS</h2>
+              <h2 className={styles.card__title}>
+                <Gamepad2 size={18} className={styles.titleIcon} /> COMMUNITY GAME IDS
+              </h2>
               <div className={styles.manual_games}>
                 {[
-                  { label: 'Arena of Valor', value: profile?.arena_of_valor_id, icon: '⚔️' },
-                  { label: 'Cricket Sixes', value: profile?.cricket_sixes_id, icon: '🏏' },
-                  { label: 'Minecraft', value: profile?.minecraft_id, icon: '⛏️' },
-                  { label: 'Krunker', value: profile?.krunker_id, icon: '🎯' },
-                  { label: 'FIFA Mobile', value: profile?.fifa_mobile_id, icon: '⚽' },
-                  { label: 'Honor of Kings', value: profile?.honor_of_kings_id, icon: '👑' },
-                  { label: 'Identity V', value: profile?.identity_v_id, icon: '👻' },
+                  { label: 'Arena of Valor', value: profile?.arena_of_valor_id, icon: <GiBroadsword size={20} color="#FF6B00" /> },
+                  { label: 'Cricket Sixes', value: profile?.cricket_sixes_id, icon: <GiBullets size={20} color="#00FF88" /> }, // Generic sport placeholder
+                  { label: 'Minecraft', value: profile?.minecraft_id, icon: <SiMinecraft size={20} color="#8B6914" /> },
+                  { label: 'Krunker', value: profile?.krunker_id, icon: <GiCrosshair size={20} color="#FF006E" /> },
+                  { label: 'FIFA Mobile', value: profile?.fifa_mobile_id, icon: <GiSoccerBall size={20} color="#FFFFFF" /> },
+                  { label: 'Honor of Kings', value: profile?.honor_of_kings_id, icon: <GiCrown size={20} color="#FFD700" /> },
+                  { label: 'Identity V', value: profile?.identity_v_id, icon: <GiGhost size={20} color="#8892A4" /> },
                 ].filter(g => g.value).map(gi => (
                   <div key={gi.label} className={styles.manual_card}>
                     <span className={styles.manual_card__icon}>{gi.icon}</span>
@@ -614,7 +661,9 @@ export default function PublicProfilePage() {
           {/* 8. ORGANIZER INFO */}
           {user.is_organizer && organizerProfile && (
             <div className={`${styles.card} ${styles['card--full']}`}>
-              <h2 className={styles.card__title}>🏆 ORGANIZER INFO</h2>
+              <h2 className={styles.card__title}>
+                <Trophy size={18} className={styles.titleIcon} /> ORGANIZER INFO
+              </h2>
               <div className={styles.card__rows}>
                 {[
                   { label: 'Organization', value: organizerProfile.organization_name || '—' },

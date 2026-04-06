@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
 import {
   Gamepad2, Trophy, Coins, Handshake, UserPlus, Link as LinkIcon,
-  Swords, Crosshair, Zap, Sword, Users, Briefcase
+  Swords, Crosshair, Zap, Sword, Users, Briefcase, CheckCircle
 } from 'lucide-react';
 import api from '../lib/api';
 import styles from './page.module.scss';
@@ -425,7 +425,7 @@ export default function HomePage() {
               animate={{ y: [-8, 8, -8] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
-              🏆 Tournament Live
+              <Trophy size={14} style={{ marginRight: 6, display: 'inline' }} /> Tournament Live
             </motion.div>
             <motion.div
               className={styles.hero__mini}
@@ -433,7 +433,7 @@ export default function HomePage() {
               animate={{ y: [8, -8, 8] }}
               transition={{ duration: 5, repeat: Infinity }}
             >
-              ⚡ Stats Synced
+              <Zap size={14} style={{ marginRight: 6, display: 'inline' }} /> Stats Synced
             </motion.div>
             <motion.div
               className={styles.hero__mini}
@@ -441,7 +441,7 @@ export default function HomePage() {
               animate={{ y: [-5, 5, -5] }}
               transition={{ duration: 6, repeat: Infinity, delay: 1 }}
             >
-              🎯 PUBG ✅
+              <Crosshair size={14} style={{ marginRight: 6, display: 'inline' }} /> PUBG <CheckCircle size={12} color="#00FF88" style={{ marginLeft: 6, display: 'inline' }} />
             </motion.div>
           </motion.div>
         </div>
@@ -480,9 +480,9 @@ export default function HomePage() {
       <section className={`${styles.how_section} section`}>
         <div className="container">
           <FadeIn>
-            <p className={`badge-orange badge ${styles.center_badge}`}>
+            {/* <p className={`badge-orange badge ${styles.center_badge}`}>
               HOW IT WORKS
-            </p>
+            </p> */}
             <h2 className="section-title gradient-text">YOUR PATH TO GLORY</h2>
             <p className="section-sub">
               Four steps from casual gamer to tournament champion
@@ -577,7 +577,7 @@ export default function HomePage() {
                 <ControllerIcon size={130} color="#00F5FF" opacity={0.07} />
               </div>
               <div className={styles.cta_content}>
-                <span className={`badge-orange badge`}>🚀 JOIN NOW!</span>
+                {/* <span className={`badge-orange badge`}>🚀 JOIN NOW!</span> */}
                 <h2 className={styles.cta_title}>
                   READY TO DOMINATE<br />
                   <span className="gradient-text">THE ARENA?</span>
@@ -588,10 +588,10 @@ export default function HomePage() {
                 </p>
                 <div className={styles.cta_btns}>
                   <Link href="/register" className={styles.cta_btn_primary}>
-                    🎮 CREATE FREE ACCOUNT →
+                    CREATE FREE ACCOUNT →
                   </Link>
                   <Link href="/tournaments" className={styles.cta_btn_secondary}>
-                    🏆 VIEW TOURNAMENTS ↗
+                    VIEW TOURNAMENTS ↗
                   </Link>
                 </div>
               </div>

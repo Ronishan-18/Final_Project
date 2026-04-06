@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { Search, Star, Globe, Gamepad2, X } from 'lucide-react';
 import api from '../../lib/api';
 import styles from './players.module.scss';
 
@@ -23,22 +24,24 @@ interface Gamer {
 export default function PlayersPage() {
   const [gamers, setGamers] = useState<Gamer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState({
-    username: '',
-    game: '',
-    rank: '',
-    country: '',
-  });
+  const [query, setQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const fetchGamers = async (filters: Record<string, string> = {}) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchGamers = async (q: string = '') => {
     setLoading(true);
     try {
-      const params = new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(filters).filter(([, v]) => v !== '')
-        )
-      );
-      const res = await api.get(`/profile/search?${params}`);
+      const res = await api.get(`/profile/search?q=${q}`);
       if (res.data.success) {
         setGamers(res.data.gamers);
       }
@@ -50,16 +53,16 @@ export default function PlayersPage() {
   };
 
   useEffect(() => {
-    fetchGamers();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchGamers(query);
+    }, 500);
 
-  const handleSearch = () => {
-    fetchGamers(search);
-  };
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
 
-  const handleReset = () => {
-    setSearch({ username: '', game: '', rank: '', country: '' });
-    fetchGamers();
+  const handleClear = () => {
+    setQuery('');
+    fetchGamers('');
   };
 
   return (
@@ -68,46 +71,84 @@ export default function PlayersPage() {
 
         {/* Header */}
         <div className={styles.players__header}>
-          <div className="badge">🎮 Player Directory</div>
+          <div className="badge">
+            <Gamepad2 size={12} style={{ marginRight: 4 }} /> Player Directory
+          </div>
           <h1 className={styles.players__title}>
             FIND <span className="gradient-text">PLAYERS</span>
           </h1>
           <p className={styles.players__sub}>
-            Discover talented gamers, check their stats and connect!
+            Search by username or game to discover talented gamers!
           </p>
         </div>
 
         {/* Search Filters */}
-        <div className={styles.filters}>
-          <div className={styles.filters__grid}>
-            {[
-              { label: 'Username', field: 'username', placeholder: 'Search by username...' },
-              { label: 'Game', field: 'game', placeholder: 'e.g. PUBG, Valorant...' },
-              { label: 'Rank', field: 'rank', placeholder: 'e.g. Diamond, Pro...' },
-              { label: 'Country', field: 'country', placeholder: 'e.g. Sri Lanka...' },
-            ].map((item) => (
-              <div key={item.field} className={styles.filters__group}>
-                <label className={styles.filters__label}>{item.label}</label>
-                <input
-                  type="text"
-                  className={styles.filters__input}
-                  placeholder={item.placeholder}
-                  value={search[item.field as keyof typeof search]}
-                  onChange={(e) =>
-                    setSearch({ ...search, [item.field]: e.target.value })
-                  }
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
+        <div className={styles.filters} ref={searchRef}>
+          <div className={styles.filters__wrapper}>
+            <span className={styles.filters__icon}>
+              <Search size={18} color="#8892A4" />
+            </span>
+            <input
+              type="text"
+              className={styles.filters__input}
+              placeholder="Search by username or game"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+            />
+            {query && (
+              <button className={styles.filters__clear} onClick={handleClear}>
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Dropdown Results */}
+            {showDropdown && query.length > 0 && (
+              <div className={styles.filters__dropdown}>
+                {loading ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    Searching...
+                  </div>
+                ) : gamers.length === 0 ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    No players found
+                  </div>
+                ) : (
+                  gamers.map((gamer) => (
+                    <Link
+                      key={gamer.id}
+                      href={`/profile/${gamer.id}`}
+                      className={styles.filters__item}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <div className={styles.filters__avatar_small}>
+                        {gamer.avatar ? (
+                          <img src={gamer.avatar} alt={gamer.username} />
+                        ) : (
+                          <Gamepad2 size={20} color="#8892A4" />
+                        )}
+                      </div>
+                      <div className={styles.filters__item_info}>
+                        <div className={styles.filters__item_name}>
+                          {gamer.full_name || gamer.username}
+                        </div>
+                        <div className={styles.filters__item_user}>
+                          @{gamer.username}
+                        </div>
+                      </div>
+                      {gamer.game_preferences && (
+                        <div className={styles.filters__item_game}>
+                          {gamer.game_preferences.split(',')[0]}
+                        </div>
+                      )}
+                    </Link>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
-          <div className={styles.filters__btns}>
-            <button className={styles.filters__search} onClick={handleSearch}>
-              🔍 Search Players
-            </button>
-            <button className={styles.filters__reset} onClick={handleReset}>
-              ✕ Reset
-            </button>
+            )}
           </div>
         </div>
 
@@ -123,8 +164,8 @@ export default function PlayersPage() {
             </div>
           ) : gamers.length === 0 ? (
             <div className={styles.results__empty}>
-              <span>😕</span>
-              <p>No players found! Try different filters.</p>
+              <span style={{ fontSize: '2rem', opacity: 0.5 }}>🤷</span>
+              <p>No players found! Try a different search term.</p>
             </div>
           ) : (
             <div className={styles.grid}>
@@ -139,7 +180,7 @@ export default function PlayersPage() {
                     {gamer.avatar ? (
                       <img src={gamer.avatar} alt={gamer.username} />
                     ) : (
-                      <span>🎮</span>
+                      <Gamepad2 size={32} color="#8892A4" opacity={0.5} />
                     )}
                   </div>
 
@@ -152,19 +193,19 @@ export default function PlayersPage() {
 
                     {gamer.player_rank && (
                       <span className={styles.card__rank}>
-                        ⭐ {gamer.player_rank}
+                        <Star size={14} color="#FFD700" fill="#FFD700" style={{ marginRight: 4 }} /> {gamer.player_rank}
                       </span>
                     )}
 
                     {gamer.country && (
                       <p className={styles.card__country}>
-                        🌍 {gamer.country}
+                        <Globe size={14} color="#8892A4" style={{ marginRight: 4 }} /> {gamer.country}
                       </p>
                     )}
 
                     {gamer.game_preferences && (
                       <p className={styles.card__games}>
-                        🎮 {gamer.game_preferences}
+                        <Gamepad2 size={14} color="#00F5FF" style={{ marginRight: 4 }} /> {gamer.game_preferences}
                       </p>
                     )}
                   </div>

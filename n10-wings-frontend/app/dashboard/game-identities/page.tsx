@@ -3,6 +3,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { 
+  Gamepad2, Plus, ArrowLeft, RefreshCw, Edit, Trash2, 
+  CheckCircle, Zap, Info, ShieldCheck, Star, Search, X, Clock
+} from 'lucide-react';
+import { 
+  SiFacebook, SiInstagram, SiYoutube, SiX, SiGoogle, SiSteam, SiDiscord,
+  SiLeagueoflegends, SiValorant
+} from 'react-icons/si';
+import { 
+  GiCrossedSwords, GiCrosshair, GiFire, GiBullets, GiSoccerBall, GiGhost, GiCrown, GiBroadsword
+} from 'react-icons/gi';
+import { FaMobile } from 'react-icons/fa6';
 import api from '../../../lib/api';
 import styles from './game-identities.module.scss';
 
@@ -28,12 +40,20 @@ interface Identity {
   api_stats: string | null;
 }
 
-const GAME_ICONS: Record<string, string> = {
-  'PUBG PC': '/icons/games/pubg_pc.png', 'PUBG Mobile': '📱',
-  'Valorant': '/icons/games/valorant.png', 'League of Legends': '/icons/games/lol.png',
-  'Free Fire': '🔥', 'Mobile Legends': '⚔️',
-  'COD Mobile': '💥', 'Fortnite': '🌀',
-  'Minecraft': '⛏️',
+const GameIcon = ({ name, size = 16, color }: { name: string; size?: number; color?: string }) => {
+  const props = { size, style: { color } };
+  switch (name) {
+    case 'PUBG PC': return <GiCrosshair {...props} />;
+    case 'PUBG Mobile': return <FaMobile {...props} />;
+    case 'Valorant': return <SiValorant {...props} />;
+    case 'League of Legends': return <SiLeagueoflegends {...props} />;
+    case 'Free Fire': return <GiFire {...props} />;
+    case 'Mobile Legends': return <GiCrossedSwords {...props} />;
+    case 'COD Mobile': return <GiBullets {...props} />;
+    case 'Fortnite': return <GiBullets {...props} />;
+    case 'Minecraft': return <Gamepad2 {...props} />;
+    default: return <Gamepad2 {...props} />;
+  }
 };
 
 const GAME_COLORS: Record<string, string> = {
@@ -206,36 +226,41 @@ export default function GameIdentitiesPage() {
 
       {/* Header */}
       <div className={styles.header}>
-        <Link href="/dashboard" className={styles.header__back}>← Dashboard</Link>
+        <Link href="/dashboard" className={styles.header__back}>
+          <ArrowLeft size={14} style={{ marginRight: 6 }} /> Dashboard
+        </Link>
         <div className={styles.header__content}>
           <div>
             <h1 className={styles.header__title}>
-              🎮 GAME <span className={styles.header__cyan}>IDENTITIES</span>
+              <Gamepad2 size={28} className={styles.header__icon_main} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12, color: '#00F5FF' }} />
+              GAME <span className={styles.header__cyan}>IDENTITIES</span>
             </h1>
             <p className={styles.header__sub}>
               Link your gaming accounts — API games auto-sync stats!
             </p>
           </div>
           <button className={styles.header__add_btn} onClick={openCustomModal}>
-            ➕ Add Custom Game
+            <Plus size={16} /> Add Custom Game
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      {message && <div className={styles.success}>✅ {message}</div>}
-      {error && !showModal && <div className={styles.error}>❌ {error}</div>}
+      {message && <div className={styles.success}><CheckCircle size={14} /> {message}</div>}
+      {error && !showModal && <div className={styles.error}><X size={14} /> {error}</div>}
 
       {/* Linked Games */}
       {identities.length > 0 && (
         <div className={styles.section}>
-          <h2 className={styles.section__title}>MY LINKED GAMES</h2>
+          <h2 className={styles.section__title}>
+            <Gamepad2 size={18} style={{ color: '#00F5FF', marginRight: 8, display: 'inline', verticalAlign: 'middle' }} />
+            MY LINKED GAMES
+          </h2>
           <div className={styles.linked}>
-            {identities.map(identity => {
-              const game = games.find(g => g.name === identity.game_name);
+            {identities.map((identity: Identity) => {
+              const game = games.find((g: Game) => g.name === identity.game_name);
               const stats = parseStats(identity.api_stats);
               const color = GAME_COLORS[identity.game_name] || game?.color || '#8892A4';
-              const icon = GAME_ICONS[identity.game_name] || game?.icon || '🎮';
 
               return (
                 <div key={identity.id} className={styles.card}
@@ -243,7 +268,7 @@ export default function GameIdentitiesPage() {
                   <div className={styles.card__top}>
                     <div className={styles.card__game}>
                       <span className={styles.card__icon}>
-                        {icon.startsWith('/') ? <img src={icon} alt={identity.game_name} /> : icon}
+                        <GameIcon name={identity.game_name} size={24} color={color} />
                       </span>
                       <div>
                         <h3 className={styles.card__name} style={{ color }}>
@@ -254,10 +279,12 @@ export default function GameIdentitiesPage() {
                     </div>
                     <div className={styles.card__badges}>
                       {identity.is_verified && (
-                        <span className={styles.badge__verified}>✅ Verified</span>
+                        <span className={styles.badge__verified}>
+                          <ShieldCheck size={12} style={{ marginRight: 4 }} /> Verified
+                        </span>
                       )}
                       <span className={`${styles.badge__type} ${identity.game_type === 'api' ? styles['badge__type--api'] : styles['badge__type--manual']}`}>
-                        {identity.game_type === 'api' ? '⚡ API' : '📝 Manual'}
+                        {identity.game_type === 'api' ? <><Zap size={10} style={{ marginRight: 4 }} /> API</> : <><Edit size={10} style={{ marginRight: 4 }} /> Manual</>}
                       </span>
                     </div>
                   </div>
@@ -288,7 +315,7 @@ export default function GameIdentitiesPage() {
                             <span>Riot ID</span>
                           </div>
                           <div className={styles.stat}>
-                            <span style={{ color: '#00F5FF' }}>Verified ✅</span>
+                            <span style={{ color: '#00F5FF' }}>Verified <ShieldCheck size={12} style={{ display: 'inline', marginLeft: 4 }} /></span>
                             <span>Status</span>
                           </div>
                         </>
@@ -315,7 +342,7 @@ export default function GameIdentitiesPage() {
 
                   {identity.last_synced && (
                     <p className={styles.card__synced}>
-                      🕐 Synced: {new Date(identity.last_synced).toLocaleDateString()}
+                      <Clock size={11} style={{ marginRight: 4 }} /> Synced: {new Date(identity.last_synced).toLocaleDateString()}
                     </p>
                   )}
 
@@ -327,7 +354,7 @@ export default function GameIdentitiesPage() {
                         onClick={() => game && handleSync(game)}
                         disabled={!!syncing}
                       >
-                        {syncing === identity.game_name ? '⏳ Syncing...' : '🔄 Sync'}
+                        {syncing === identity.game_name ? '⏳ Syncing...' : <><RefreshCw size={12} /> Sync</>}
                       </button>
                     )}
                     <button className={styles.btn__edit}

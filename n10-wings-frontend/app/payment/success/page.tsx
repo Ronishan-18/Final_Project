@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { CheckCircle, XCircle, Loader, Trophy, Gamepad2 } from 'lucide-react';
 import { verifyPayment } from '@/lib/payments';
 import styles from './payment-success.module.scss';
 
@@ -18,10 +18,7 @@ export default function PaymentSuccessPage() {
   const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
-    if (!sessionId) {
-      setStatus('failed');
-      return;
-    }
+    if (!sessionId) { setStatus('failed'); return; }
 
     let mounted = true;
     let timeout: ReturnType<typeof setTimeout>;
@@ -37,7 +34,6 @@ export default function PaymentSuccessPage() {
         } else if (data.payment.status === 'failed') {
           setStatus('failed');
         } else {
-          // Still pending — webhook may be delayed, poll a few times
           if (attempts < 5) {
             setAttempts(a => a + 1);
             timeout = setTimeout(check, 2000);
@@ -60,71 +56,127 @@ export default function PaymentSuccessPage() {
     return '/tournaments';
   };
 
-  const getTitle = () => {
-    if (type === 'creation') return 'Tournament created!';
-    return 'Registration successful!';
-  };
-
-  const getMessage = () => {
-    if (type === 'creation') return 'Your tournament has been created and is now open for registrations.';
-    return 'Your team has been registered. Waiting for organizer approval.';
-  };
+  const isEntry = type === 'entry';
+  const isCreation = type === 'creation';
 
   return (
     <main className={styles.page}>
+      {/* Cyber grid background */}
+      <div className={styles.grid_bg} />
+
       <div className={styles.card}>
+        {/* ── Loading ── */}
         {status === 'loading' && (
-          <>
-            <div className={styles.iconWrap}>
-              <Loader size={48} className={styles.spinner} />
+          <div className={styles.state}>
+            <div className={styles.icon_wrap}>
+              <div className={styles.pulse_ring} />
+              <Loader size={36} className={styles.spin_icon} color="#00F5FF" />
             </div>
             <h1 className={styles.title}>Verifying payment...</h1>
             <p className={styles.msg}>Please wait, do not close this page.</p>
-          </>
+            <div className={styles.progress_bar}>
+              <div className={styles.progress_fill} />
+            </div>
+          </div>
         )}
 
+        {/* ── Success ── */}
         {status === 'success' && (
-          <>
-            <div className={`${styles.iconWrap} ${styles.success}`}>
-              <CheckCircle size={48} />
+          <div className={styles.state}>
+            <div className={`${styles.icon_wrap} ${styles.icon_success}`}>
+              <div className={styles.success_ring} />
+              {isCreation
+                ? <Trophy size={40} color="#FFD700" strokeWidth={1.5} />
+                : <Gamepad2 size={40} color="#00FF88" strokeWidth={1.5} />
+              }
             </div>
-            <h1 className={styles.title}>{getTitle()}</h1>
-            <p className={styles.msg}>{getMessage()}</p>
+
+            <div className={styles.badge}>
+              <CheckCircle size={12} />
+              Payment confirmed
+            </div>
+
+            <h1 className={styles.title}>
+              {isCreation ? 'Tournament Created!' : "You're In! 🎮"}
+            </h1>
+
+            <p className={styles.msg}>
+              {isCreation
+                ? 'Your tournament is now live and open for team registrations.'
+                : 'Your team is registered and approved. Time to compete!'}
+            </p>
+
             {paymentData?.amount && (
-              <p className={styles.amount}>
-                Paid: ${(paymentData.amount / 100).toFixed(2)}
+              <div className={styles.amount_box}>
+                <span className={styles.amount_label}>Amount paid</span>
+                <span className={styles.amount_val}>
+                  ${(paymentData.amount / 100).toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            <button
+              className={styles.cta_btn}
+              onClick={() => router.push(getRedirectPath())}
+            >
+              {isCreation ? 'Manage Tournament →' : 'View Tournament →'}
+            </button>
+
+            {isEntry && (
+              <p className={styles.note}>
+                Your slot is secured. Check the tournament page for match schedule updates.
               </p>
             )}
-            <button className={styles.btn} onClick={() => router.push(getRedirectPath())}>
-              Continue
-            </button>
-          </>
+          </div>
         )}
 
+        {/* ── Pending (webhook delayed) ── */}
         {status === 'pending' && (
-          <>
-            <div className={`${styles.iconWrap} ${styles.warn}`}>
-              <Loader size={48} />
+          <div className={styles.state}>
+            <div className={`${styles.icon_wrap} ${styles.icon_warn}`}>
+              <Loader size={36} className={styles.spin_icon} color="#FF6B00" />
             </div>
-            <h1 className={styles.title}>Payment processing...</h1>
-            <p className={styles.msg}>Your payment is being confirmed. This may take a few minutes. Check your email or visit your payments history.</p>
-            <button className={styles.btn} onClick={() => router.push('/dashboard')}>
-              Go to dashboard
-            </button>
-          </>
+            <h1 className={styles.title}>Still processing...</h1>
+            <p className={styles.msg}>
+              Your payment is being confirmed by Stripe. This usually takes under a minute.
+              Check your email or visit your payments history.
+            </p>
+            <div className={styles.btn_row}>
+              <button className={styles.cta_btn} onClick={() => router.push('/dashboard')}>
+                Go to Dashboard
+              </button>
+              <button
+                className={styles.outline_btn}
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         )}
 
+        {/* ── Failed ── */}
         {status === 'failed' && (
-          <>
-            <div className={`${styles.iconWrap} ${styles.error}`}>
-              <XCircle size={48} />
+          <div className={styles.state}>
+            <div className={`${styles.icon_wrap} ${styles.icon_error}`}>
+              <XCircle size={40} color="#FF006E" strokeWidth={1.5} />
             </div>
-            <h1 className={styles.title}>Payment failed</h1>
-            <p className={styles.msg}>Something went wrong. You have not been charged. Please try again.</p>
-            <button className={styles.btn} onClick={() => router.back()}>
-              Go back
-            </button>
-          </>
+            <h1 className={styles.title}>Payment Failed</h1>
+            <p className={styles.msg}>
+              Something went wrong. You have not been charged. Please try again.
+            </p>
+            <div className={styles.btn_row}>
+              <button className={styles.cta_btn} onClick={() => router.back()}>
+                Try Again
+              </button>
+              <button
+                className={styles.outline_btn}
+                onClick={() => router.push('/tournaments')}
+              >
+                Browse Tournaments
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </main>

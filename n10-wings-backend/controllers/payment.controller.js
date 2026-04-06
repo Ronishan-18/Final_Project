@@ -5,11 +5,9 @@ import { createNotification } from './notification.controller.js';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const CREATION_FEE = parseInt(process.env.STRIPE_TOURNAMENT_CREATION_FEE || '500');
 
-// ── CREATE CHECKOUT — TEAM ENTRY FEE ──
-
-// PLATFORM COMMISSION: 5%
 const PLATFORM_COMMISSION_RATE = 0.05;
 
+// ── CREATE CHECKOUT — TEAM ENTRY FEE ──
 export const createTeamEntryCheckout = async (req, res) => {
   try {
     const { tournament_id, team_id } = req.body;
@@ -29,12 +27,11 @@ export const createTeamEntryCheckout = async (req, res) => {
     const tournament = tournaments[0];
 
     // SECURITY: amount always set server-side from DB
-    const entryFeeAmount = Math.round(parseFloat(tournament.entry_fee || 0) * 100); // in cents
+    const entryFeeAmount = Math.round(parseFloat(tournament.entry_fee || 0) * 100);
     if (entryFeeAmount <= 0) {
       return res.status(400).json({ success: false, message: 'This tournament has no entry fee!' });
     }
 
-    // 5% platform commission
     const commissionAmount = Math.round(entryFeeAmount * PLATFORM_COMMISSION_RATE);
     const totalAmount = entryFeeAmount + commissionAmount;
 
@@ -51,7 +48,10 @@ export const createTeamEntryCheckout = async (req, res) => {
 
     const [leaderOf] = await db.query(query, params);
     if (!leaderOf.length) {
-      return res.status(403).json({ success: false, message: team_id ? 'You are not the leader of this team!' : 'Only team leaders can pay entry fees!' });
+      return res.status(403).json({
+        success: false,
+        message: team_id ? 'You are not the leader of this team!' : 'Only team leaders can pay entry fees!'
+      });
     }
     const team = leaderOf[0];
 
@@ -73,11 +73,17 @@ export const createTeamEntryCheckout = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Team already registered!' });
     }
 
+    // Check tournament not full
+    const [[{ count }]] = await db.query(
+      "SELECT COUNT(*) as count FROM tournament_registrations WHERE tournament_id = ? AND status = 'approved'",
+      [tournament_id]
+    );
+    if (count >= tournament.max_teams) {
+      return res.status(400).json({ success: false, message: 'Tournament is full!' });
+    }
+
     const [[user]] = await db.query('SELECT email, username FROM users WHERE id = ?', [userId]);
 
-    // Create Stripe checkout session with TWO line items:
-    // 1. Entry fee (goes to prize pool)
-    // 2. Platform commission (platform revenue)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -119,7 +125,6 @@ export const createTeamEntryCheckout = async (req, res) => {
       cancel_url: `${FRONTEND_URL}/tournaments/${tournament_id}?payment=cancelled`,
     });
 
-    // Save pending payment with total amount
     await db.query(
       `INSERT INTO payments (user_id, tournament_id, team_id, stripe_session_id, amount, type, status, metadata)
        VALUES (?, ?, ?, ?, ?, 'team_entry', 'pending', ?)`,
@@ -155,7 +160,6 @@ export const createTeamEntryCheckout = async (req, res) => {
 export const createTournamentCreationCheckout = async (req, res) => {
   try {
     const userId = req.user.id;
-    // Store tournament data temporarily in session metadata
     const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type, entry_fee_required } = req.body;
 
     if (!title || !game) {
@@ -164,7 +168,6 @@ export const createTournamentCreationCheckout = async (req, res) => {
 
     const [[user]] = await db.query('SELECT email FROM users WHERE id = ?', [userId]);
 
-    // SECURITY: creation fee is always from env, never from request
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -202,7 +205,6 @@ export const createTournamentCreationCheckout = async (req, res) => {
       cancel_url: `${FRONTEND_URL}/tournaments/create?payment=cancelled`,
     });
 
-    // Save pending payment
     await db.query(
       `INSERT INTO payments (user_id, stripe_session_id, amount, type, status, metadata)
        VALUES (?, ?, ?, 'tournament_creation', 'pending', ?)`,
@@ -216,9 +218,7 @@ export const createTournamentCreationCheckout = async (req, res) => {
   }
 };
 
-// ── STRIPE WEBHOOK — MOST CRITICAL ENDPOINT ──
-// SECURITY: This endpoint MUST receive the raw body (not JSON-parsed)
-// It verifies the Stripe signature to ensure only real Stripe events are processed
+// ── STRIPE WEBHOOK ──
 export const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -230,19 +230,16 @@ export const handleWebhook = async (req, res) => {
 
   let event;
   try {
-    // SECURITY: req.body must be raw Buffer here (see server.js setup)
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
   }
 
-  // Only handle the events we care about
   if (event.type === 'checkout.session.completed') {
     await handleCheckoutCompleted(event.data.object);
   }
 
-  // Always return 200 quickly so Stripe doesn't retry
   res.json({ received: true });
 };
 
@@ -251,7 +248,6 @@ const handleCheckoutCompleted = async (session) => {
   const sessionId = session.id;
   const metadata = session.metadata || {};
 
-  // SECURITY: Idempotency check — if already processed, skip silently
   const [existing] = await db.query(
     "SELECT id, status FROM payments WHERE stripe_session_id = ?",
     [sessionId]
@@ -265,7 +261,6 @@ const handleCheckoutCompleted = async (session) => {
     return;
   }
 
-  // Mark payment as succeeded
   await db.query(
     "UPDATE payments SET status = 'succeeded', stripe_payment_intent = ? WHERE stripe_session_id = ?",
     [session.payment_intent || null, sessionId]
@@ -279,11 +274,11 @@ const handleCheckoutCompleted = async (session) => {
 };
 
 // ── INTERNAL: register team after successful entry payment ──
+// FIX: status is now 'approved' immediately — no organizer approval needed after payment
 const processTeamEntryPayment = async (metadata, session) => {
   const { user_id, tournament_id, team_id, team_name } = metadata;
 
   try {
-    // Get the payment record id
     const [[payment]] = await db.query(
       "SELECT id FROM payments WHERE stripe_session_id = ?",
       [session.id]
@@ -295,37 +290,47 @@ const processTeamEntryPayment = async (metadata, session) => {
       [tournament_id]
     );
     const [[tournament]] = await db.query('SELECT max_teams, title FROM tournaments WHERE id = ?', [tournament_id]);
+
     if (count >= tournament.max_teams) {
-      // Refund needed — tournament is full
       console.warn(`Tournament ${tournament_id} is full — refund required for session ${session.id}`);
       await db.query("UPDATE payments SET status = 'refunded' WHERE id = ?", [payment.id]);
+      // Notify user about refund
+      await createNotification(
+        parseInt(user_id),
+        'tournament_registration',
+        '⚠️ Tournament Full',
+        `Sorry, "${tournament.title}" is now full. You will receive a refund shortly.`,
+        { tournament_id: parseInt(tournament_id) }
+      );
       return;
     }
 
-    // Register the team
+    // FIX: Insert with status = 'approved' — payment confirms the spot instantly
     await db.query(
       `INSERT INTO tournament_registrations (tournament_id, user_id, team_id, team_name, status, payment_id, payment_status)
-       VALUES (?, ?, ?, ?, 'pending', ?, 'paid')
-       ON DUPLICATE KEY UPDATE payment_id = VALUES(payment_id), payment_status = 'paid'`,
+       VALUES (?, ?, ?, ?, 'approved', ?, 'paid')
+       ON DUPLICATE KEY UPDATE
+         status = 'approved',
+         payment_id = VALUES(payment_id),
+         payment_status = 'paid'`,
       [tournament_id, user_id, team_id, team_name || 'Unknown Team', payment.id]
     );
 
-    // Update payment with tournament_id
     await db.query(
       'UPDATE payments SET tournament_id = ?, team_id = ? WHERE id = ?',
       [tournament_id, team_id, payment.id]
     );
 
-    // Notify the user
+    // FIX: notification now says "You're in!" not "waiting for approval"
     await createNotification(
       parseInt(user_id),
       'tournament_registration',
-      'Payment successful!',
-      `Your team has been registered for "${tournament.title}". Waiting for organizer approval.`,
+      '🎮 You\'re in!',
+      `Payment confirmed! Your team is now registered for "${tournament.title}". Good luck!`,
       { tournament_id: parseInt(tournament_id) }
     );
 
-    console.log(`Team ${team_id} registered for tournament ${tournament_id} after payment`);
+    console.log(`✅ Team ${team_id} auto-approved for tournament ${tournament_id} after payment`);
   } catch (error) {
     console.error('processTeamEntryPayment error:', error);
   }
@@ -339,7 +344,6 @@ const processTournamentCreationPayment = async (metadata, session) => {
   } = metadata;
 
   try {
-    // Dynamically import challonge to avoid circular deps
     const { createChallongeTournament } = await import('../config/challonge.js');
 
     let challongeData = null;
@@ -373,7 +377,6 @@ const processTournamentCreationPayment = async (metadata, session) => {
       ]
     );
 
-    // Link payment to tournament
     await db.query(
       "UPDATE payments SET tournament_id = ? WHERE stripe_session_id = ?",
       [result.insertId, session.id]
@@ -384,22 +387,21 @@ const processTournamentCreationPayment = async (metadata, session) => {
       [parseInt(user_id)]
     ).catch(() => {});
 
-    // Notify organizer
     await createNotification(
       parseInt(user_id),
       'tournament_registration',
-      'Tournament created!',
+      '🏆 Tournament Created!',
       `Your tournament "${title}" is now live and open for registrations.`,
       { tournament_id: result.insertId }
     );
 
-    console.log(`Tournament ${result.insertId} created for organizer ${user_id} after payment`);
+    console.log(`✅ Tournament ${result.insertId} created for organizer ${user_id} after payment`);
   } catch (error) {
     console.error('processTournamentCreationPayment error:', error);
   }
 };
 
-// ── VERIFY PAYMENT (frontend polls this after redirect) ──
+// ── VERIFY PAYMENT ──
 export const verifyPayment = async (req, res) => {
   try {
     const { session_id } = req.query;
@@ -407,7 +409,6 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Session ID required' });
     }
 
-    // SECURITY: verify the session belongs to this user
     const [payments] = await db.query(
       'SELECT * FROM payments WHERE stripe_session_id = ? AND user_id = ?',
       [session_id, req.user.id]
@@ -418,12 +419,10 @@ export const verifyPayment = async (req, res) => {
 
     const payment = payments[0];
 
-    // If still pending, double-check with Stripe directly
     if (payment.status === 'pending') {
       try {
         const stripeSession = await stripe.checkout.sessions.retrieve(session_id);
         if (stripeSession.payment_status === 'paid') {
-          // Webhook may have been delayed — process it now
           await handleCheckoutCompleted(stripeSession);
           payment.status = 'succeeded';
         }

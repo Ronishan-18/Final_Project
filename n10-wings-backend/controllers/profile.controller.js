@@ -269,7 +269,7 @@ export const getProfileById = async (req, res) => {
 // ============================================
 export const searchGamers = async (req, res) => {
   try {
-    const { game, rank, country, username } = req.query;
+    const { q } = req.query;
 
     let query = `
       SELECT
@@ -288,21 +288,14 @@ export const searchGamers = async (req, res) => {
 
     const params = [];
 
-    if (game) {
-      query += ' AND gp.game_preferences LIKE ?';
-      params.push(`%${game}%`);
-    }
-    if (rank) {
-      query += ' AND gp.player_rank LIKE ?';
-      params.push(`%${rank}%`);
-    }
-    if (country) {
-      query += ' AND p.country LIKE ?';
-      params.push(`%${country}%`);
-    }
-    if (username) {
-      query += ' AND u.username LIKE ?';
-      params.push(`%${username}%`);
+    if (q && q.trim() !== '') {
+      query += ` AND (
+        u.username LIKE ? OR 
+        p.full_name LIKE ? OR 
+        gp.game_preferences LIKE ?
+      )`;
+      const searchTerm = `%${q}%`;
+      params.push(searchTerm, searchTerm, searchTerm);
     }
 
     query += ' ORDER BY gp.points DESC';

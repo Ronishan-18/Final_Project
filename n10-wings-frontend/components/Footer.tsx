@@ -1,8 +1,16 @@
+'use client';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Gamepad2, Mail, MapPin, Clock, Zap } from 'lucide-react';
 import styles from './Footer.module.scss';
 
 export default function Footer() {
+  const pathname = usePathname();
+  const hideFooterRoutes = ['/friends', '/chat', '/dashboard', '/notifications'];
+  const shouldHide = hideFooterRoutes.some(route => pathname.startsWith(route));
+
+  if (shouldHide) return null;
+
   return (
     <footer className={styles.footer}>
       <div className={styles.footer__inner}>

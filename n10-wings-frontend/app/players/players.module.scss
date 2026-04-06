@@ -26,100 +26,153 @@
 }
 
 .filters {
-  background: #12121A;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
+  position: relative;
   margin-bottom: 2rem;
+  max-width: 800px;
+  margin: 0 auto 3rem auto;
 
-  &__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
-
-    @media (min-width: 640px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (min-width: 1024px) {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-
-  &__group {
+  &__wrapper {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    align-items: center;
+    background: #12121A;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+    &:focus-within {
+      border-color: #00F5FF;
+      box-shadow: 0 0 20px rgba(0,245,255,0.1);
+    }
   }
 
-  &__label {
-    color: #8892A4;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  &__icon {
+    font-size: 1.25rem;
+    margin: 0 1rem;
+    opacity: 0.5;
   }
 
   &__input {
-    background: #0A0A0F;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px;
+    flex: 1;
+    background: transparent;
+    border: none;
     color: #ffffff;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    padding: 1rem 0;
+    font-size: 1.1rem;
     font-family: 'Rajdhani', sans-serif;
     outline: none;
-    transition: all 0.3s ease;
-
-    &:focus {
-      border-color: #00F5FF;
-      box-shadow: 0 0 0 2px rgba(0,245,255,0.1);
-    }
 
     &::placeholder { color: #4B5563; }
   }
 
-  &__btns {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  &__search {
-    background: #00F5FF;
-    color: #0A0A0F;
+  &__clear {
+    background: rgba(255,255,255,0.05);
     border: none;
-    border-radius: 6px;
-    padding: 0.75rem 1.5rem;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      opacity: 0.85;
-      transform: translateY(-1px);
-    }
-  }
-
-  &__reset {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.15);
     color: #8892A4;
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+    transition: all 0.2s ease;
 
     &:hover {
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
       color: #ffffff;
     }
   }
+
+  /* Dropdown Styles */
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    background: #12121A;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    animation: slideDown 0.3s ease;
+
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.2s ease;
+
+    &:last-child { border: none; }
+
+    &:hover {
+      background: rgba(0,245,255,0.05);
+    }
+  }
+
+  &__avatar_small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__item_info {
+    flex: 1;
+  }
+
+  &__item_name {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.1rem;
+  }
+
+  &__item_user {
+    color: #8892A4;
+    font-size: 0.8rem;
+  }
+
+  &__item_game {
+    color: #00F5FF;
+    font-size: 0.75rem;
+    font-family: 'Orbitron', sans-serif;
+    background: rgba(0,245,255,0.1);
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+  }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .results {

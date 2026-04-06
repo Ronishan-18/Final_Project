@@ -19,7 +19,7 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<number | null>(null);
   const myId = useRef<number>(0);
 
@@ -101,7 +101,12 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
   }, [socket, friendId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+            top: messagesContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
   }, [messages, isTyping]);
 
   const handleSend = () => {
@@ -169,7 +174,7 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
       </div>
 
       {/* Messages */}
-      <div className={styles.messages}>
+      <div className={styles.messages} ref={messagesContainerRef}>
         {messages.length === 0 && (
           <div className={styles.noMessages}>
             <p>Secure connection established. Say hello to {friend?.username}!</p>
@@ -214,7 +219,6 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
             </div>
           </div>
         )}
-        <div ref={bottomRef} style={{ height: '1px' }} />
       </div>
 
       {/* Input */}
