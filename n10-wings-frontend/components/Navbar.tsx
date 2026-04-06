@@ -6,11 +6,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Gamepad2, LogIn, LogOut, Menu, X,
-  LayoutDashboard, User, ChevronDown, Shield, Trophy, Building2
+  LayoutDashboard, User, ChevronDown, Shield, Trophy, Building2, ArrowRight
 } from 'lucide-react';
 import styles from './Navbar.module.scss';
-
 import NotificationBell from './NotificationBell';
+import { getImageUrl } from '../lib/urlHelper';
 
 
 
@@ -194,7 +194,7 @@ export default function Navbar() {
                   style={{ borderColor: getRoleColor() }}
                 >
                   {user.avatar ? (
-                    <img src={`http://localhost:5000${user.avatar}`} alt={user.username} />
+                    <img src={getImageUrl(user.avatar)} alt={user.username} />
                   ) : (
                     <span style={{ color: getRoleColor() }}>
                       {user.username.charAt(0).toUpperCase()}
@@ -230,7 +230,7 @@ export default function Navbar() {
                       <div className={styles.navbar__dropdown_avatar}
                         style={{ borderColor: getRoleColor() }}>
                         {user.avatar ? (
-                          <img src={`http://localhost:5000${user.avatar}`} alt={user.username} />
+                          <img src={getImageUrl(user.avatar)} alt={user.username} />
                         ) : (
                           <span style={{ color: getRoleColor() }}>
                             {user.username.charAt(0).toUpperCase()}
@@ -288,7 +288,7 @@ export default function Navbar() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link href="/register" className={styles.navbar__join}>
-                  Join Now →
+                  Join Now <ArrowRight size={14} />
                 </Link>
               </motion.div>
             </div>
@@ -395,7 +395,7 @@ export default function Navbar() {
                 <Link href="/register"
                   className={styles.navbar__mobile_join}
                   onClick={() => setIsOpen(false)}>
-                  Join Now →
+                  Join Now <ArrowRight size={14} style={{ marginLeft: 6, display: 'inline' }} />
                 </Link>
               </>
             )}

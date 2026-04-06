@@ -6,11 +6,12 @@ import Link from 'next/link';
 import {
   ArrowLeft, Trophy, Users, Zap, Calendar, Gamepad2,
   ExternalLink, CheckCircle, Clock, Shield, ChevronRight,
-  CreditCard, LogIn, AlertCircle, Lock, Info
+  CreditCard, LogIn, AlertCircle, Lock, Info, ArrowRight
 } from 'lucide-react';
 import IconTile from '../../../components/IconTile';
 import api from '../../../lib/api';
 import styles from './tournament.module.scss';
+import { getImageUrl } from '../../../lib/urlHelper';
 
 interface Tournament {
   id: number; title: string; game: string; status: string;
@@ -177,7 +178,7 @@ export default function TournamentDetailPage() {
           <Shield size={15} /> <span>You need to be a team captain to apply</span>
         </div>
         <Link href="/teams/create" className={styles.create_team_btn}>
-          <Users size={14} /> Create a Team →
+          <Users size={14} /> Create a Team <ArrowRight size={14} />
         </Link>
       </div>
     );
@@ -313,7 +314,7 @@ export default function TournamentDetailPage() {
                   <div key={r.id} className={styles.team_card}>
                     <div className={styles.team_card__num}>{i + 1}</div>
                     <div className={styles.team_card__avatar}>
-                      {r.avatar ? <img src={`http://localhost:5000${r.avatar}`} alt={r.username} /> : <Gamepad2 size={16} color="#8892A4" strokeWidth={1.75} />}
+                      {r.avatar ? <img src={getImageUrl(r.avatar)} alt={r.username} /> : <Gamepad2 size={16} color="#8892A4" strokeWidth={1.75} />}
                     </div>
                     <div className={styles.team_card__info}>
                       <div className={styles.team_card__name}>{r.team_name || r.full_name || r.username}</div>

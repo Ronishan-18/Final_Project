@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, Star, Globe, Gamepad2, X } from 'lucide-react';
 import api from '../../lib/api';
 import styles from './players.module.scss';
+import { getImageUrl } from '../../lib/urlHelper';
 
 interface Gamer {
   id: number;
@@ -126,7 +127,7 @@ export default function PlayersPage() {
                     >
                       <div className={styles.filters__avatar_small}>
                         {gamer.avatar ? (
-                          <img src={gamer.avatar} alt={gamer.username} />
+                          <img src={getImageUrl(gamer.avatar)} alt={gamer.username} />
                         ) : (
                           <Gamepad2 size={20} color="#8892A4" />
                         )}
@@ -178,7 +179,7 @@ export default function PlayersPage() {
                   {/* Avatar */}
                   <div className={styles.card__avatar}>
                     {gamer.avatar ? (
-                      <img src={gamer.avatar} alt={gamer.username} />
+                      <img src={getImageUrl(gamer.avatar)} alt={gamer.username} />
                     ) : (
                       <Gamepad2 size={32} color="#8892A4" opacity={0.5} />
                     )}

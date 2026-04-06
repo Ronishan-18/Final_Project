@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Mail, MapPin, Gamepad2, Timer, CheckCircle, ArrowRight } from 'lucide-react';
 import styles from './contact.module.scss';
 
 export default function Contact() {
@@ -19,7 +20,7 @@ export default function Contact() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className="container">
-          <div className="badge">📬 Get In Touch</div>
+          <div className="badge"><Mail size={12} style={{marginRight: 4}} /> Get In Touch</div>
           <h1 className={styles.hero__title}>
             CONTACT <span className="gradient-text">US</span>
           </h1>
@@ -42,10 +43,10 @@ export default function Contact() {
                 GET IN <span className="gradient-text">TOUCH</span>
               </h2>
               {[
-                { icon: '📧', label: 'EMAIL', val: 'ronisonroni0@gmail.com' },
-                { icon: '🌍', label: 'LOCATION', val: 'Sri Lanka' },
-                { icon: '🎮', label: 'PLATFORM', val: 'N-10 Wings E-Sports' },
-                { icon: '⏰', label: 'RESPONSE', val: 'Within 24 hours' },
+                { icon: <Mail size={24} />, label: 'EMAIL', val: 'ronisonroni0@gmail.com' },
+                { icon: <MapPin size={24} />, label: 'LOCATION', val: 'Sri Lanka' },
+                { icon: <Gamepad2 size={24} />, label: 'PLATFORM', val: 'N-10 Wings E-Sports' },
+                { icon: <Timer size={24} />, label: 'RESPONSE', val: 'Within 24 hours' },
               ].map((item) => (
                 <div key={item.label} className={styles.info__item}>
                   <div className={styles.info__icon}>{item.icon}</div>
@@ -61,7 +62,7 @@ export default function Contact() {
             <div className={styles.form}>
               {submitted ? (
                 <div className={styles.form__success}>
-                  <span className={styles.form__success_icon}>✅</span>
+                  <CheckCircle size={48} color="#00FF88" className={styles.form__success_icon} />
                   <h3 className={styles.form__success_title}>Message Sent!</h3>
                   <p className={styles.form__success_sub}>
                     We&apos;ll get back to you within 24 hours.
@@ -70,7 +71,7 @@ export default function Contact() {
                     onClick={() => setSubmitted(false)}
                     className={styles.form__success_btn}
                   >
-                    Send Another →
+                    Send Another <ArrowRight size={16} />
                   </button>
                 </div>
               ) : (
@@ -117,7 +118,7 @@ export default function Contact() {
                     />
                   </div>
                   <button onClick={handleSubmit} className={styles.form__btn}>
-                    Send Message →
+                    Send Message <ArrowRight size={16} />
                   </button>
                 </>
               )}

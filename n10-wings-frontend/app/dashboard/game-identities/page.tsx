@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Gamepad2, Plus, ArrowLeft, RefreshCw, Edit, Trash2, 
-  CheckCircle, Zap, Info, ShieldCheck, Star, Search, X, Clock
+  CheckCircle, Zap, Info, ShieldCheck, Star, Search, X, Clock, XCircle
 } from 'lucide-react';
 import { 
   SiFacebook, SiInstagram, SiYoutube, SiX, SiGoogle, SiSteam, SiDiscord,
@@ -389,7 +389,7 @@ export default function GameIdentitiesPage() {
                 onClick={() => openModal(game)}
               >
                 <span className={styles.game__tile_icon}>
-                  {game.icon.startsWith('/') ? <img src={game.icon} alt={game.name} /> : game.icon}
+                  {game.icon.startsWith('/') ? <img src={game.icon} alt={game.name} /> : <Gamepad2 size={32} strokeWidth={1.5} />}
                 </span>
                 <span className={styles.game__tile_name} style={{ color: linked ? game.color : '#ffffff' }}>
                   {game.name}
@@ -400,7 +400,7 @@ export default function GameIdentitiesPage() {
                   ⚡ {game.stats_info}
                 </span>
                 {linked
-                  ? <span className={styles.game__tile_linked}>✅ Linked</span>
+                  ? <span className={styles.game__tile_linked}><CheckCircle size={12} style={{marginRight:4}}/> Linked</span>
                   : <span className={styles.game__tile_add}>+ Link Account</span>
                 }
               </button>
@@ -432,14 +432,14 @@ export default function GameIdentitiesPage() {
                 </span>
                 <span className={styles.game__tile_platform}>{game.platform}</span>
                 {linked
-                  ? <span className={styles.game__tile_linked}>✅ {linked.game_username}</span>
+                  ? <span className={styles.game__tile_linked}><CheckCircle size={12} style={{marginRight:4}}/> {linked.game_username}</span>
                   : <span className={styles.game__tile_add}>+ Add ID</span>
                 }
               </button>
             );
           })}
           <button className={styles.game__tile} onClick={openCustomModal}>
-            <span className={styles.game__tile_icon}>🎮</span>
+            <span className={styles.game__tile_icon}><Gamepad2 size={32} strokeWidth={1.5}/></span>
             <span className={styles.game__tile_name}>Other Game</span>
             <span className={styles.game__tile_platform}>Any</span>
             <span className={styles.game__tile_add}>+ Add Custom</span>
@@ -455,7 +455,7 @@ export default function GameIdentitiesPage() {
               <span className={styles.modal__icon_wrap}>
                 {selectedGame?.id && selectedGame.id in GAME_ICONS_BY_ID 
                   ? <img src={GAME_ICONS_BY_ID[selectedGame.id]} alt={selectedGame.name} className={styles.modal__icon} />
-                  : <span className={styles.modal__icon}>{selectedGame?.icon || '🎮'}</span>
+                  : <span className={styles.modal__icon}><Gamepad2 size={24} /></span>
                 }
               </span>
               <div>
@@ -503,8 +503,8 @@ export default function GameIdentitiesPage() {
               </p>
             </div>
 
-            {error && <p className={styles.modal__error}>❌ {error}</p>}
-            {message && <p className={styles.modal__success}>✅ {message}</p>}
+            {error && <p className={styles.modal__error}><XCircle size={14} style={{display:'inline', marginRight:4}}/> {error}</p>}
+            {message && <p className={styles.modal__success}><CheckCircle size={14} style={{display:'inline', marginRight:4}}/> {message}</p>}
 
             <div className={styles.modal__btns}>
               <button className={styles.modal__cancel} onClick={closeModal}>

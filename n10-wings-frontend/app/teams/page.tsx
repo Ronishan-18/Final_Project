@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import styles from './teams.module.scss';
+import { getImageUrl } from '../../lib/urlHelper';
 
 interface Team {
   id: number;
@@ -212,7 +213,7 @@ function TeamsContent() {
                   <div className={styles.card__leader}>
                     <div className={styles.card__leader_avatar}>
                       {t.leader_avatar ? (
-                        <img src={`http://localhost:5000${t.leader_avatar}`} alt={t.leader_username} />
+                        <img src={getImageUrl(t.leader_avatar)} alt={t.leader_username} />
                       ) : (
                         <span>{t.leader_username.charAt(0).toUpperCase()}</span>
                       )}

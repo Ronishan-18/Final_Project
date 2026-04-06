@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Gamepad2, AlertCircle, Building2, Eye, EyeOff } from 'lucide-react';
+import { Gamepad2, AlertCircle, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { register } from '../../lib/auth';
 import styles from './register.module.scss';
 
@@ -189,7 +189,12 @@ function RegisterForm() {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? 'Creating Account...' : 'Create Account →'}
+            {loading ? 'Creating Account...' : (
+              <>
+                Create Account
+                <ArrowRight size={18} />
+              </>
+            )}
           </button>
 
           <div className={styles.register__divider}>

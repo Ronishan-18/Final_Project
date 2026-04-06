@@ -698,6 +698,7 @@ export const editUserRole = async (req, res) => {
 // GET /api/auth/google
 // ============================================
 export const googleAuth = (req, res, next) => {
+  console.log('🔄 Google OAuth Initiation...');
   next();
 };
 
@@ -708,14 +709,17 @@ export const googleAuth = (req, res, next) => {
 export const googleCallback = async (req, res) => {
   try {
     const user = req.user;
+    console.log('🔙 Google OAuth Callback reached for user:', user?.email || 'No user info');
 
     if (!user) {
+      console.warn('⚠️ Google OAuth: No user found in request');
       return res.redirect(
         `${process.env.CLIENT_URL}/login?error=google_auth_failed`
       );
     }
 
     if (!user.is_active) {
+      console.warn('⚠️ Google OAuth: User account suspended:', user.id);
       return res.redirect(
         `${process.env.CLIENT_URL}/suspended?user_id=${user.id}&type=account`
       );
@@ -724,12 +728,13 @@ export const googleCallback = async (req, res) => {
     const token = generateToken(user);
     setCookie(res, token, user.role);
 
+    console.log('✅ Google OAuth: Auth success, redirecting user...');
     res.redirect(
       `${process.env.CLIENT_URL}/auth/success?token=${token}&role=${user.role}&username=${user.username}`
     );
 
   } catch (error) {
-    console.error('Google Callback Error:', error);
+    console.error('❌ Google Callback Handler Error:', error);
     res.redirect(
       `${process.env.CLIENT_URL}/login?error=server_error`
     );

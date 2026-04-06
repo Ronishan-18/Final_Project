@@ -7,6 +7,7 @@ import { ArrowLeft, Users, Gamepad2, Crown, Edit3, X, Save, Check } from 'lucide
 import IconTile from '../../../components/IconTile';
 import api from '../../../lib/api';
 import styles from './team.module.scss'; // Reuse or create basic styles
+import { getImageUrl } from '../../../lib/urlHelper';
 
 interface Team {
   id: number;
@@ -231,7 +232,7 @@ export default function TeamDetailPage() {
         {/* Hero */}
         <div style={{ background: '#12121A', padding: '2rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'center' }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#0A0A0F', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-            {team.logo ? <img src={team.logo} alt={team.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={40} color="#00F5FF" strokeWidth={1.5} />}
+            {team.logo ? <img src={getImageUrl(team.logo)} alt={team.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={40} color="#00F5FF" strokeWidth={1.5} />}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -305,7 +306,7 @@ export default function TeamDetailPage() {
                 <div key={req.request_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', background: '#12121A', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#0A0A0F', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      {req.avatar ? <img src={`http://localhost:5000${req.avatar}`} alt={req.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={20} color="#8892A4" />}
+                      {req.avatar ? <img src={getImageUrl(req.avatar)} alt={req.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={20} color="#8892A4" />}
                     </div>
                     <div>
                       <Link href={`/profile/${req.user_id}`} style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
@@ -373,7 +374,7 @@ export default function TeamDetailPage() {
             {members.map(member => (
               <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#0A0A0F', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#12121A', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {member.avatar ? <img src={`http://localhost:5000${member.avatar}`} alt={member.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={20} color="#8892A4" />}
+                  {member.avatar ? <img src={getImageUrl(member.avatar)} alt={member.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Gamepad2 size={20} color="#8892A4" />}
                 </div>
                   <div>
                     <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>

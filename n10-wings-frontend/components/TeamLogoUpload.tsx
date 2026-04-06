@@ -2,19 +2,18 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Cropper from 'react-easy-crop';
+import { Camera, X, Upload, Check } from 'lucide-react';
 import api from '../lib/api';
-import styles from './AvatarUpload.module.scss';
+import styles from './TeamLogoUpload.module.scss';
 import { getImageUrl } from '../lib/urlHelper';
 
 interface Props {
-  currentAvatar?: string;
-  username?: string;
-  onUpdate: (newAvatar: string) => void;
+  value?: string;
+  onChange: (url: string) => void;
 }
 
-export default function AvatarUpload({ currentAvatar, username, onUpdate }: Props) {
+export default function TeamLogoUpload({ value, onChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showMenu, setShowMenu] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -39,7 +38,6 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
     const reader = new FileReader();
     reader.onload = () => {
       setImageSrc(reader.result as string);
-      setShowMenu(false);
     };
     reader.readAsDataURL(file);
   };
@@ -47,15 +45,15 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
   const getCroppedImage = async (): Promise<Blob> => {
     const image = new Image();
     image.src = imageSrc!;
-
     await new Promise(resolve => { image.onload = resolve; });
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
-    const size = 400;
+    const size = 512; // High quality logo size
     canvas.width = size;
     canvas.height = size;
 
+    // Center and rotate
     ctx.translate(size / 2, size / 2);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.translate(-size / 2, -size / 2);
@@ -73,7 +71,7 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
     );
 
     return new Promise(resolve => {
-      canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.9);
+      canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.95);
     });
   };
 
@@ -84,80 +82,56 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
     try {
       const blob = await getCroppedImage();
       const formData = new FormData();
-      formData.append('avatar', blob, 'avatar.jpg');
+      formData.append('logo', blob, 'team-logo.jpg');
 
-      const res = await api.post('/upload/avatar', formData, {
+      const res = await api.post('/upload/team-logo', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (res.data.success) {
-        onUpdate(res.data.avatar);
+        onChange(res.data.logo);
         setImageSrc(null);
       }
-    } catch {
-      setError('Upload failed! Try again.');
+    } catch (err: any) {
+      console.error('Upload Error:', err);
+      setError('Upload failed! Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await api.put('/profile/me', { avatar: null });
-      onUpdate('');
-      setShowMenu(false);
-    } catch {
-      setError('Failed to remove avatar!');
-    }
-  };
-
   return (
-    <div className={styles.avatar}>
-
-      {/* Avatar Frame */}
-      <div
-        className={styles.avatar__frame}
-        onClick={() => setShowMenu(!showMenu)}
+    <div className={styles.upload}>
+      {/* Upload Frame */}
+      <div 
+        className={styles.upload__frame} 
+        onClick={() => !uploading && fileInputRef.current?.click()}
       >
-        {currentAvatar ? (
-          <img src={getImageUrl(currentAvatar)} alt="avatar" />
+        {value ? (
+          <>
+            <img src={getImageUrl(value)} alt="Team Logo" />
+            <div className={styles.upload__overlay}>
+              <Camera size={20} />
+              <span>Change Logo</span>
+            </div>
+          </>
         ) : (
-          <div className={styles.avatar__placeholder}>
-            {username?.charAt(0).toUpperCase() || '🎮'}
+          <div className={styles.upload__placeholder}>
+            <Upload size={24} strokeWidth={1.5} />
+            <span>Upload Team Logo</span>
           </div>
         )}
-        <div className={styles.avatar__overlay}>
-          <span className={styles.avatar__camera}></span>
-        </div>
       </div>
 
-      {/* Popup Menu */}
-      {showMenu && (
-        <div className={styles.avatar__menu}>
-          <button
-            className={styles.avatar__menu_item}
-            onClick={() => {
-              setShowMenu(false);
-              fileInputRef.current?.click();
-            }}
-          >
-            Upload Photo
-          </button>
-          {currentAvatar && (
-            <button
-              className={`${styles.avatar__menu_item} ${styles['avatar__menu_item--delete']}`}
-              onClick={handleDelete}
-            >
-              Remove Photo
-            </button>
-          )}
-          <button
-            className={`${styles.avatar__menu_item} ${styles['avatar__menu_item--cancel']}`}
-            onClick={() => setShowMenu(false)}
-          >
-            ✕ Cancel
-          </button>
-        </div>
+      {/* Remove Button */}
+      {value && !uploading && (
+        <button 
+          className={styles.upload__remove} 
+          onClick={(e) => { e.stopPropagation(); onChange(''); }}
+          title="Remove logo"
+        >
+          <X size={14} strokeWidth={3} />
+        </button>
       )}
 
       {/* Hidden File Input */}
@@ -173,9 +147,8 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
       {imageSrc && (
         <div className={styles.modal}>
           <div className={styles.modal__box}>
-            <h3 className={styles.modal__title}>Adjust Photo</h3>
+            <h3 className={styles.modal__title}>Adjust Team Logo</h3>
 
-            {/* Crop Area */}
             <div className={styles.modal__crop}>
               <Cropper
                 image={imageSrc}
@@ -183,8 +156,8 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
                 zoom={zoom}
                 rotation={rotation}
                 aspect={1}
-                cropShape="round"
-                showGrid={false}
+                cropShape="rect"
+                showGrid={true}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onRotationChange={setRotation}
@@ -192,10 +165,11 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
               />
             </div>
 
-            {/* Controls
             <div className={styles.modal__controls}>
               <div className={styles.modal__control}>
-                <label>🔍 Zoom</label>
+                <label>
+                  Zoom <span>{Math.round(zoom * 100)}%</span>
+                </label>
                 <input
                   type="range"
                   min={1}
@@ -206,38 +180,40 @@ export default function AvatarUpload({ currentAvatar, username, onUpdate }: Prop
                 />
               </div>
               <div className={styles.modal__control}>
-                <label>🔄 Rotate</label>
+                <label>
+                  Rotation <span>{rotation}°</span>
+                </label>
                 <input
                   type="range"
-                  min={-180}
-                  max={180}
+                  min={0}
+                  max={360}
                   step={1}
                   value={rotation}
                   onChange={(e) => setRotation(Number(e.target.value))}
                 />
               </div>
-            </div> */}
+            </div>
 
             {error && <p className={styles.modal__error}>❌ {error}</p>}
 
-            {/* Buttons */}
-            <div className={styles.modal__btns}>
+            <div className={styles.modal__footer}>
               <button
-                className={styles.modal__cancel}
+                className={`${styles.modal__btn} ${styles['modal__btn--cancel']}`}
                 onClick={() => {
                   setImageSrc(null);
                   setZoom(1);
                   setRotation(0);
                 }}
+                disabled={uploading}
               >
                 Cancel
               </button>
               <button
-                className={styles.modal__save}
+                className={`${styles.modal__btn} ${styles['modal__btn--save']}`}
                 onClick={handleSave}
                 disabled={uploading}
               >
-                {uploading ? 'Saving...' : 'Save Photo'}
+                {uploading ? 'Processing...' : <><Check size={16} /> Apply Logo</>}
               </button>
             </div>
           </div>

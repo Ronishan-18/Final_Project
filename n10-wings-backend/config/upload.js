@@ -4,19 +4,24 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 
 // Create uploads folder if not exists
-const uploadDir = 'uploads/avatars';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const folders = ['uploads/avatars', 'uploads/teams'];
+folders.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    // Determine folder based on request (custom header or middleware property)
+    const folder = req.uploadFolder || 'uploads/avatars';
+    cb(null, folder);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const filename = `avatar_${uuidv4()}${ext}`;
+    const prefix = req.filePrefix || 'file';
+    const filename = `${prefix}_${uuidv4()}${ext}`;
     cb(null, filename);
   }
 });

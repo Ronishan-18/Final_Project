@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { KeyRound, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { forgotPassword } from '../../lib/auth';
 import styles from './forgot.module.scss';
 
@@ -31,15 +32,22 @@ export default function ForgotPasswordPage() {
     <div className={styles.forgot}>
       <div className={styles.forgot__box}>
         <Link href="/" className={styles.forgot__logo}>
-          🎮 <span>N-10 WINGS</span>
+          <img src="/images/myLogo_.png" alt="N10 Wings Logo" className={styles.forgot__logo_img} />
         </Link>
-        <div className={styles.forgot__icon}>🔐</div>
+        <div className={styles.forgot__icon}>
+          <KeyRound size={32} strokeWidth={1.5} />
+        </div>
         <h1 className={styles.forgot__title}>FORGOT PASSWORD</h1>
         <p className={styles.forgot__sub}>
           Enter your email and we&apos;ll send you an OTP to reset your password.
         </p>
 
-        {error && <div className={styles.forgot__error}>❌ {error}</div>}
+        {error && (
+          <div className={styles.forgot__error}>
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
 
         <div className={styles.forgot__group}>
           <label className={styles.forgot__label}>Email Address</label>
@@ -53,11 +61,19 @@ export default function ForgotPasswordPage() {
         </div>
 
         <button className={styles.forgot__btn} onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Sending OTP...' : 'Send OTP →'}
+          {loading ? 'Sending OTP...' : (
+            <>
+              Send OTP
+              <ArrowRight size={16} />
+            </>
+          )}
         </button>
 
         <p className={styles.forgot__back}>
-          <Link href="/login">← Back to Login</Link>
+          <Link href="/login">
+            <ArrowLeft size={14} />
+            Back to Login
+          </Link>
         </p>
       </div>
     </div>

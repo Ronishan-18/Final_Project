@@ -8,9 +8,17 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.SERVER_URL}/api/auth/google/callback`,
+      passReqToCallback: true
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (req, accessToken, refreshToken, profile, done) => {
       try {
+        console.log('--- Google OAuth Callback profile ---', JSON.stringify(profile));
+        
+        if (!profile.emails || profile.emails.length === 0) {
+          console.error('❌ Google OAuth: No email found in profile');
+          return done(new Error('No email found in your Google account'), null);
+        }
+
         const email = profile.emails[0].value;
         const googleName = profile.displayName;
         const username = googleName
@@ -68,7 +76,7 @@ passport.use(
         return done(null, newUser[0]);
 
       } catch (error) {
-        console.error('❌ Google OAuth Error:', error);
+        console.error('❌ Google OAuth Strategy Callback Error:', error);
         return done(error, null);
       }
     }

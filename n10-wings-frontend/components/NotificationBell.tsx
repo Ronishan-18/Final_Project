@@ -27,7 +27,12 @@ export default function NotificationBell() {
     try {
       const data = await fetchNotifications();
       setNotifications(data.notifications);
-      setUnreadCount(data.totalUnread); // Badge shows combined total
+      // If current path is notifications, don't show badge
+      if (window.location.pathname === '/notifications') {
+        setUnreadCount(0);
+      } else {
+        setUnreadCount(data.unreadCount); // Badge shows combined total
+      }
     } catch {}
   };
 
@@ -38,6 +43,11 @@ export default function NotificationBell() {
   }, []);
 
   useEffect(() => {
+    // If we navigate to notifications, clear badge immediately
+    if (pathname === '/notifications') {
+      setUnreadCount(0);
+      markAllRead().catch(() => {});
+    }
     load(); // Reload on navigation
   }, [pathname]);
 

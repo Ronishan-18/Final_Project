@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Loader, Trophy, Gamepad2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader, Trophy, Gamepad2, ArrowRight } from 'lucide-react';
 import { verifyPayment } from '@/lib/payments';
 import styles from './payment-success.module.scss';
 
@@ -97,7 +97,7 @@ export default function PaymentSuccessPage() {
             </div>
 
             <h1 className={styles.title}>
-              {isCreation ? 'Tournament Created!' : "You're In! 🎮"}
+              {isCreation ? 'Tournament Created!' : "You're In!"}
             </h1>
 
             <p className={styles.msg}>
@@ -119,7 +119,11 @@ export default function PaymentSuccessPage() {
               className={styles.cta_btn}
               onClick={() => router.push(getRedirectPath())}
             >
-              {isCreation ? 'Manage Tournament →' : 'View Tournament →'}
+              {isCreation ? (
+                <>Manage Tournament <ArrowRight size={18} /></>
+              ) : (
+                <>View Tournament <ArrowRight size={18} /></>
+              )}
             </button>
 
             {isEntry && (

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Gamepad2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Gamepad2, AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import api from '../../lib/api';
 import styles from './login.module.scss';
 
@@ -137,7 +137,12 @@ export default function LoginPage() {
             onClick={handleLogin}
             disabled={loading}
           >
-            {loading ? 'Logging in...' : 'Login →'}
+            {loading ? 'Logging in...' : (
+              <>
+                Login
+                <ArrowRight size={18} />
+              </>
+            )}
           </button>
 
           {/* Divider */}

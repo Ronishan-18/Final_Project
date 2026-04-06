@@ -7,7 +7,7 @@ import {
   UserPlus, UserCheck, Clock, MessageCircle, UserX, 
   Globe, Calendar, Trophy, CheckCircle, XCircle, Zap, TrendingUp, 
   User, Gamepad2, Link as LinkIcon, ShieldCheck, Mail, MapPin, 
-  Star, Info
+  Star, Info, Briefcase, ArrowLeft
 } from 'lucide-react';
 import { 
   SiFacebook, SiInstagram, SiYoutube, SiX, SiGoogle, SiSteam, SiDiscord,
@@ -338,10 +338,12 @@ export default function PublicProfilePage() {
 
   if (notFound || !user) return (
     <div className={styles.notfound}>
-      <span>😕</span>
+      <XCircle size={64} color="#FF006E" style={{marginBottom: '1rem', opacity: 0.5}} />
       <h2>Profile Not Found</h2>
       <p>This player doesn&apos;t exist or has been removed.</p>
-      <Link href="/players">← Back to Players</Link>
+      <Link href="/players" className={styles.backButton}>
+        <ArrowLeft size={14} /> Back to Players
+      </Link>
     </div>
   );
 
@@ -353,8 +355,8 @@ export default function PublicProfilePage() {
 
   const roleColor = user.role === 'sponsor' ? '#FF006E' :
     user.is_organizer ? '#00F5FF' : '#00F5FF';
-  const roleLabel = user.role === 'sponsor' ? '💼 SPONSOR' :
-    user.is_organizer ? '🏆 ORGANIZER' : '🎮 GAMER';
+  const roleLabel = user.role === 'sponsor' ? <><Briefcase size={14} style={{marginRight: 6}} /> SPONSOR</> :
+    user.is_organizer ? <><Trophy size={14} style={{marginRight: 6}} /> ORGANIZER</> : <><Gamepad2 size={14} style={{marginRight: 6}} /> GAMER</>;
 
   const apiGames = gameIdentities.filter(g => g.game_type === 'api');
   const manualGames = gameIdentities.filter(g => g.game_type === 'manual');
@@ -370,7 +372,9 @@ export default function PublicProfilePage() {
     <div className={styles.page}>
       <div className={styles.inner}>
 
-        <Link href="/players" className={styles.back}>← Back to Players</Link>
+        <Link href="/players" className={styles.back}>
+          <ArrowLeft size={14} /> Back to Players
+        </Link>
 
         {/* 1. HERO */}
         <div className={styles.hero}>
@@ -538,7 +542,7 @@ export default function PublicProfilePage() {
                             <span>Riot ID</span>
                           </div>
                           <div className={styles.api_stat}>
-                            <span style={{ color: '#00FF88' }}>Verified ✅</span>
+                            <span style={{ color: '#00FF88' }}>Verified <CheckCircle size={12} style={{ display: 'inline', marginLeft: 4 }} /></span>
                             <span>Account Status</span>
                           </div>
                         </div>
@@ -640,7 +644,7 @@ export default function PublicProfilePage() {
                 {[
                   { label: 'Arena of Valor', value: profile?.arena_of_valor_id, icon: <GiBroadsword size={20} color="#FF6B00" /> },
                   { label: 'Cricket Sixes', value: profile?.cricket_sixes_id, icon: <GiBullets size={20} color="#00FF88" /> }, // Generic sport placeholder
-                  { label: 'Minecraft', value: profile?.minecraft_id, icon: <SiMinecraft size={20} color="#8B6914" /> },
+                  { label: 'Minecraft', value: profile?.minecraft_id, icon: <Gamepad2 size={20} color="#8B6914" /> },
                   { label: 'Krunker', value: profile?.krunker_id, icon: <GiCrosshair size={20} color="#FF006E" /> },
                   { label: 'FIFA Mobile', value: profile?.fifa_mobile_id, icon: <GiSoccerBall size={20} color="#FFFFFF" /> },
                   { label: 'Honor of Kings', value: profile?.honor_of_kings_id, icon: <GiCrown size={20} color="#FFD700" /> },

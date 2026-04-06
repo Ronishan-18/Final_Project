@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Users, Plus } from 'lucide-react';
 import IconTile from '../../../components/IconTile';
+import TeamLogoUpload from '../../../components/TeamLogoUpload';
 import api from '../../../lib/api';
 import styles from './create_team.module.scss';
 
@@ -70,12 +71,10 @@ export default function CreateTeamPage() {
               />
             </div>
             <div className={`${styles.group} ${styles['group--full']}`}>
-              <label className={styles.label}>Team Logo URL</label>
-              <input
-                className={styles.input}
-                placeholder="Enter image URL for team logo..."
-                value={form.logo}
-                onChange={e => set('logo', e.target.value)}
+              <label className={styles.label}>Team Logo</label>
+              <TeamLogoUpload 
+                value={form.logo} 
+                onChange={(url) => set('logo', url)} 
               />
             </div>
             <div className={`${styles.group} ${styles['group--full']}`}>

@@ -7,6 +7,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import ChatWindow from '@/components/ChatWindow';
 import { formatDistanceToNow } from 'date-fns';
 import styles from './friends.module.scss';
+import { getImageUrl } from '@/lib/urlHelper';
 
 export default function FriendsPage() {
   const router = useRouter();
@@ -152,7 +153,7 @@ export default function FriendsPage() {
                     }}
                   >
                     <div className={styles.avatarWrap}>
-                      <img src={f.avatar ? `http://localhost:5000${f.avatar}` : '/default-avatar.png'} alt="" className={styles.avatar} />
+                      <img src={getImageUrl(f.avatar) || '/default-avatar.png'} alt="" className={styles.avatar} />
                       <span className={`${styles.statusDot} ${onlineUsers[f.friend_id] ? styles.online : styles.offline}`} />
                     </div>
                     <div className={styles.friendInfo}>
@@ -179,7 +180,7 @@ export default function FriendsPage() {
                 {pending.received?.map(r => (
                   <div key={r.friendship_id} className={styles.friendCard} style={{ cursor: 'default' }}>
                     <div className={styles.avatarWrap}>
-                      <img src={r.avatar ? `http://localhost:5000${r.avatar}` : '/default-avatar.png'} alt="" className={styles.avatar} />
+                      <img src={getImageUrl(r.avatar) || '/default-avatar.png'} alt="" className={styles.avatar} />
                     </div>
                     <div className={styles.friendInfo}>
                       <p className={styles.name}>{r.full_name || r.username}</p>

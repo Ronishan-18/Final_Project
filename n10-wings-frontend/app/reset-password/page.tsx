@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { KeyRound, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { resetPassword } from '../../lib/auth';
 import styles from './reset.module.scss';
 
@@ -47,9 +48,11 @@ function ResetForm() {
     <div className={styles.reset}>
       <div className={styles.reset__box}>
         <Link href="/" className={styles.reset__logo}>
-          🎮 <span>N-10 WINGS</span>
+          <img src="/images/myLogo_.png" alt="N10 Wings Logo" className={styles.verify__logo_img} />
         </Link>
-        <div className={styles.reset__icon}>🔑</div>
+        <div className={styles.reset__icon}>
+          <KeyRound size={32} strokeWidth={1.5} />
+        </div>
         <h1 className={styles.reset__title}>RESET PASSWORD</h1>
         <p className={styles.reset__sub}>
           Enter the OTP sent to{' '}
@@ -58,11 +61,17 @@ function ResetForm() {
 
         {success ? (
           <div className={styles.reset__success}>
-            ✅ Password reset! Redirecting to login...
+            <CheckCircle2 size={48} className={styles.verify__success_icon} />
+            <p>Password reset! Redirecting to login...</p>
           </div>
         ) : (
           <>
-            {error && <div className={styles.reset__error}>❌ {error}</div>}
+            {error && (
+              <div className={styles.reset__error}>
+                <AlertCircle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
 
             <div className={styles.reset__group}>
               <label className={styles.reset__label}>OTP Code</label>
@@ -103,13 +112,21 @@ function ResetForm() {
               onClick={handleReset}
               disabled={loading}
             >
-              {loading ? 'Resetting...' : 'Reset Password →'}
+              {loading ? 'Resetting...' : (
+                <>
+                  Reset Password
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
           </>
         )}
 
         <p className={styles.reset__back}>
-          <Link href="/login">← Back to Login</Link>
+          <Link href="/login">
+            <ArrowLeft size={14} />
+            Back to Login
+          </Link>
         </p>
       </div>
     </div>

@@ -1,9 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import passport from './config/passport.js';
-import 'dotenv/config';
 import authRoutes from './routes/auth.routes.js';
 import profileRoutes from './routes/profile.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
@@ -35,14 +35,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-app.use('/api/tournaments', tournamentRoutes);
-app.use('/api/teams', teamRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/public', publicRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/payments', paymentRoutes);   
-app.use('/api/friends', friendRoutes);
-app.use('/api/messages', messageRoutes); 
+// ── Static files ──
+app.use('/uploads', express.static('uploads'));
 
 
 
@@ -68,6 +62,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/game-identities', gameIdentityRoutes);
+app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/friends', friendRoutes);
+app.use('/api/messages', messageRoutes);
 
 // ── Health check ──
 app.get('/', (req, res) => {
@@ -87,7 +89,12 @@ app.use((req, res) => {
 // ── Error handler ──
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
-  res.status(500).json({ success: false, message: 'Internal server error' });
+  res.status(500).json({ 
+    success: false, 
+    message: 'Internal server error',
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+  });
 });
 
 const PORT = process.env.PORT || 5000;

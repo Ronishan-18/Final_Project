@@ -10,25 +10,25 @@ export default function NotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [actedInvites, setActedInvites] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-
   const load = async () => {
     try {
       const data = await fetchNotifications();
       setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      setUnreadCount(0); // On this page, we consider everything seen
+      if (data.unreadCount > 0) {
+        await markAllRead();
+      }
+    } catch (err) {
+      console.error("Failed to load notifications:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load().then(async () => {
-      // Auto-mark all as read on mount
-      try {
-        await markAllRead();
-        setUnreadCount(0);
-      } catch {}
-    });
+    load();
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleTeamAction = async (n: Notification, action: 'accept' | 'decline') => {

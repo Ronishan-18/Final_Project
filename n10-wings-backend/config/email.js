@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
-const transporter = nodemailer.createTransport({
+// Export transporter so tournament.controller.js can use it directly
+export const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -9,77 +10,80 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// ============================================
-// Send Verification OTP Email
-// ============================================
+// ── Send Verification OTP Email ──
 export const sendVerificationEmail = async (email, username, otp) => {
-  const mailOptions = {
-    from: `"E-Sports Platform" <${process.env.EMAIL_USER}>`,
+  await transporter.sendMail({
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: '✅ Verify Your E-Sports Account - OTP',
+    subject: '✅ Verify Your N-10 Wings Account - OTP',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="color: #6C63FF;">Welcome to E-Sports Platform, ${username}! 🎮</h2>
-        <p>Your email verification OTP is:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <span style="background-color: #6C63FF; color: white; padding: 14px 40px; border-radius: 6px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
-            ${otp}
-          </span>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#070709;color:#E8EAF0;border-radius:12px;overflow:hidden;border:1px solid #1a1a2e;">
+        <div style="background:linear-gradient(135deg,#00F5FF22,#8B00FF22);padding:32px;text-align:center;border-bottom:1px solid #1a1a2e;">
+          <div style="font-family:monospace;font-size:28px;font-weight:900;color:#00F5FF;letter-spacing:4px;">N-10 WINGS</div>
+          <div style="color:#8892A4;font-size:12px;letter-spacing:2px;margin-top:6px;">E-SPORTS PLATFORM</div>
         </div>
-        <p style="color: #999; font-size: 13px;">This OTP will expire in <strong>5 minutes</strong>.</p>
-        <p style="color: #999; font-size: 13px;">If you didn't create this account, ignore this email.</p>
-        <hr style="border: none; border-top: 1px solid #eee;" />
-        <p style="color: #bbb; font-size: 12px; text-align: center;">E-Sports Development & Management System</p>
+        <div style="padding:32px;text-align:center;">
+          <h2 style="color:#fff;margin:0 0 8px;">Welcome, ${username}! 🎮</h2>
+          <p style="color:#8892A4;margin:0 0 28px;">Your email verification code:</p>
+          <div style="background:#0D0D16;border:1px solid rgba(0,245,255,0.3);border-radius:12px;padding:24px;display:inline-block;margin-bottom:24px;">
+            <span style="color:#00F5FF;font-size:36px;font-weight:900;letter-spacing:12px;font-family:monospace;">${otp}</span>
+          </div>
+          <p style="color:#8892A4;font-size:13px;margin:0;">Expires in <strong style="color:#E8EAF0;">5 minutes</strong>. If you didn't create this account, ignore this email.</p>
+        </div>
+        <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">
+          <p style="color:#8892A4;font-size:11px;margin:0;">N-10 Wings E-Sports Development & Management System</p>
+        </div>
       </div>
     `
-  };
-  await transporter.sendMail(mailOptions);
+  });
 };
 
-// ============================================
-// Send Password Reset OTP Email
-// ============================================
+// ── Send Password Reset OTP Email ──
 export const sendPasswordResetEmail = async (email, username, otp) => {
-  const mailOptions = {
-    from: `"E-Sports Platform" <${process.env.EMAIL_USER}>`,
+  await transporter.sendMail({
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: '🔐 Reset Your E-Sports Password - OTP',
+    subject: '🔐 Reset Your N-10 Wings Password - OTP',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="color: #e74c3c;">Password Reset Request 🔐</h2>
-        <p>Hi <strong>${username}</strong>,</p>
-        <p>Your password reset OTP is:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <span style="background-color: #e74c3c; color: white; padding: 14px 40px; border-radius: 6px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
-            ${otp}
-          </span>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#070709;color:#E8EAF0;border-radius:12px;overflow:hidden;border:1px solid #1a1a2e;">
+        <div style="background:linear-gradient(135deg,#FF006E22,#8B00FF22);padding:32px;text-align:center;border-bottom:1px solid #1a1a2e;">
+          <div style="font-family:monospace;font-size:28px;font-weight:900;color:#00F5FF;letter-spacing:4px;">N-10 WINGS</div>
         </div>
-        <p style="color: #999; font-size: 13px;">This OTP will expire in <strong>5 minutes</strong>.</p>
-        <p style="color: #999; font-size: 13px;">If you didn't request this, ignore this email.</p>
-        <hr style="border: none; border-top: 1px solid #eee;" />
-        <p style="color: #bbb; font-size: 12px; text-align: center;">E-Sports Development & Management System</p>
+        <div style="padding:32px;text-align:center;">
+          <h2 style="color:#FF006E;margin:0 0 8px;">Password Reset 🔐</h2>
+          <p style="color:#8892A4;margin:0 0 8px;">Hi <strong style="color:#E8EAF0;">${username}</strong>, your reset code:</p>
+          <div style="background:#0D0D16;border:1px solid rgba(255,0,110,0.3);border-radius:12px;padding:24px;display:inline-block;margin:20px 0;">
+            <span style="color:#FF006E;font-size:36px;font-weight:900;letter-spacing:12px;font-family:monospace;">${otp}</span>
+          </div>
+          <p style="color:#8892A4;font-size:13px;margin:0;">Expires in <strong style="color:#E8EAF0;">5 minutes</strong>. If you didn't request this, ignore this email.</p>
+        </div>
+        <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">
+          <p style="color:#8892A4;font-size:11px;margin:0;">N-10 Wings E-Sports Development & Management System</p>
+        </div>
       </div>
     `
-  };
-  await transporter.sendMail(mailOptions);
+  });
 };
 
-// for superadmin
+// ── Send Admin Welcome Email ──
 export const sendAdminWelcomeEmail = async (email, username) => {
-  const mailOptions = {
-    from: `"E-Sports Platform" <${process.env.EMAIL_USER}>`,
+  await transporter.sendMail({
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: '👑 Admin Access Granted — E-Sports Platform',
+    subject: '👑 Admin Access Granted — N-10 Wings',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="color: #1A1A1A;">Admin Access Granted 👑</h2>
-        <p>Hi <strong>${username}</strong>,</p>
-        <p>You have been granted <strong>Admin</strong> access to the E-Sports Platform.</p>
-        <p>You can now login and access the admin dashboard.</p>
-        <hr style="border: none; border-top: 1px solid #eee;" />
-        <p style="color: #bbb; font-size: 12px; text-align: center;">E-Sports Development & Management System</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#070709;color:#E8EAF0;border-radius:12px;overflow:hidden;border:1px solid #1a1a2e;">
+        <div style="background:linear-gradient(135deg,#FFD70022,#FF6B0022);padding:32px;text-align:center;border-bottom:1px solid #1a1a2e;">
+          <div style="font-family:monospace;font-size:28px;font-weight:900;color:#FFD700;letter-spacing:4px;">N-10 WINGS</div>
+        </div>
+        <div style="padding:32px;text-align:center;">
+          <h2 style="color:#FFD700;margin:0 0 12px;">Admin Access Granted 👑</h2>
+          <p style="color:#8892A4;">Hi <strong style="color:#E8EAF0;">${username}</strong>, you now have admin access to N-10 Wings.</p>
+        </div>
+        <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">
+          <p style="color:#8892A4;font-size:11px;margin:0;">N-10 Wings E-Sports Development & Management System</p>
+        </div>
       </div>
     `
-  };
-  await transporter.sendMail(mailOptions);
+  });
 };

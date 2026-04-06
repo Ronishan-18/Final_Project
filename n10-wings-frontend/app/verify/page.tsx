@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Mail, CheckCircle2, AlertCircle, ArrowRight, XCircle } from 'lucide-react';
 import { verifyEmail } from '../../lib/auth';
 import styles from './verify.module.scss';
 
@@ -42,10 +43,12 @@ function VerifyForm() {
     <div className={styles.verify}>
       <div className={styles.verify__box}>
         <Link href="/" className={styles.verify__logo}>
-          🎮 <span>N-10 WINGS</span>
+          <img src="/images/myLogo_.png" alt="N10 Wings Logo" className={styles.verify__logo_img} />
         </Link>
 
-        <div className={styles.verify__icon}>📧</div>
+        <div className={styles.verify__icon}>
+          <Mail size={32} strokeWidth={1.5} />
+        </div>
         <h1 className={styles.verify__title}>VERIFY EMAIL</h1>
         <p className={styles.verify__sub}>
           We sent a 6-digit OTP to<br />
@@ -54,11 +57,17 @@ function VerifyForm() {
 
         {success ? (
           <div className={styles.verify__success}>
-            ✅ Email verified! Redirecting to login...
+            <CheckCircle2 size={48} className={styles.verify__success_icon} />
+            <p>Email verified! Redirecting to login...</p>
           </div>
         ) : (
           <>
-            {error && <div className={styles.verify__error}>❌ {error}</div>}
+            {error && (
+              <div className={styles.verify__error}>
+                <AlertCircle size={18} />
+                <span>{error}</span>
+              </div>
+            )}
 
             <div className={styles.verify__group}>
               <label className={styles.verify__label}>Enter OTP Code</label>
@@ -77,7 +86,12 @@ function VerifyForm() {
               onClick={handleVerify}
               disabled={loading}
             >
-              {loading ? 'Verifying...' : 'Verify Email →'}
+              {loading ? 'Verifying...' : (
+                <>
+                  Verify Email
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
 
             <p className={styles.verify__resend}>

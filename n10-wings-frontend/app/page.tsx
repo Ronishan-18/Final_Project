@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
 import {
   Gamepad2, Trophy, Coins, Handshake, UserPlus, Link as LinkIcon,
-  Swords, Crosshair, Zap, Sword, Users, Briefcase, CheckCircle
+  Swords, Crosshair, Zap, Sword, Users, Briefcase, CheckCircle, ArrowRight, ArrowUpRight, Gem
 } from 'lucide-react';
 import api from '../lib/api';
 import styles from './page.module.scss';
@@ -321,10 +321,10 @@ export default function HomePage() {
               transition={{ delay: 0.65 }}
             >
               <Link href="/register" className={styles.hero__btn_primary}>
-                START PLAYING NOW →
+                START PLAYING NOW <ArrowRight size={18} />
               </Link>
               <Link href="/players" className={styles.hero__btn_secondary}>
-                VIEW PLAYERS ↗
+                VIEW PLAYERS <ArrowUpRight size={18} />
               </Link>
             </motion.div>
 
@@ -385,10 +385,10 @@ export default function HomePage() {
               ) : (
                 <>
                   <div className={styles.hero__card_header}>
-                    <div className={styles.hero__card_avatar}>🎮</div>
+                    <div className={styles.hero__card_avatar}><Gamepad2 size={24} /></div>
                     <div>
                       <p className={styles.hero__card_name}>Pro Gamer LK</p>
-                      <p className={styles.hero__card_rank}>💎 Diamond Rank</p>
+                      <p className={styles.hero__card_rank}><Gem size={12} color="#00F5FF" style={{display:'inline', marginRight:4}}/> Diamond Rank</p>
                     </div>
                     <motion.span
                       className={styles.hero__card_live}
@@ -511,7 +511,7 @@ export default function HomePage() {
                 <p className={styles.how_desc}>{item.desc}</p>
                 {i < howItWorks.length - 1 && (
                   <span className={styles.how_arrow}
-                    style={{ color: item.color }}>→</span>
+                    style={{ color: item.color }}><ArrowRight size={20} /></span>
                 )}
               </motion.div>
             ))}
@@ -588,10 +588,10 @@ export default function HomePage() {
                 </p>
                 <div className={styles.cta_btns}>
                   <Link href="/register" className={styles.cta_btn_primary}>
-                    CREATE FREE ACCOUNT →
+                    CREATE FREE ACCOUNT <ArrowRight size={18} />
                   </Link>
                   <Link href="/tournaments" className={styles.cta_btn_secondary}>
-                    VIEW TOURNAMENTS ↗
+                    VIEW TOURNAMENTS <ArrowUpRight size={18} />
                   </Link>
                 </div>
               </div>
