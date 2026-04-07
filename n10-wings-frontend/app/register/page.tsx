@@ -201,7 +201,7 @@ function RegisterForm() {
             <span>OR</span>
           </div>
 
-           <a href="http://localhost:5000/api/auth/google"
+           <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`}
             className={styles.register__google}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

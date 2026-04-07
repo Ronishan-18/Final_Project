@@ -13,7 +13,7 @@ useEffect(() => {
   if (token) {
     localStorage.setItem('token', token);
     // Fetch user data and save
-    fetch('http://localhost:5000/api/auth/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(r => r.json())

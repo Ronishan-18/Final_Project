@@ -1,19 +1,32 @@
 import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
-// Export transporter so tournament.controller.js can use it directly
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+// ── Auto-switch: Gmail for local dev, Brevo for Railway production ──
+// Local:      NODE_ENV=development → uses Gmail App Password
+// Production: NODE_ENV=production  → uses Brevo SMTP (works on Railway)
+
+export const transporter = process.env.NODE_ENV === 'production'
+  ? nodemailer.createTransport({
+      host: 'smtp-relay.brevo.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.BREVO_USER,      // your Brevo login email
+        pass: process.env.BREVO_SMTP_KEY   // Brevo SMTP key from dashboard
+      }
+    })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,  // your Gmail
+        pass: process.env.EMAIL_PASS   // 16-digit App Password
+      }
+    });
 
 // ── Send Verification OTP Email ──
 export const sendVerificationEmail = async (email, username, otp) => {
   await transporter.sendMail({
-    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER || process.env.BREVO_USER}>`,
     to: email,
     subject: '✅ Verify Your N-10 Wings Account - OTP',
     html: `
@@ -41,7 +54,7 @@ export const sendVerificationEmail = async (email, username, otp) => {
 // ── Send Password Reset OTP Email ──
 export const sendPasswordResetEmail = async (email, username, otp) => {
   await transporter.sendMail({
-    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER || process.env.BREVO_USER}>`,
     to: email,
     subject: '🔐 Reset Your N-10 Wings Password - OTP',
     html: `
@@ -68,7 +81,7 @@ export const sendPasswordResetEmail = async (email, username, otp) => {
 // ── Send Admin Welcome Email ──
 export const sendAdminWelcomeEmail = async (email, username) => {
   await transporter.sendMail({
-    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER}>`,
+    from: `"N-10 Wings E-Sports" <${process.env.EMAIL_USER || process.env.BREVO_USER}>`,
     to: email,
     subject: '👑 Admin Access Granted — N-10 Wings',
     html: `
@@ -78,7 +91,7 @@ export const sendAdminWelcomeEmail = async (email, username) => {
         </div>
         <div style="padding:32px;text-align:center;">
           <h2 style="color:#FFD700;margin:0 0 12px;">Admin Access Granted 👑</h2>
-          <p style="color:#8892A4;">Hi <strong style="color:#E8EAF0;">${username}</strong>, you now have admin access to N-10 Wings.</p>
+          <p style="color:#8892A4;">Hi <strong style="color:#E8EAF0;">${username}</strong>, you now have full admin access to N-10 Wings.</p>
         </div>
         <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">
           <p style="color:#8892A4;font-size:11px;margin:0;">N-10 Wings E-Sports Development & Management System</p>

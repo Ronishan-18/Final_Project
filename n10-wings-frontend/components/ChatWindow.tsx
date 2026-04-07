@@ -153,7 +153,7 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
       <div className={styles.header}>
         <div className={styles.avatarWrap}>
           <img 
-            src={friend?.avatar ? `http://localhost:5000${friend.avatar}` : '/default-avatar.png'} 
+            src={friend?.avatar ? `${process.env.NEXT_PUBLIC_API_URL}${friend.avatar}` : '/default-avatar.png'} 
             alt="" 
             className={styles.avatar} 
           />
@@ -194,7 +194,7 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
               <div className={`${styles.msgRow} ${isMine ? styles.mine : styles.theirs}`}>
                 {!isMine && (
                   <img 
-                    src={msg.sender_avatar ? `http://localhost:5000${msg.sender_avatar}` : '/default-avatar.png'} 
+                    src={msg.sender_avatar ? `${process.env.NEXT_PUBLIC_API_URL}${msg.sender_avatar}` : '/default-avatar.png'} 
                     className={styles.msgAvatar} 
                     alt="" 
                   />
@@ -210,7 +210,7 @@ export default function ChatWindow({ friendId, onBack }: ChatWindowProps) {
         {isTyping && (
           <div className={`${styles.msgRow} ${styles.theirs}`}>
             <img 
-              src={friend?.avatar ? `http://localhost:5000${friend.avatar}` : '/default-avatar.png'} 
+              src={friend?.avatar ? `${process.env.NEXT_PUBLIC_API_URL}${friend.avatar}` : '/default-avatar.png'} 
               className={styles.msgAvatar} 
               alt="" 
             />

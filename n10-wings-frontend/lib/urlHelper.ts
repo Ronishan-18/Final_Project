@@ -12,7 +12,7 @@ export const getImageUrl = (path: string | null | undefined): string => {
   }
   
   // Base URL for the backend
-  const API_URL = 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   
   // Ensure the relative path starts with a slash
   const cleanPath = path.startsWith('/') ? path : `/${path}`;

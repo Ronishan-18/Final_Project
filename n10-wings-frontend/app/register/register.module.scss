@@ -179,6 +179,14 @@
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    svg {
+      margin-bottom: -1px; // Slight adjustment for Orbitron font baseline
+    }
 
     &:hover:not(:disabled) {
       opacity: 0.85;
