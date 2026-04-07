@@ -1,4 +1,4 @@
-import db from '../n10-wings-backend/config/db.js';
+import db from './config/db.js';
 
 async function checkSchema() {
   try {
