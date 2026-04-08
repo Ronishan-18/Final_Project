@@ -24,4 +24,5 @@ pool.getConnection((err, connection) => {
   connection.release();
 });
 
+export const pool_raw = pool;
 export default pool.promise();
