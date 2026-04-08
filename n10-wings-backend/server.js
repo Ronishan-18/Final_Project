@@ -22,9 +22,17 @@ import messageRoutes from './routes/message.routes.js';
 
 const app = express();
 
+// ── Production Settings ──
+app.set('trust proxy', 1); // Required for Railway/Vercel cookies
+
 // ── Middleware (MUST come before ALL routes) ──
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001',
+    process.env.CLIENT_URL,
+    'https://final-project-kappa-peach.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
