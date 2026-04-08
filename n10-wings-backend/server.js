@@ -19,16 +19,6 @@ import { initSocket } from './config/socket.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import { pool_raw } from './config/db.js';
-import MySQLStoreFactory from 'express-mysql-session';
-
-const options = {
-  clearExpired: true,
-  checkExpirationInterval: 900000,
-  expiration: 86400000,
-};
-
-const MySQLStore = MySQLStoreFactory(session);
-const sessionStore = new MySQLStore(options, pool_raw);
 
 
 const app = express();
@@ -74,7 +64,6 @@ app.use('/uploads', express.static('uploads'));
 app.use(session({
   key: 'n10_wings_session',
   secret: process.env.JWT_SECRET,
-  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
