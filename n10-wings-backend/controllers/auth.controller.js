@@ -85,7 +85,9 @@ export const register = async (req, res) => {
     );
 
     // Send OTP email
+    console.log(`📤 Sending verification email to: ${email}...`);
     await sendVerificationEmail(email, username, otp);
+    console.log(`✅ Verification email sent to: ${email}`);
 
     res.status(201).json({
       success: true,
@@ -94,10 +96,10 @@ export const register = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Register Error:', error);
+    console.error('❌ Register Error Details:', error);
     res.status(500).json({
       success: false,
-      message: 'Registration failed!'
+      message: `Registration failed: ${error.message || 'Internal Server Error'}`
     });
   }
 };

@@ -417,9 +417,12 @@ export const requestJoinTeam = async (req, res) => {
     }
 
     const [insertResult] = await db.query(
-      "INSERT INTO team_members (team_id, user_id, role, status) VALUES (?, ?, 'member', 'join_request')",
+      "INSERT INTO team_members (team_id, user_id, role, status) VALUES (?, ?, 'member', 'join_request') ON DUPLICATE KEY UPDATE status = 'join_request', role = 'member'",
       [teamId, userId]
     );
+
+    // Get the correct ID for the notification (either new or existing)
+    const requestId = insertResult.insertId || (await db.query('SELECT id FROM team_members WHERE team_id = ? AND user_id = ?', [teamId, userId]))[0][0].id;
 
     // Notify team owner
     await createNotification(
@@ -427,10 +430,10 @@ export const requestJoinTeam = async (req, res) => {
       'team_join_request',
       '🚨 New Join Request',
       `Player @${req.user.username} wants to join your team "${teamName}".`,
-      { team_id: Number(teamId), request_id: insertResult.insertId, user_id: userId }
+      { team_id: Number(teamId), request_id: requestId, user_id: userId }
     );
 
-    res.status(200).json({ success: true, message: 'Join request sent!' });
+    res.status(200).json({ success: true, message: 'Join request sent! Waiting for captain approval.' });
   } catch (error) {
     console.error('Request Join Error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

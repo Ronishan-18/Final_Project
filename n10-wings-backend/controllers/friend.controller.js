@@ -61,7 +61,7 @@ export const sendFriendRequest = async (req, res) => {
 export const respondToFriendRequest = async (req, res) => {
   try {
     const receiverId = req.user.id;
-    const { friendship_id, requester_id, action } = req.body;
+    const { friendship_id, requester_id, action, notification_id } = req.body;
 
     if (!['accept', 'decline'].includes(action)) {
       return res.status(400).json({ success: false, message: 'Invalid action!' });
@@ -71,28 +71,43 @@ export const respondToFriendRequest = async (req, res) => {
     let friendships = [];
     if (friendship_id) {
       [friendships] = await db.query(
-        "SELECT * FROM friendships WHERE id = ? AND receiver_id = ? AND status = 'pending'",
+        "SELECT * FROM friendships WHERE id = ? AND receiver_id = ?",
         [friendship_id, receiverId]
       );
     } else if (requester_id) {
       [friendships] = await db.query(
-        "SELECT * FROM friendships WHERE requester_id = ? AND receiver_id = ? AND status = 'pending'",
+        "SELECT * FROM friendships WHERE requester_id = ? AND receiver_id = ?",
         [requester_id, receiverId]
       );
     }
 
-    if (!friendships.length) return res.status(404).json({ success: false, message: 'Friend request not found!' });
+    if (!friendships.length) {
+      return res.status(404).json({ success: false, message: 'Friend request not found!' });
+    }
 
-    const fId = friendships[0].id;
+    const friendship = friendships[0];
+    const fId = friendship.id;
+
+    // If already processed, just return success
+    if (friendship.status !== 'pending') {
+      // Still try to mark notification as acted if it was missed
+      if (notification_id) {
+        await db.query('UPDATE notifications SET is_acted = TRUE WHERE id = ?', [notification_id]);
+      }
+      return res.json({ 
+        success: true, 
+        message: friendship.status === 'accepted' ? 'Already accepted!' : 'Already declined.' 
+      });
+    }
+
     const newStatus = action === 'accept' ? 'accepted' : 'declined';
     await db.query('UPDATE friendships SET status = ?, updated_at = NOW() WHERE id = ?', [newStatus, fId]);
 
     // Mark notification as acted upon if ID provided
     if (notification_id) {
       await db.query('UPDATE notifications SET is_acted = TRUE WHERE id = ?', [notification_id]);
-    }
-    // Also try to find it by data if not provided (fallback)
-    else {
+    } else {
+      // Fallback: try to find it by data
       await db.query(
         "UPDATE notifications SET is_acted = TRUE WHERE type = 'friend_request' AND user_id = ? AND (JSON_EXTRACT(data, '$.friendship_id') = ? OR JSON_EXTRACT(data, '$.requester_id') = ?)",
         [receiverId, fId, requester_id]
@@ -102,7 +117,7 @@ export const respondToFriendRequest = async (req, res) => {
     if (action === 'accept') {
       const [[receiver]] = await db.query('SELECT username FROM users WHERE id = ?', [receiverId]);
       await createNotification(
-        friendships[0].requester_id,
+        friendship.requester_id,
         'friend_accepted',
         '👥 Friend Request Accepted',
         `${receiver.username} accepted your friend request!`,
