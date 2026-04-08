@@ -19,7 +19,7 @@ import { initSocket } from './config/socket.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import { pool_raw } from './config/db.js';
-import MySQLStore from 'express-mysql-session';
+import MySQLStoreFactory from 'express-mysql-session';
 
 const options = {
   clearExpired: true,
@@ -27,6 +27,7 @@ const options = {
   expiration: 86400000,
 };
 
+const MySQLStore = MySQLStoreFactory(session);
 const sessionStore = new MySQLStore(options, pool_raw);
 
 
