@@ -18,7 +18,6 @@ import { createServer } from 'http';
 import { initSocket } from './config/socket.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
-import { pool_raw } from './config/db.js';
 
 
 const app = express();
@@ -28,20 +27,14 @@ app.set('trust proxy', 1); // Required for Railway/Vercel cookies
 
 // ── Middleware (MUST come before ALL routes) ──
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    const allowed = [
-      'http://localhost:3000', 
-      'http://localhost:3001',
-      process.env.CLIENT_URL,
-      'https://final-project-kappa-peach.vercel.app'
-    ];
-    if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001',
+    process.env.CLIENT_URL,
+    'https://final-project-kappa-peach.vercel.app',
+    'https://final-project-ronishan-18.vercel.app',
+    /^https:\/\/final-project-.*-ronishans-projects\.vercel\.app$/
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -55,20 +48,13 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 // ── Static files ──
 app.use('/uploads', express.static('uploads'));
 
-
-
-// ── Static files ──
-app.use('/uploads', express.static('uploads'));
-
 // ── Session & Passport ──
 app.use(session({
-  key: 'n10_wings_session',
   secret: process.env.JWT_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-site cookies
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
