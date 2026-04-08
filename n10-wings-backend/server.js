@@ -19,10 +19,15 @@ import { initSocket } from './config/socket.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import { pool_raw } from './config/db.js';
-import MySQLStoreFactory from 'express-mysql-session';
+import MySQLStore from 'express-mysql-session';
 
-const MySQLStore = MySQLStoreFactory(session);
-const sessionStore = new MySQLStore({}, pool_raw);
+const options = {
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000,
+};
+
+const sessionStore = new MySQLStore(options, pool_raw);
 
 
 const app = express();
