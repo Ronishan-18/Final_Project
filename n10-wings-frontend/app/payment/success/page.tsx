@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader, Trophy, Gamepad2, ArrowRight } from 'lucide-react';
 import { verifyPayment } from '@/lib/payments';
@@ -7,7 +7,7 @@ import styles from './payment-success.module.scss';
 
 type Status = 'loading' | 'success' | 'failed' | 'pending';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get('session_id');
@@ -184,5 +184,17 @@ export default function PaymentSuccessPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' }}>
+         <div className={styles.spinner} />
+       </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

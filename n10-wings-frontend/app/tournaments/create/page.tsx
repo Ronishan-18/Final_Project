@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Trophy, Calendar, Users, DollarSign, AlertCircle } from 'lucide-react';
 import { createCreationCheckout } from '@/lib/payments';
@@ -11,7 +11,7 @@ const TYPES = ['single elimination', 'double elimination', 'round robin', 'swiss
 const MAX_TEAMS_OPTIONS = [4, 8, 16, 32, 64, 128];
 const CREATION_FEE_USD = (parseInt(process.env.NEXT_PUBLIC_CREATION_FEE || '500') / 100).toFixed(2);
 
-export default function CreateTournamentPage() {
+function CreateTournamentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentCancelled = searchParams.get('payment') === 'cancelled';
@@ -153,5 +153,17 @@ export default function CreateTournamentPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function CreateTournamentPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' }}>
+        <p style={{ color: '#8892A4' }}>Loading...</p>
+      </div>
+    }>
+      <CreateTournamentContent />
+    </Suspense>
   );
 }

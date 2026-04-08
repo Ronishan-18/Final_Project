@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -33,7 +33,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 const COMMISSION = 0.05;
 
-export default function TournamentDetailPage() {
+function TournamentDetailContent() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -351,5 +351,17 @@ export default function TournamentDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TournamentDetailPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' }}>
+        <div className={styles.spinner} />
+      </div>
+    }>
+      <TournamentDetailContent />
+    </Suspense>
   );
 }

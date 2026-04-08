@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Check, CheckCheck, Trophy, Users, X, ShieldCheck, ShieldX, UserCheck, UserX } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trophy, Users, X, ShieldCheck, ShieldX, UserCheck, UserX, UserPlus } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 import { fetchNotifications, markRead, markAllRead, Notification } from '@/lib/notifications';
@@ -109,7 +109,8 @@ export default function NotificationBell() {
 
   const getIcon = (type: string) => {
     if (type === 'tournament_launched') return <Trophy size={16} />;
-    if (type === 'team_invitation' || type === 'friend_request' || type === 'team_join_request') return <Users size={16} />;
+    if (type === 'team_invitation' || type === 'friend_request') return <Users size={16} />;
+    if (type === 'team_join_request') return <UserPlus size={16} />;
     if (type === 'team_invite_accepted' || type === 'friend_accepted' || type === 'team_request_accepted') return <UserCheck size={16} />;
     if (type === 'team_invite_declined' || type === 'team_request_declined') return <UserX size={16} />;
     if (type === 'organizer_approval' || type === 'account_restored') return <ShieldCheck size={16} />;
@@ -119,8 +120,8 @@ export default function NotificationBell() {
 
   const getColor = (type: string) => {
     if (type === 'tournament_launched') return '#00F5FF';
-    if (type === 'team_invitation') return '#00F5FF';
-    if (type === 'friend_request' || type === 'team_join_request') return '#00F5FF';
+    if (type === 'team_invitation' || type === 'friend_request') return '#00F5FF';
+    if (type === 'team_join_request') return '#FFD700'; // Golden for requests
     if (type === 'team_invite_accepted' || type === 'friend_accepted' || type === 'team_request_accepted') return '#00e57a';
     if (type === 'team_invite_declined' || type === 'team_request_declined') return '#ff3366';
     if (type === 'organizer_approval' || type === 'account_restored') return '#32CD32';

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { UserPlus, UserCheck, UserX, MessageCircle, Search, Users, ChevronLeft, ChevronRight, LayoutDashboard, UserMinus } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getMyFriends, getPendingRequests, sendFriendRequest, respondToRequest, removeFriend } from '@/lib/friends';
@@ -9,7 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import styles from './friends.module.scss';
 import { getImageUrl } from '@/lib/urlHelper';
 
-export default function FriendsPage() {
+function FriendsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { onlineUsers, socket } = useSocket();
@@ -243,5 +243,17 @@ export default function FriendsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function FriendsPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0A0A0F' }}>
+        <p style={{ color: '#8892A4' }}>Loading Wings Social...</p>
+      </div>
+    }>
+      <FriendsPageContent />
+    </Suspense>
   );
 }

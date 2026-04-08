@@ -50,6 +50,15 @@ export default function TeamDetailPage() {
   const [inviteUsername, setInviteUsername] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  const [uiMsg, setUiMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (uiMsg) {
+      const timer = setTimeout(() => setUiMsg(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [uiMsg]);
+
   useEffect(() => {
     fetchData();
     const userStr = localStorage.getItem('user');
@@ -111,18 +120,20 @@ export default function TeamDetailPage() {
         setTeam(prev => prev ? { ...prev, ...editData, tag: editData.tag.toUpperCase() } : null);
         setIsEditing(false);
       } else {
-        alert(res.data.message || 'Failed to update team');
+        setUiMsg({ text: res.data.message || 'Failed to update team', type: 'error' });
       }
     } catch (error: any) {
       console.error('Update team error:', error);
-      alert(error.response?.data?.message || 'Failed to update team');
+      setUiMsg({ text: error.response?.data?.message || 'Failed to update team', type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleRequestToJoin = async () => {
+    if (hasRequested) return;
     setRequestLoading(true);
+    setUiMsg(null);
     try {
       const token = localStorage.getItem('token');
       const res = await api.post(`/teams/${team?.id}/request-join`, {}, {
@@ -130,11 +141,12 @@ export default function TeamDetailPage() {
       });
       if (res.data.success) {
         setHasRequested(true);
-        alert(res.data.message);
+        setUiMsg({ text: res.data.message || 'Join request sent!', type: 'success' });
       }
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to send request');
-      if (e.response?.data?.message === 'Join request already sent!') {
+      const msg = e.response?.data?.message || 'Failed to send request';
+      setUiMsg({ text: msg, type: 'error' });
+      if (msg === 'Join request already sent!' || msg.includes('already in a team')) {
         setHasRequested(true);
       }
     } finally {
@@ -156,7 +168,7 @@ export default function TeamDetailPage() {
         }
       }
     } catch (e: any) {
-      alert(e.response?.data?.message || `Failed to ${action} request`);
+      setUiMsg({ text: e.response?.data?.message || `Failed to ${action} request`, type: 'error' });
     } finally {
       setRequestActionLoading(null);
     }
@@ -166,6 +178,7 @@ export default function TeamDetailPage() {
     e.preventDefault();
     if (!inviteUsername) return;
     setInviteLoading(true);
+    setUiMsg(null);
     try {
       const token = localStorage.getItem('token');
       const res = await api.post(`/teams/${team?.id}/invite`, { username: inviteUsername }, {
@@ -173,10 +186,10 @@ export default function TeamDetailPage() {
       });
       if (res.data.success) {
         setInviteUsername('');
-        alert(res.data.message || 'Invitation sent successfully!');
+        setUiMsg({ text: res.data.message || 'Invitation sent successfully!', type: 'success' });
       }
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to send invitation');
+      setUiMsg({ text: e.response?.data?.message || 'Failed to send invitation', type: 'error' });
     } finally {
       setInviteLoading(false);
     }
@@ -184,6 +197,7 @@ export default function TeamDetailPage() {
 
   const handleRemoveMember = async (userId: number) => {
     if (!window.confirm('Are you sure you want to remove this member?')) return;
+    setUiMsg(null);
     try {
       const token = localStorage.getItem('token');
       const res = await api.delete(`/teams/${id}/members/${userId}`, {
@@ -191,26 +205,27 @@ export default function TeamDetailPage() {
       });
       if (res.data.success) {
         setMembers(prev => prev.filter(m => m.user_id !== userId));
-        alert('Member removed successfully');
+        setUiMsg({ text: 'Member removed successfully', type: 'success' });
       }
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to remove member');
+      setUiMsg({ text: e.response?.data?.message || 'Failed to remove member', type: 'error' });
     }
   };
 
   const handleDeleteTeam = async () => {
     if (!window.confirm('CRITICAL: Are you sure you want to delete this team? This action cannot be undone.')) return;
+    setUiMsg(null);
     try {
       const token = localStorage.getItem('token');
       const res = await api.delete(`/teams/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        alert('Team deleted successfully');
-        router.push('/teams');
+        setUiMsg({ text: 'Team deleted successfully. Redirecting...', type: 'success' });
+        setTimeout(() => router.push('/teams'), 2000);
       }
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to delete team');
+      setUiMsg({ text: e.response?.data?.message || 'Failed to delete team', type: 'error' });
     }
   };
 
@@ -228,6 +243,27 @@ export default function TeamDetailPage() {
         <Link href="/teams" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8892A4', textDecoration: 'none', marginBottom: '2rem', fontSize: '14px' }}>
           <ArrowLeft size={16} /> Back to Teams
         </Link>
+
+        {/* Global Feedback Message */}
+        {uiMsg && (
+          <div style={{
+            background: uiMsg.type === 'success' ? 'rgba(0, 255, 136, 0.1)' : 'rgba(255, 0, 110, 0.1)',
+            color: uiMsg.type === 'success' ? '#00FF88' : '#FF006E',
+            border: `1px solid ${uiMsg.type === 'success' ? 'rgba(0, 255, 136, 0.2)' : 'rgba(255, 0, 110, 0.2)'}`,
+            padding: '12px 16px',
+            borderRadius: '10px',
+            marginBottom: '2rem',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontFamily: '"Rajdhani", sans-serif',
+            animation: 'fadeIn 0.3s ease'
+          }}>
+            {uiMsg.type === 'success' ? <Check size={18} /> : <X size={18} />}
+            {uiMsg.text}
+          </div>
+        )}
 
         {/* Hero */}
         <div style={{ background: '#12121A', padding: '2rem', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'center' }}>
