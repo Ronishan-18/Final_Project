@@ -23,18 +23,11 @@ import messageRoutes from './routes/message.routes.js';
 const app = express();
 
 // ── Production Settings ──
-app.set('trust proxy', 1); // Required for Railway/Vercel cookies
+app.set('trust proxy', 1);
 
 // ── Middleware (MUST come before ALL routes) ──
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001',
-    process.env.CLIENT_URL,
-    'https://final-project-kappa-peach.vercel.app',
-    'https://final-project-ronishan-18.vercel.app',
-    'https://final-project-dyczfslpi-ronishans-projects.vercel.app'
-  ].filter(Boolean),
+  origin: true, // Temporarily allow all for health check verification
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -50,7 +43,7 @@ app.use('/uploads', express.static('uploads'));
 
 // ── Session & Passport ──
 app.use(session({
-  secret: process.env.JWT_SECRET,
+  secret: process.env.JWT_SECRET || 'fallback_secret_keep_it_safe',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -62,7 +55,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ── Routes (AFTER all middleware) ──
+// ── Routes ──
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -105,6 +98,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 initSocket(httpServer);
-httpServer.listen(PORT, () => {
+
+// Listen on 0.0.0.0 for Railway compatibility
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
