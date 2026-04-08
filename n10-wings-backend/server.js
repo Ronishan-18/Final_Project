@@ -33,8 +33,8 @@ app.use(cors({
     process.env.CLIENT_URL,
     'https://final-project-kappa-peach.vercel.app',
     'https://final-project-ronishan-18.vercel.app',
-    /^https:\/\/final-project-.*-ronishans-projects\.vercel\.app$/
-  ],
+    'https://final-project-dyczfslpi-ronishans-projects.vercel.app'
+  ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
