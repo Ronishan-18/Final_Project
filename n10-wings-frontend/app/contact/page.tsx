@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, MapPin, Gamepad2, Timer, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, MapPin, Gamepad2, Timer, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+import api from '../../lib/api';
+
+
 import styles from './contact.module.scss';
 
 export default function Contact() {
@@ -10,18 +13,52 @@ export default function Contact() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      return showToast('Please fill all fields', 'error');
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.post('/public/contact', formData);
+      if (res.data.success) {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        showToast('Message sent successfully!');
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to send message', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   return (
     <div className={styles.contact}>
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`${styles.toast} ${styles[`toast--${toast.type}`]}`}>
+          {toast.msg}
+        </div>
+      )}
+
 
       {/* Hero */}
       <section className={styles.hero}>
         <div className="container">
-          <div className="badge"><Mail size={12} style={{marginRight: 4}} /> Get In Touch</div>
           <h1 className={styles.hero__title}>
+
             CONTACT <span className="gradient-text">US</span>
           </h1>
           <p className={styles.hero__sub}>
@@ -117,9 +154,18 @@ export default function Contact() {
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     />
                   </div>
-                  <button onClick={handleSubmit} className={styles.form__btn}>
-                    Send Message <ArrowRight size={16} />
+                  <button 
+                    onClick={handleSubmit} 
+                    className={styles.form__btn}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>Sending... <Loader2 size={16} className="animate-spin" /></>
+                    ) : (
+                      <>Send Message <ArrowRight size={16} /></>
+                    )}
                   </button>
+
                 </>
               )}
             </div>

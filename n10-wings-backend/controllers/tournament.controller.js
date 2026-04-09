@@ -16,15 +16,33 @@ export const createTournament = async (req, res) => {
     const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type, mode, venue_address, registration_open_date, registration_close_date } = req.body;
     if (!title || !game) return res.status(400).json({ success: false, message: 'Title and game are required!' });
 
+    // ── ACTIVE TOURNAMENT VALIDATION ──
+    const [activeTournaments] = await db.query(
+      "SELECT id, title, status FROM tournaments WHERE organizer_id = ? AND status NOT IN ('completed', 'cancelled')",
+      [req.user.id]
+    );
+
+    if (activeTournaments.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `You currently have an active tournament ("${activeTournaments[0].title}" - ${activeTournaments[0].status.toUpperCase()}). Please complete or cancel it before creating a new one.`
+      });
+    }
+
+    const isBR = ['PUBG', 'Free Fire'].includes(game);
+    const final_tournament_type = isBR ? 'battle royale' : (tournament_type || 'single elimination');
+
     let challongeData = null;
     try {
-      challongeData = await createChallongeTournament({ name: title, tournamentType: tournament_type || 'single elimination', startAt: start_date });
+      if (!isBR) {
+        challongeData = await createChallongeTournament({ name: title, tournamentType: final_tournament_type, startAt: start_date });
+      }
     } catch (e) { console.warn('Challonge skip:', e.message); }
 
     const [result] = await db.query(
       `INSERT INTO tournaments (organizer_id,title,game,description,rules,prize_pool,max_teams,entry_fee,start_date,end_date,tournament_type,status,challonge_id,challonge_url,mode,venue_address,registration_open_date,registration_close_date)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,'open',?,?,?,?,?,?)`,
-      [req.user.id, title, game, description||null, rules||null, prize_pool||0, max_teams||16, entry_fee||0, start_date||null, end_date||null, tournament_type||'single elimination', challongeData?.id||null, challongeData?.full_challonge_url||null, mode||'online', venue_address||null, registration_open_date||null, registration_close_date||null]
+      [req.user.id, title, game, description||null, rules||null, prize_pool||0, max_teams||16, entry_fee||0, start_date||null, end_date||null, final_tournament_type, challongeData?.id||null, challongeData?.full_challonge_url||null, mode||'online', venue_address||null, registration_open_date||null, registration_close_date||null]
     );
 
     await db.query('UPDATE organizer_profiles SET tournaments_hosted = tournaments_hosted + 1 WHERE user_id = ?', [req.user.id]).catch(()=>{});
@@ -43,7 +61,7 @@ export const getTournaments = async (req, res) => {
     const userId = req.user?.id;
 
     let query = `
-      SELECT t.*, u.username as organizer_username, p.full_name as organizer_name,
+      SELECT t.*, t.winner_team_name, u.username as organizer_username, p.full_name as organizer_name,
         COUNT(DISTINCT r.id) as registered_teams
       FROM tournaments t
       LEFT JOIN users u ON t.organizer_id = u.id
@@ -167,6 +185,18 @@ export const deleteTournament = async (req, res) => {
     const [rows] = await db.query('SELECT * FROM tournaments WHERE id = ? AND organizer_id = ?', [req.params.id, req.user.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Not found!' });
     if (rows[0].challonge_id) { try { await deleteChallongeTournament(rows[0].challonge_id); } catch {} }
+
+    // ── CASCADE DELETES ──
+    const deleteQueries = [
+      'DELETE FROM tournament_registrations WHERE tournament_id = ?',
+      'DELETE FROM matches WHERE tournament_id = ?',
+      'DELETE FROM prize_claims WHERE tournament_id = ?',
+      'DELETE FROM payments WHERE tournament_id = ?'
+    ];
+    for (const q of deleteQueries) {
+      try { await db.query(q, [req.params.id]); } catch(e) {}
+    }
+
     await db.query('DELETE FROM tournaments WHERE id = ?', [req.params.id]);
     res.status(200).json({ success: true, message: 'Tournament deleted!' });
   } catch (error) {
@@ -363,9 +393,10 @@ export const declareWinner = async (req, res) => {
         'tournament_launched',
         isWinner ? `🏆 You Won "${tournament.title}"!` : `🏁 "${tournament.title}" Has Ended`,
         isWinner
-          ? `Your team "${winnerName}" won! Prize: LKR ${prizePool.toLocaleString()}. We'll contact you for transfer.`
+          ? `Your team "${winnerName}" won! Prize: LKR ${prizePool.toLocaleString()}. Visit the tournament page to submit your prize claim details.`
           : `Tournament ended. Winner: "${winnerName}". Well played!`,
         { tournament_id: parseInt(id) }
+
       );
 
       transporter.sendMail({
@@ -384,8 +415,9 @@ export const declareWinner = async (req, res) => {
               <div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,0,0.1));border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:24px;margin-bottom:24px;">
                 <div style="color:#8892A4;font-size:12px;letter-spacing:2px;margin-bottom:8px;">PRIZE POOL</div>
                 <div style="color:#FFD700;font-size:36px;font-weight:900;font-family:monospace;">LKR ${prizePool.toLocaleString()}</div>
-                <div style="color:#8892A4;font-size:13px;margin-top:8px;">Our team will contact you within 48 hours for prize transfer.</div>
+                <div style="color:#8892A4;font-size:13px;margin-top:8px;">Please visit the tournament page on N-10 Wings to submit your prize claim and payout details.</div>
               </div>
+
               <a href="${process.env.FRONTEND_URL}/tournaments/${id}" style="background:linear-gradient(135deg,#FFD700,#FF6B00);color:#0A0A0F;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:900;font-size:14px;">VIEW TOURNAMENT →</a>
             </div>
             <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">

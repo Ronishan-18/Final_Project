@@ -110,7 +110,7 @@ function PaymentSuccessContent() {
               <div className={styles.amount_box}>
                 <span className={styles.amount_label}>Amount paid</span>
                 <span className={styles.amount_val}>
-                  ${(paymentData.amount / 100).toFixed(2)}
+                  LKR {(paymentData.amount / 100).toFixed(2)}
                 </span>
               </div>
             )}

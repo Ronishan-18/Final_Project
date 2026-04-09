@@ -131,25 +131,30 @@
   }
 
   &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     width: 100%;
+    padding: 1.2rem;
     background: #00F5FF;
     color: #0A0A0F;
     border: none;
-    border-radius: 6px;
-    padding: 1rem;
+    border-radius: 12px;
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    &:hover {
-      opacity: 0.85;
-      transform: translateY(-1px);
-      box-shadow: 0 8px 25px rgba(0,245,255,0.3);
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 245, 255, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 

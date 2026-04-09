@@ -7,8 +7,8 @@ export default function About() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className="container">
-          <div className="badge">⚡ About Us</div>
           <h1 className={styles.hero__title}>
+
             ABOUT{' '}
             <span className="gradient-text">N-10 WINGS</span>
           </h1>

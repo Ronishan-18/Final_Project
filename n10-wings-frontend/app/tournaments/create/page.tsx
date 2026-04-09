@@ -9,7 +9,7 @@ import styles from './create.module.scss';
 const GAMES = ['PUBG', 'Valorant', 'Free Fire', 'Mobile Legends', 'Call of Duty', 'Other'];
 const TYPES = ['single elimination', 'double elimination', 'round robin', 'swiss'];
 const MAX_TEAMS_OPTIONS = [4, 8, 16, 32, 64, 128];
-const CREATION_FEE_USD = (parseInt(process.env.NEXT_PUBLIC_CREATION_FEE || '500') / 100).toFixed(2);
+const CREATION_FEE_LKR = parseInt(process.env.NEXT_PUBLIC_CREATION_FEE || '500');
 
 function CreateTournamentContent() {
   const router = useRouter();
@@ -75,7 +75,7 @@ function CreateTournamentContent() {
           <IconTile icon={Trophy} color="#00F5FF" size={22} tileSize={44} radius={10} />
           <div>
             <h1 className={styles.heading}>Create tournament</h1>
-            <p className={styles.sub}>A creation fee of <strong>${CREATION_FEE_USD}</strong> is required to publish your tournament.</p>
+            <p className={styles.sub}>A creation fee of <strong>LKR {CREATION_FEE_LKR}</strong> is required to publish your tournament.</p>
           </div>
         </div>
 
@@ -127,8 +127,8 @@ function CreateTournamentContent() {
               </select>
             </div>
             <div className={styles.field}>
-              <label>Prize pool (USD)</label>
-              <input name="prize_pool" type="number" min="0" step="0.01" value={form.prize_pool} onChange={handle} placeholder="0.00" />
+              <label>Prize pool (LKR)</label>
+              <input name="prize_pool" type="number" min="0" step="1" value={form.prize_pool} onChange={handle} placeholder="0" />
             </div>
             <div className={styles.field}>
               <label>Start date</label>
@@ -147,8 +147,8 @@ function CreateTournamentContent() {
               <input name="registration_close_date" type="datetime-local" value={form.registration_close_date} onChange={handle} />
             </div>
             <div className={styles.field}>
-              <label>Entry fee per team (USD)</label>
-              <input name="entry_fee" type="number" min="0" step="0.01" value={form.entry_fee} onChange={handle} placeholder="0.00" />
+              <label>Entry fee per team (LKR)</label>
+              <input name="entry_fee" type="number" min="0" step="1" value={form.entry_fee} onChange={handle} placeholder="0" />
             </div>
           </div>
 
@@ -169,12 +169,19 @@ function CreateTournamentContent() {
 
           <div className={styles.feeNotice}>
             <DollarSign size={16} />
-            <span>You will be redirected to Stripe to pay the <strong>${CREATION_FEE_USD} creation fee</strong>. Your tournament will be created automatically after payment.</span>
+            <span>
+              Total Payment: <strong>LKR {(CREATION_FEE_LKR + (parseFloat(form.prize_pool) || 0)).toLocaleString()}</strong>
+              <br />
+              <small style={{ opacity: 0.7 }}>
+                (LKR {CREATION_FEE_LKR.toLocaleString()} creation fee + LKR {(parseFloat(form.prize_pool) || 0).toLocaleString()} prize pool escrow)
+              </small>
+            </span>
           </div>
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? 'Redirecting to payment...' : `Pay $${CREATION_FEE_USD} and create tournament`}
+            {loading ? 'Redirecting to payment...' : `Pay LKR ${(CREATION_FEE_LKR + (parseFloat(form.prize_pool) || 0)).toLocaleString()} and Publish`}
           </button>
+
         </form>
       </div>
     </main>

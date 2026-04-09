@@ -10,6 +10,11 @@ import {
   getAppeals,
   resolveAppeal,
 } from '../controllers/admin.controller.js';
+import {
+  getSupportMessages,
+  replyToSupportMessage,
+} from '../controllers/support.controller.js';
+
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -26,5 +31,10 @@ router.put('/organizer-applications/:id', handleOrganizerApplication);
 router.put('/organizers/:id/suspend', toggleOrganizerSuspension);
 router.get('/appeals', getAppeals);
 router.put('/appeals/:id', resolveAppeal);
+
+// Support Messages
+router.get('/support-messages', getSupportMessages);
+router.post('/support-messages/:id/reply', replyToSupportMessage);
+
 
 export default router;

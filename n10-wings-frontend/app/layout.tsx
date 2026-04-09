@@ -4,7 +4,11 @@ import './globals.scss';           // ← .scss not .css
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ThemeInitializer from '@/components/ThemeInitializer';
+import ThunderBackground from '@/components/ThunderBackground';
 import { SocketProvider } from '@/contexts/SocketContext';
+
+
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,11 +35,17 @@ export default function RootLayout({
       <body>
         <SocketProvider>
           <ThemeInitializer />
+          <ThunderBackground />
           <Navbar />
           {children}
           <Footer />
+
+
+
+
         </SocketProvider>
       </body>
+
     </html>
   );
 }

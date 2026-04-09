@@ -90,15 +90,17 @@ export const updateClaimStatus = async (req, res) => {
         claim.user_id,
         'system',
         '💰 Prize Paid',
-        `Your prize claim of $${claim.amount} has been paid successfully.`
+        `Your prize claim of LKR ${claim.amount.toLocaleString()} has been paid successfully.`
       );
+
     } else if (status === 'rejected') {
       await createNotification(
         claim.user_id,
         'system',
         '❌ Prize Claim Rejected',
-        `Your prize claim of $${claim.amount} was rejected. Note: ${notes}`
+        `Your prize claim of LKR ${claim.amount.toLocaleString()} was rejected. Note: ${notes}`
       );
+
     }
 
     res.status(200).json({ success: true, message: `Claim marked as ${status}.` });

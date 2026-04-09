@@ -21,7 +21,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import prizeClaimRoutes from './routes/prizeClaim.routes.js';
-
+import brRoutes from './routes/br.routes.js';
 const app = express();
 
 console.log('--- RESTORING PRODUCTION SERVICES ---');
@@ -73,7 +73,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/prize-claims', prizeClaimRoutes);
-
+app.use('/api/br', brRoutes);
 // Health check
 app.get('/', (req, res) => {
   res.json({

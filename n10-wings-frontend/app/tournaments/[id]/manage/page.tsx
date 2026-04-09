@@ -12,6 +12,9 @@ import IconTile from '../../../../components/IconTile';
 import api from '../../../../lib/api';
 import styles from './manage.module.scss';
 import { getImageUrl } from '../../../../lib/urlHelper';
+import BRScoreboard from './components/BRScoreboard';
+import ConfirmModal from '../../../../components/ConfirmModal';
+
 
 interface Registration {
   id: number; username: string; full_name?: string; avatar?: string;
@@ -53,6 +56,8 @@ export default function ManageTournamentPage() {
   const [selectedWinner, setSelectedWinner] = useState('');
   const [declaringWinner, setDeclaringWinner] = useState(false);
   const [winnerConfirm, setWinnerConfirm] = useState(false);
+  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast(msg); setToastType(type);
@@ -87,10 +92,14 @@ export default function ManageTournamentPage() {
     finally { setActionLoading(null); }
   };
 
-  const handleStart = async () => {
+  const handleStart = () => {
     const approvedCount = registrations.filter(r => r.status === 'approved').length;
     if (approvedCount < 2) { showToast('Need at least 2 approved teams!', 'error'); return; }
-    if (!confirm(`Start tournament with ${approvedCount} teams? This will lock registrations and generate the bracket.`)) return;
+    setIsStartModalOpen(true);
+  };
+
+  const confirmStart = async () => {
+    setIsStartModalOpen(false);
     setActionLoading('start');
     try {
       const res = await api.post(`/tournaments/${id}/start`);
@@ -100,6 +109,7 @@ export default function ManageTournamentPage() {
     } catch (err: any) { showToast(err.response?.data?.message || 'Failed to start!', 'error'); }
     finally { setActionLoading(null); }
   };
+
 
   const handleMatchUpdate = async (matchKey: string, challongeMatchId?: string) => {
     const scores = scoreInput[matchKey];
@@ -246,13 +256,20 @@ export default function ManageTournamentPage() {
 
         {/* ── Tabs ── */}
         <div className={styles.tabs}>
-          {[
-            { key: 'registrations', label: `Registrations (${registrations.length})`, icon: Users },
-            { key: 'matches', label: `Matches (${matches.length})`, icon: Trophy },
-            { key: 'bracket', label: 'Bracket', icon: Zap },
-            { key: 'announce', label: 'Announce', icon: Megaphone },
-            { key: 'winner', label: 'Declare Winner', icon: Crown },
-          ].map(t => (
+          {(
+            tournament.tournament_type === 'battle royale' ? [
+              { key: 'registrations', label: `Registrations (${registrations.length})`, icon: Users },
+              { key: 'br_matches', label: `BR Scoreboard`, icon: Trophy },
+              { key: 'announce', label: 'Announce', icon: Megaphone },
+              { key: 'winner', label: 'Declare Winner', icon: Crown },
+            ] : [
+              { key: 'registrations', label: `Registrations (${registrations.length})`, icon: Users },
+              { key: 'matches', label: `Matches (${matches.length})`, icon: Trophy },
+              { key: 'bracket', label: 'Bracket', icon: Zap },
+              { key: 'announce', label: 'Announce', icon: Megaphone },
+              { key: 'winner', label: 'Declare Winner', icon: Crown },
+            ]
+          ).map(t => (
             <button
               key={t.key}
               className={`${styles.tab} ${tab === t.key ? styles['tab--active'] : ''}`}
@@ -322,6 +339,19 @@ export default function ManageTournamentPage() {
                 <p>No registrations yet</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── BR MATCHES TAB ── */}
+        {tab === 'br_matches' && tournament.tournament_type === 'battle royale' && (
+          <div className={styles.section}>
+            <BRScoreboard 
+              tournamentId={id} 
+              approvedRegistrations={approvedRegistrations} 
+              showToast={showToast} 
+              isOngoing={isOngoing} 
+              isCompleted={isCompleted} 
+            />
           </div>
         )}
 
@@ -592,6 +622,17 @@ export default function ManageTournamentPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={isStartModalOpen}
+        onClose={() => setIsStartModalOpen(false)}
+        onConfirm={confirmStart}
+        title="Start Tournament?"
+        message={`This will lock registrations and generate the tournament bracket for ${registrations.filter(r => r.status === 'approved').length} approved teams. This action cannot be undone.`}
+        confirmText="Yes, Start Now"
+        cancelText="Maybe Later"
+        isLoading={actionLoading === 'start'}
+      />
     </div>
   );
 }

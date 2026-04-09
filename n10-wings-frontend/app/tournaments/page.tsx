@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Trophy, Gamepad2, Users, Zap, Plus,
-  Search, Filter, Calendar, ChevronRight, Lock, CheckCircle
+  Search, Filter, Calendar, ChevronRight, Lock, CheckCircle, X
 } from 'lucide-react';
+
 import IconTile from '../../components/IconTile';
 import api from '../../lib/api';
 import styles from './tournaments.module.scss';
@@ -27,6 +28,7 @@ interface Tournament {
   is_registered?: boolean;
   challonge_url?: string;
   entry_fee_required?: boolean;
+  winner_team_name?: string;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -47,8 +49,12 @@ function TournamentsContent() {
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [myOwnedTeams, setMyOwnedTeams] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   
   const router = useRouter();
+
   const searchParams = useSearchParams();
   const filterParam = searchParams.get('filter');
 
@@ -64,8 +70,19 @@ function TournamentsContent() {
     const role = localStorage.getItem('role');
     setIsLoggedIn(!!token);
     setIsOrganizer(orgStatus === 'true' || role === 'admin');
+
     if (token) fetchMyTeams();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+
 
   const fetchMyTeams = async () => {
     try {
@@ -127,85 +144,133 @@ function TournamentsContent() {
 
         {/* Header */}
         <div className={styles.header}>
-          <div>
-            <div className="badge">
-              <Trophy size={12} strokeWidth={2.5} /> Tournaments
-            </div>
-            <h1 className={styles.header__title}>
-              FIND YOUR <span className="gradient-text">TOURNAMENT</span>
-            </h1>
-            <p className={styles.header__sub}>
-              Compete, win prizes and climb the leaderboard
-            </p>
-          </div>
-          <div className={styles.header__actions}>
+          <h1 className={styles.header__title}>
+
+            FIND YOUR <span className="gradient-text">TOURNAMENT</span>
+          </h1>
+          <p className={styles.header__sub}>
+            Compete, win prizes and climb the leaderboard! Explore all upcoming events.
+          </p>
+
+        </div>
+
+
+        {/* Filters & Search */}
+        <div className={styles.filters} ref={searchRef}>
+          <div className={styles.filters__header}>
             {isLoggedIn && (
               <div className={styles.tabs}>
                 <button 
                   className={`${styles.tab} ${activeTab === 'all' ? styles.tab_active : ''}`}
                   onClick={() => setActiveTab('all')}
                 >
-                  All Tournaments
+                  All
                 </button>
                 <button 
                   className={`${styles.tab} ${activeTab === 'my' ? styles.tab_active : ''}`}
                   onClick={() => setActiveTab('my')}
                 >
-                  My Tournaments
+                  My
                 </button>
               </div>
             )}
             <button onClick={handleCreateTournamentClick} className={styles.create_btn}>
-              <Plus size={16} strokeWidth={2.5} /> Create Tournament
+              <Plus size={16} strokeWidth={2.5} /> Create
             </button>
+          </div>
+
+          <div className={styles.filters__wrapper}>
+
+            <span className={styles.filters__icon}>
+              <Search size={18} color="#8892A4" />
+            </span>
+            <input
+              type="text"
+              className={styles.filters__input}
+              placeholder="Search by tournament name or game..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            {search && (
+              <button 
+                className={styles.filters__clear} 
+                onClick={() => { setSearch(''); fetchTournaments({ search: '' }); }}
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Dropdown Results */}
+            {showDropdown && search.length > 0 && (
+              <div className={styles.filters__dropdown}>
+                {loading ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    Searching...
+                  </div>
+                ) : tournaments.length === 0 ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    No tournaments found
+                  </div>
+                ) : (
+                  tournaments.slice(0, 5).map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/tournaments/${t.id}`}
+                      className={styles.filters__item}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <div className={styles.filters__item_info}>
+                        <div className={styles.filters__item_name}>{t.title}</div>
+                        <div className={styles.filters__item_meta}>
+                          {t.game} • LKR {Number(t.prize_pool).toLocaleString()}
+                        </div>
+                      </div>
+                      <ChevronRight size={14} color="#8892A4" />
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.filters__chips_container}>
+            <div className={styles.filters__chips}>
+              {GAMES.map(g => (
+                <button
+                  key={g}
+                  className={`${styles.chip} ${gameFilter === g ? styles['chip--active'] : ''}`}
+                  onClick={() => {
+                    setGameFilter(g);
+                    fetchTournaments({ game: g });
+                  }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+            <div className={styles.filters__row}>
+              {STATUSES.map(s => (
+                <button
+                  key={s}
+                  className={`${styles.status_chip} ${statusFilter === s ? styles['status_chip--active'] : ''}`}
+                  onClick={() => { 
+                    setStatusFilter(s); 
+                    fetchTournaments({ status: s }); 
+                  }}
+                  style={s !== 'All' ? { '--sc': STATUS_COLOR[s] } as any : {}}
+                >
+                  {s === 'All' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className={styles.filters}>
-          <div className={styles.filters__search}>
-            <Search size={15} color="#8892A4" strokeWidth={2} />
-            <input
-              className={styles.filters__input}
-              placeholder="Search tournaments..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <div className={styles.filters__chips}>
-            {GAMES.map(g => (
-              <button
-                key={g}
-                className={`${styles.chip} ${gameFilter === g ? styles['chip--active'] : ''}`}
-                onClick={() => {
-                  setGameFilter(g);
-                  fetchTournaments({ game: g });
-                }}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-          <div className={styles.filters__row}>
-            {STATUSES.map(s => (
-              <button
-                key={s}
-                className={`${styles.status_chip} ${statusFilter === s ? styles['status_chip--active'] : ''}`}
-                onClick={() => { 
-                  setStatusFilter(s); 
-                  fetchTournaments({ status: s }); 
-                }}
-                style={s !== 'All' ? { '--sc': STATUS_COLOR[s] } as any : {}}
-              >
-                {s === 'All' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-            <button className={styles.search_btn} onClick={handleSearch}>
-              <Search size={14} strokeWidth={2} /> Search
-            </button>
-          </div>
-        </div>
 
         {/* Results count */}
         <p className={styles.count}>
@@ -254,37 +319,48 @@ function TournamentsContent() {
                   {t.tournament_type}
                 </div>
 
-                <div className={styles.card__stats}>
-                  <div className={styles.card__stat}>
-                    <Zap size={14} color="#FFD700" strokeWidth={2} />
-                    <div>
-                      <div className={styles.card__stat_val} style={{ color: '#FFD700' }}>
-                        LKR {Number(t.prize_pool).toLocaleString()}
-                      </div>
-                      <div className={styles.card__stat_label}>Prize Pool</div>
+                {t.status === 'completed' && t.winner_team_name ? (
+                  <div style={{ padding: '0.75rem', background: 'rgba(255,215,0,0.1)', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,215,0,0.3)' }}>
+                    <div style={{ color: '#FFD700', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Trophy size={11} strokeWidth={2.5} /> WINNER
+                    </div>
+                    <div style={{ color: '#FFF', fontSize: '1rem', fontWeight: 700 }}>
+                      {t.winner_team_name}
                     </div>
                   </div>
-                  <div className={styles.card__stat}>
-                    <Users size={14} color="#00F5FF" strokeWidth={2} />
-                    <div>
-                      <div className={styles.card__stat_val} style={{ color: '#00F5FF' }}>
-                        {t.registered_teams}/{t.max_teams}
-                      </div>
-                      <div className={styles.card__stat_label}>Teams</div>
-                    </div>
-                  </div>
-                  {t.start_date && (
+                ) : (
+                  <div className={styles.card__stats}>
                     <div className={styles.card__stat}>
-                      <Calendar size={14} color="#FF6B00" strokeWidth={2} />
+                      <Zap size={14} color="#FFD700" strokeWidth={2} />
                       <div>
-                        <div className={styles.card__stat_val} style={{ color: '#FF6B00' }}>
-                          {new Date(t.start_date).toLocaleDateString()}
+                        <div className={styles.card__stat_val} style={{ color: '#FFD700' }}>
+                          LKR {Number(t.prize_pool).toLocaleString()}
                         </div>
-                        <div className={styles.card__stat_label}>Start Date</div>
+                        <div className={styles.card__stat_label}>Prize Pool</div>
                       </div>
                     </div>
-                  )}
-                </div>
+                    <div className={styles.card__stat}>
+                      <Users size={14} color="#00F5FF" strokeWidth={2} />
+                      <div>
+                        <div className={styles.card__stat_val} style={{ color: '#00F5FF' }}>
+                          {t.registered_teams}/{t.max_teams}
+                        </div>
+                        <div className={styles.card__stat_label}>Teams</div>
+                      </div>
+                    </div>
+                    {t.start_date && (
+                      <div className={styles.card__stat}>
+                        <Calendar size={14} color="#FF6B00" strokeWidth={2} />
+                        <div>
+                          <div className={styles.card__stat_val} style={{ color: '#FF6B00' }}>
+                            {new Date(t.start_date).toLocaleDateString()}
+                          </div>
+                          <div className={styles.card__stat_label}>Start Date</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Fill bar */}
                 <div className={styles.card__fill_track}>

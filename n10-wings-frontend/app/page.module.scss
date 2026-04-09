@@ -23,13 +23,16 @@ $text-gray: #8892A4;
     background-image: url('/images/hero_bg.png');
     background-size: cover;
     background-position: center;
+    opacity: 0.4; // Reduced opacity for better text contrast and thunder visibility
+
     &::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(7, 7, 9, 0.4) 0%, #070709 95%);
+      background: radial-gradient(circle at center, rgba(7, 7, 9, 0.4) 0%, transparent 95%);
       z-index: 1;
     }
+
   }
 
   &__grid {

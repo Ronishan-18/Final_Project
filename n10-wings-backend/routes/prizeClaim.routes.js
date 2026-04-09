@@ -1,11 +1,11 @@
 import express from 'express';
 import { claimPrize, getClaims, updateClaimStatus } from '../controllers/prizeClaim.controller.js';
-import { verifyToken, isAdmin } from '../middleware/auth.js';
+import { protect, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.post('/', verifyToken, claimPrize);
-router.get('/', verifyToken, isAdmin, getClaims);
-router.put('/:id/status', verifyToken, isAdmin, updateClaimStatus);
+router.post('/', protect, claimPrize);
+router.get('/', protect, authorize('admin'), getClaims);
+router.put('/:id/status', protect, authorize('admin'), updateClaimStatus);
 
 export default router;

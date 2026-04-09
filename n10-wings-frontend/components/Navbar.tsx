@@ -110,7 +110,6 @@ export default function Navbar() {
     { href: '/players', label: 'PLAYERS' },
     { href: '/tournaments', label: 'TOURNAMENTS' },
     { href: '/teams', label: 'TEAMS' },
-    { href: '/sponsors', label: 'SPONSORS' },
     { href: '/friends', label: 'FRIENDS' },
   ];
 

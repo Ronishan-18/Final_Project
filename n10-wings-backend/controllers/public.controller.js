@@ -14,13 +14,13 @@ export const getLandingStats = async (req, res) => {
     // 4. Total Sponsors
     const [[{ sponsor_count }]] = await db.query("SELECT COUNT(*) as sponsor_count FROM users WHERE role = 'sponsor'");
     
-    // 5. Featured Tournament (latest ongoing or open with biggest prize pool)
+    // 5. Featured Tournament (latest ongoing/open/completed with biggest prize pool)
     const [tournaments] = await db.query(`
       SELECT t.*, u.username as organizer_username
       FROM tournaments t
       LEFT JOIN users u ON t.organizer_id = u.id
-      WHERE t.status IN ('open', 'ongoing')
-      ORDER BY t.prize_pool DESC, t.created_at DESC
+      WHERE t.status IN ('open', 'ongoing', 'completed')
+      ORDER BY t.status = 'ongoing' DESC, t.status = 'open' DESC, t.prize_pool DESC, t.created_at DESC
       LIMIT 1
     `);
 

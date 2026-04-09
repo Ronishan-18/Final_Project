@@ -4,8 +4,10 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Users, Gamepad2, Plus, Search, ChevronRight, Crown
+  Users, Gamepad2, Plus, Search, ChevronRight, Crown, X
 } from 'lucide-react';
+import { useRef } from 'react';
+
 import api from '../../lib/api';
 import styles from './teams.module.scss';
 import { getImageUrl } from '../../lib/urlHelper';
@@ -32,6 +34,9 @@ function TeamsContent() {
   const [gameFilter, setGameFilter] = useState('All');
   const [activeTab, setActiveTab] = useState<'all' | 'my'>('all');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,11 +51,20 @@ function TeamsContent() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
     fetchTeams();
   }, [activeTab]);
+
 
   const fetchTeams = async (params: Record<string, string> = {}) => {
     setLoading(true);
@@ -91,69 +105,120 @@ function TeamsContent() {
 
         {/* Header */}
         <div className={styles.header}>
-          <div>
-            <div className="badge">
-              <Users size={12} strokeWidth={2.5} /> Teams Directory
-            </div>
-            <h1 className={styles.header__title}>
-              FIND YOUR <span className="gradient-text">SQUAD</span>
-            </h1>
-            <p className={styles.header__sub}>
-              Browse top teams, explore rosters, and join the action
-            </p>
-          </div>
-          <div className={styles.header__actions}>
+          <h1 className={styles.header__title}>
+
+            FIND YOUR <span className="gradient-text">SQUAD</span>
+          </h1>
+          <p className={styles.header__sub}>
+            Browse top teams, explore rosters, and join the action!
+          </p>
+
+        </div>
+
+
+        {/* Filters & Search */}
+        <div className={styles.filters} ref={searchRef}>
+          <div className={styles.filters__header}>
             {isLoggedIn && (
               <div className={styles.tabs}>
                 <button 
                   className={`${styles.tab} ${activeTab === 'all' ? styles.tab_active : ''}`}
                   onClick={() => setActiveTab('all')}
                 >
-                  All Teams
+                  All
                 </button>
                 <button 
                   className={`${styles.tab} ${activeTab === 'my' ? styles.tab_active : ''}`}
                   onClick={() => setActiveTab('my')}
                 >
-                  My Teams
+                  My
                 </button>
               </div>
             )}
             <button onClick={handleCreateTeamClick} className={styles.create_btn}>
-              <Plus size={16} strokeWidth={2.5} /> Create Team
+              <Plus size={16} strokeWidth={2.5} /> Create
             </button>
           </div>
-        </div>
 
-        {/* Filters */}
-        <div className={styles.filters}>
-          <div className={styles.filters__search}>
-            <Search size={15} color="#8892A4" strokeWidth={2} />
+          <div className={styles.filters__wrapper}>
+
+            <span className={styles.filters__icon}>
+              <Search size={18} color="#8892A4" />
+            </span>
             <input
+              type="text"
               className={styles.filters__input}
               placeholder="Search by team name or tag..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
+            {search && (
+              <button 
+                className={styles.filters__clear} 
+                onClick={() => { setSearch(''); fetchTeams({ search: '' }); }}
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Dropdown Results */}
+            {showDropdown && search.length > 0 && (
+              <div className={styles.filters__dropdown}>
+                {loading ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    Searching...
+                  </div>
+                ) : teams.length === 0 ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#8892A4' }}>
+                    No teams found
+                  </div>
+                ) : (
+                  teams.slice(0, 5).map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/teams/${t.id}`}
+                      className={styles.filters__item}
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      <div className={styles.filters__avatar_small}>
+                        {t.logo ? (
+                          <img src={getImageUrl(t.logo)} alt={t.name} />
+                        ) : (
+                          <Users size={20} color="#8892A4" />
+                        )}
+                      </div>
+                      <div className={styles.filters__item_info}>
+                        <div className={styles.filters__item_name}>{t.name}</div>
+                        <div className={styles.filters__item_meta}>
+                          [{t.tag}] • {t.game}
+                        </div>
+                      </div>
+                      <ChevronRight size={14} color="#8892A4" />
+                    </Link>
+                  ))
+                )}
+              </div>
+            )}
           </div>
-          <div className={styles.filters__row}>
-            <div className={styles.filters__chips}>
-              {GAMES.map(g => (
-                <button
-                  key={g}
-                  className={`${styles.chip} ${gameFilter === g ? styles['chip--active'] : ''}`}
-                  onClick={() => { setGameFilter(g); fetchTeams({ game: g }); }}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-            <button className={styles.search_btn} onClick={handleSearch}>
-              <Search size={14} strokeWidth={2} /> Search
-            </button>
+
+          <div className={styles.filters__chips}>
+            {GAMES.map(g => (
+              <button
+                key={g}
+                className={`${styles.chip} ${gameFilter === g ? styles['chip--active'] : ''}`}
+                onClick={() => { setGameFilter(g); fetchTeams({ game: g }); }}
+              >
+                {g}
+              </button>
+            ))}
           </div>
         </div>
+
 
         {/* Results count */}
         <p className={styles.count}>

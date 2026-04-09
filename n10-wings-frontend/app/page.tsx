@@ -390,13 +390,6 @@ export default function HomePage() {
                       <p className={styles.hero__card_name}>Pro Gamer LK</p>
                       <p className={styles.hero__card_rank}><Gem size={12} color="#00F5FF" style={{display:'inline', marginRight:4}}/> Diamond Rank</p>
                     </div>
-                    <motion.span
-                      className={styles.hero__card_live}
-                      animate={{ opacity: [1, 0.5, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      ● LIVE
-                    </motion.span>
                   </div>
                   <div className={styles.hero__card_stats}>
                     {[
@@ -425,7 +418,7 @@ export default function HomePage() {
               animate={{ y: [-8, 8, -8] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
-              <Trophy size={14} style={{ marginRight: 6, display: 'inline' }} /> Tournament Live
+              <Trophy size={14} style={{ marginRight: 6, display: 'inline' }} /> Tournaments
             </motion.div>
             <motion.div
               className={styles.hero__mini}

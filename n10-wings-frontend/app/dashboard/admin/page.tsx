@@ -6,7 +6,7 @@ import {
   Users, Trophy, ShieldCheck, LayoutDashboard,
   TrendingUp, UserCheck, UserX, Search, ChevronDown,
   CheckCircle, XCircle, Shield, Gamepad2, Briefcase,
-  Crown, LogOut, RefreshCw, Eye, AlertTriangle
+  Crown, LogOut, RefreshCw, Eye, AlertTriangle, Send, Mail
 } from 'lucide-react';
 import IconTile from '../../../components/IconTile';
 import LoadingScreen from '../../../components/LoadingScreen';
@@ -56,7 +56,8 @@ interface Application {
   created_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'applications' | 'appeals' | 'claims';
+type Tab = 'overview' | 'users' | 'applications' | 'appeals' | 'claims' | 'support';
+
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -66,7 +67,12 @@ export default function AdminDashboard() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [appeals, setAppeals] = useState<any[]>([]);
   const [claims, setClaims] = useState<any[]>([]);
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [isReplyLoading, setIsReplyLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const [usersLoading, setUsersLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -132,7 +138,9 @@ export default function AdminDashboard() {
     if (tab === 'applications') fetchApplications();
     if (tab === 'appeals') fetchAppeals();
     if (tab === 'claims') fetchClaims();
+    if (tab === 'support') fetchSupportMessages();
   }, [tab, fetchUsers]);
+
 
   const fetchAppeals = async () => {
     try {
@@ -140,6 +148,14 @@ export default function AdminDashboard() {
       if (res.data.success) setAppeals(res.data.appeals);
     } catch {}
   };
+
+  const fetchSupportMessages = async () => {
+    try {
+      const res = await api.get('/admin/support-messages');
+      if (res.data.success) setSupportMessages(res.data.messages);
+    } catch {}
+  };
+
 
   const fetchClaims = async () => {
     try {
@@ -211,6 +227,20 @@ export default function AdminDashboard() {
     finally { setActionLoading(null); }
   };
 
+  const handleReply = async () => {
+    if (!selectedMessage || !replyText) return;
+    setIsReplyLoading(true);
+    try {
+      const res = await api.post(`/admin/support-messages/${selectedMessage.id}/reply`, { reply: replyText });
+      showToast(res.data.message);
+      setSelectedMessage(null);
+      setReplyText('');
+      fetchSupportMessages();
+    } catch { showToast('Failed to send reply'); }
+    finally { setIsReplyLoading(false); }
+  };
+
+
   const handleLogout = async () => {
     try { await api.post('/auth/logout'); } catch {}
     localStorage.clear();
@@ -225,7 +255,9 @@ export default function AdminDashboard() {
     { key: 'applications', icon: ShieldCheck, label: 'Applications', badge: stats?.pending_applications },
     { key: 'appeals', icon: AlertTriangle, label: 'Appeals' },
     { key: 'claims', icon: Trophy, label: 'Prize Claims' },
+    { key: 'support', icon: Mail, label: 'Support' },
   ];
+
 
   return (
     <div className={styles.admin}>
@@ -280,6 +312,7 @@ export default function AdminDashboard() {
               {tab === 'applications' && 'Organizer Applications'}
               {tab === 'appeals' && 'Suspension Appeals'}
               {tab === 'claims' && 'Prize Claims'}
+              {tab === 'support' && 'Support Tickets'}
             </h1>
             <p className={styles.header__sub}>
               {tab === 'overview' && 'Real-time platform statistics'}
@@ -287,7 +320,9 @@ export default function AdminDashboard() {
               {tab === 'applications' && `${stats?.pending_applications || 0} pending review`}
               {tab === 'appeals' && `${appeals.length} pending appeals`}
               {tab === 'claims' && `${claims.length} pending claims`}
+              {tab === 'support' && `${supportMessages.filter(m => m.status === 'pending').length} pending tickets`}
             </p>
+
           </div>
           <button className={styles.header__refresh} onClick={() => {
             fetchStats();
@@ -638,50 +673,48 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── CLAIMS TAB ── */}
-        {tab === 'claims' && (
+        {/* ── SUPPORT TAB ── */}
+        {tab === 'support' && (
           <div className={styles.applications}>
-            {claims.length === 0 ? (
+            {supportMessages.length === 0 ? (
               <div className={styles.empty}>
                 <CheckCircle size={40} color="#00FF88" strokeWidth={1.5} />
-                <p>No pending claims!</p>
+                <p>No messages yet!</p>
               </div>
             ) : (
               <div className={styles.app_grid}>
-                {claims.map((claim) => (
-                  <div key={claim.id} className={styles.app_card}>
+                {supportMessages.map((msg) => (
+                  <div key={msg.id} className={styles.app_card}>
                     <div className={styles.app_card__header}>
                       <div>
-                        <div className={styles.app_card__name}>{claim.tournament_title}</div>
-                        <div className={styles.app_card__email}>Team: {claim.team_name}</div>
-                        <div className={styles.app_card__email}>User: {claim.user_email}</div>
-                        <div className={styles.app_card__country} style={{ color: '#00FF88' }}>
-                          Amount: ${claim.amount}
+                        <div className={styles.app_card__name}>{msg.name}</div>
+                        <div className={styles.app_card__email}>{msg.email}</div>
+                        <div className={styles.app_card__meta}>
+                          Subject: <span style={{ color: '#00F5FF' }}>{msg.subject}</span>
                         </div>
                       </div>
+                      <span className={`${styles.badge} ${msg.status === 'replied' ? styles['badge--active'] : styles['badge--suspended']}`}>
+                        {msg.status.toUpperCase()}
+                      </span>
                     </div>
-                    <p className={styles.app_card__bio} style={{ borderLeft: '3px solid #00F5FF', paddingLeft: '1rem' }}>
-                      Bank Details: {claim.bank_details}
+                    <p className={styles.app_card__bio} style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                      &quot;{msg.message}&quot;
                     </p>
+                    {msg.status === 'replied' && (
+                      <div className={styles.app_card__meta} style={{ marginTop: '0.5rem', color: '#8892A4' }}>
+                        <strong>Reply sent:</strong> {msg.admin_reply}
+                      </div>
+                    )}
                     <div className={styles.app_card__meta}>
-                      Submitted {new Date(claim.created_at).toLocaleDateString()}
+                      Received {new Date(msg.created_at).toLocaleString()}
                     </div>
                     <div className={styles.app_card__actions}>
                       <button
                         className={styles.approve_btn}
-                        onClick={() => handleClaimStatus(claim.id, 'paid')}
-                        disabled={actionLoading === claim.id}
+                        onClick={() => setSelectedMessage(msg)}
                       >
-                        <CheckCircle size={14} strokeWidth={2} />
-                        Mark as Paid
-                      </button>
-                      <button
-                        className={styles.reject_btn}
-                        onClick={() => handleClaimStatus(claim.id, 'rejected')}
-                        disabled={actionLoading === claim.id}
-                      >
-                        <XCircle size={14} strokeWidth={2} />
-                        Reject
+                        <Mail size={14} strokeWidth={2} />
+                        {msg.status === 'replied' ? 'Send Another Reply' : 'Reply'}
                       </button>
                     </div>
                   </div>
@@ -690,6 +723,49 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* ── REPLY MODAL ── */}
+        {selectedMessage && (
+          <div className={styles.modal_overlay}>
+            <div className={styles.modal}>
+              <div className={styles.modal__header}>
+                <h3 className={styles.modal__title}>Reply to {selectedMessage.name}</h3>
+                <button onClick={() => setSelectedMessage(null)} className={styles.modal__close}>
+                  <XCircle size={20} />
+                </button>
+              </div>
+              <div className={styles.modal__body}>
+                <div className={styles.modal__field}>
+                  <label>Message From User</label>
+                  <div className={styles.modal__quote}>&quot;{selectedMessage.message}&quot;</div>
+                </div>
+                <div className={styles.modal__field}>
+                  <label>Your Reply</label>
+                  <textarea
+                    placeholder="Write your email reply here..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    rows={6}
+                  />
+                </div>
+              </div>
+              <div className={styles.modal__footer}>
+                <button onClick={() => setSelectedMessage(null)} className={styles.cancel_btn}>
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleReply} 
+                  className={styles.submit_btn}
+                  disabled={isReplyLoading || !replyText}
+                >
+                  {isReplyLoading ? 'Sending...' : 'Send Email Reply'}
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

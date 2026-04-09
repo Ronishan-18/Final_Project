@@ -72,10 +72,8 @@ export default function PlayersPage() {
 
         {/* Header */}
         <div className={styles.players__header}>
-          <div className="badge">
-            <Gamepad2 size={12} style={{ marginRight: 4 }} /> Player Directory
-          </div>
           <h1 className={styles.players__title}>
+
             FIND <span className="gradient-text">PLAYERS</span>
           </h1>
           <p className={styles.players__sub}>

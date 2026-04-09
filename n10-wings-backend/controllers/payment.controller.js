@@ -3,7 +3,9 @@ import db from '../config/db.js';
 import { createNotification } from './notification.controller.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const CREATION_FEE = parseInt(process.env.STRIPE_TOURNAMENT_CREATION_FEE || '500');
+const CREATION_FEE = parseInt(process.env.STRIPE_TOURNAMENT_CREATION_FEE || '50000'); // 500.00 LKR (Stripe minimum is ~150 LKR)
+const MIN_STRIPE_AMOUNT = 15000; // 150.00 LKR (approx $0.50 USD)
+
 
 const PLATFORM_COMMISSION_RATE = 0.05;
 
@@ -34,6 +36,14 @@ export const createTeamEntryCheckout = async (req, res) => {
 
     const commissionAmount = Math.round(entryFeeAmount * PLATFORM_COMMISSION_RATE);
     const totalAmount = entryFeeAmount + commissionAmount;
+
+    // STRIPE SAFETY: Ensure total amount is above minimum (~$0.50 USD)
+    if (totalAmount < MIN_STRIPE_AMOUNT) {
+      return res.status(400).json({
+        success: false,
+        message: `The total amount (LKR ${(totalAmount / 100).toFixed(2)}) is below the minimum allowed payment of LKR ${(MIN_STRIPE_AMOUNT / 100).toFixed(2)}.`
+      });
+    }
 
     // Verify user is a team leader of the specified team
     let query = `SELECT t.* FROM teams t
@@ -91,7 +101,7 @@ export const createTeamEntryCheckout = async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'lkr',
             product_data: {
               name: `Entry fee — ${tournament.title}`,
               description: `Team: ${team.name} (${team.tag})`,
@@ -102,7 +112,7 @@ export const createTeamEntryCheckout = async (req, res) => {
         },
         {
           price_data: {
-            currency: 'usd',
+            currency: 'lkr',
             product_data: {
               name: 'Platform fee (5%)',
               description: 'N-10 Wings platform service fee',
@@ -168,6 +178,14 @@ export const createTournamentCreationCheckout = async (req, res) => {
 
     const [[user]] = await db.query('SELECT email FROM users WHERE id = ?', [userId]);
 
+    // STRIPE SAFETY: Ensure fee is above minimum (~$0.50 USD)
+    if (CREATION_FEE < MIN_STRIPE_AMOUNT) {
+      return res.status(400).json({
+        success: false,
+        message: 'The tournament creation fee is currently set too low for payment processing.'
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -175,16 +193,28 @@ export const createTournamentCreationCheckout = async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'lkr',
             product_data: {
               name: 'Tournament creation fee',
-              description: `Create: ${title}`,
+              description: `Creation service fee for "${title}"`,
             },
             unit_amount: CREATION_FEE,
           },
           quantity: 1,
         },
+        ...(parseFloat(prize_pool) > 0 ? [{
+          price_data: {
+            currency: 'lkr',
+            product_data: {
+              name: 'Prize Pool Escrow',
+              description: `Prize pool funds for "${title}" (Held by N-10 Wings)`,
+            },
+            unit_amount: Math.round(parseFloat(prize_pool) * 100),
+          },
+          quantity: 1,
+        }] : []),
       ],
+
       metadata: {
         type: 'tournament_creation',
         user_id: String(userId),
@@ -349,15 +379,20 @@ const processTournamentCreationPayment = async (metadata, session) => {
   } = metadata;
 
   try {
+    const isBR = ['PUBG', 'Free Fire'].includes(game);
+    const final_tournament_type = isBR ? 'battle royale' : (tournament_type || 'single elimination');
+
     const { createChallongeTournament } = await import('../config/challonge.js');
 
     let challongeData = null;
     try {
-      challongeData = await createChallongeTournament({
-        name: title,
-        tournamentType: tournament_type || 'single elimination',
-        startAt: start_date || null,
-      });
+      if (!isBR) {
+        challongeData = await createChallongeTournament({
+          name: title,
+          tournamentType: final_tournament_type,
+          startAt: start_date || null,
+        });
+      }
     } catch (e) {
       console.warn('Challonge skip during creation:', e.message);
     }
@@ -376,7 +411,7 @@ const processTournamentCreationPayment = async (metadata, session) => {
         parseFloat(entry_fee) || 0,
         entry_fee_required === 'true' ? 1 : 0,
         start_date || null, end_date || null,
-        tournament_type || 'single elimination',
+        final_tournament_type,
         challongeData?.id || null,
         challongeData?.full_challonge_url || null,
         mode || 'online',

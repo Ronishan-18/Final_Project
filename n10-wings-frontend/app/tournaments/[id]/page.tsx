@@ -12,6 +12,7 @@ import IconTile from '../../../components/IconTile';
 import api from '../../../lib/api';
 import styles from './tournament.module.scss';
 import { getImageUrl } from '../../../lib/urlHelper';
+import BRPublicLeaderboard from './components/BRPublicLeaderboard';
 
 interface Tournament {
   id: number; title: string; game: string; status: string;
@@ -20,6 +21,10 @@ interface Tournament {
   entry_fee_required: boolean; start_date: string; end_date: string;
   tournament_type: string; organizer_username: string; organizer_name: string;
   challonge_url?: string; challonge_id?: string;
+  organizer_id: number;
+  winner_team_id?: number | null;
+  winner_team_name?: string | null;
+  winner_declared_at?: string | null;
 }
 interface Registration {
   id: number; username: string; full_name?: string; avatar?: string;
@@ -47,6 +52,8 @@ function TournamentDetailContent() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('user');
   const [ownedTeams, setOwnedTeams] = useState<OwnedTeam[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
@@ -61,9 +68,14 @@ function TournamentDetailContent() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const orgStatus = localStorage.getItem('is_organizer');
-    const role = localStorage.getItem('role');
+    const role = localStorage.getItem('role') || 'user';
+    const userId = Number(localStorage.getItem('userId'));
+
     setIsLoggedIn(!!token);
     setIsOrganizer(orgStatus === 'true' || role === 'admin');
+    setCurrentUserId(userId);
+    setCurrentUserRole(role);
+
     fetchTournament();
     if (token) fetchMyTeams();
     if (paymentCancelled) showToast('Payment cancelled. Your team was not registered.', 'error');
@@ -139,13 +151,34 @@ function TournamentDetailContent() {
   const commission = Math.round(entryFee * COMMISSION * 100) / 100;
   const totalFee = Math.round((entryFee + commission) * 100) / 100;
 
+  const isActualOrganizer = tournament.organizer_id === currentUserId;
+  const isAdmin = currentUserRole === 'admin';
+  const canManageTournament = isActualOrganizer || isAdmin;
+
   const renderPanel = () => {
-    if (tournament.status !== 'open') return (
-      <div className={styles.reg_notice}>
-        <Info size={14} /> Tournament is <strong>{tournament.status}</strong> — registration closed
-      </div>
-    );
-    if (isOrganizer) return null;
+    // 1. If status is NOT open, show appropriate notice
+    if (tournament.status !== 'open') {
+      const isWinner = String(tournament.winner_team_id) === String(selectedTeamId);
+      const showClaim = (isWinner || canManageTournament) && tournament.status === 'completed';
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className={styles.reg_notice}>
+            <Info size={14} /> Tournament is <strong>{tournament.status}</strong> — registration closed
+          </div>
+          {showClaim && (
+            <Link href={`/tournaments/${id}/claim?team_id=${tournament.winner_team_id || selectedTeamId}`} className={styles.cta_btn} style={{ background: 'linear-gradient(135deg, #00FF88, #00F5FF)', color: '#0A0A0F' }}>
+              <Trophy size={14} /> Claim Prize Now
+            </Link>
+          )}
+        </div>
+      );
+    }
+
+    // 2. If user is organizer, don't show registration form
+    if (canManageTournament) return null;
+
+    // 3. If already registered, show status
     if (alreadyRegistered) {
       const map: Record<string, any> = {
         approved: { bg: 'rgba(0,255,136,0.08)', bd: 'rgba(0,255,136,0.3)', c: '#00FF88', Icon: CheckCircle, txt: 'Your team is approved!' },
@@ -158,27 +191,30 @@ function TournamentDetailContent() {
           <div className={styles.reg_status} style={{ background: cfg.bg, borderColor: cfg.bd, color: cfg.c }}>
             <cfg.Icon size={15} /> <span>{cfg.txt}</span>
           </div>
-          {registrationStatus === 'approved' && (
-            <Link href={`/tournaments/${id}/claim?team_id=${selectedTeamId}`} className={styles.cta_btn} style={{ background: 'linear-gradient(135deg, #00FF88, #00F5FF)', color: '#0A0A0F', marginTop: '10px' }}>
-              <Trophy size={14} /> Claim Prize (if winner)
-            </Link>
-          )}
         </div>
       );
     }
+
+    // 4. If full
     if (isFull) return (
       <div className={styles.reg_status} style={{ background: 'rgba(136,146,164,0.08)', borderColor: 'rgba(136,146,164,0.2)', color: '#8892A4' }}>
         <Users size={15} /> <span>Tournament is full ({tournament.max_teams}/{tournament.max_teams})</span>
       </div>
     );
+
+    // 5. If not logged in
     if (!isLoggedIn) return (
       <button className={styles.cta_btn} onClick={() => router.push(`/login?returnTo=${encodeURIComponent(`/tournaments/${id}`)}`)} style={{ background: 'linear-gradient(135deg,#00F5FF,#8B00FF)' }}>
         <LogIn size={15} /> Login to Apply
       </button>
     );
+
+    // 6. If loading teams
     if (teamsLoading) return (
       <div className={styles.reg_loading}><div className={styles.mini_spinner} /> Checking your teams...</div>
     );
+
+    // 7. If no owned teams
     if (ownedTeams.length === 0) return (
       <div>
         <div className={styles.reg_status} style={{ background: 'rgba(0,245,255,0.05)', borderColor: 'rgba(0,245,255,0.12)', color: 'rgba(0,245,255,0.6)' }}>
@@ -189,6 +225,8 @@ function TournamentDetailContent() {
         </Link>
       </div>
     );
+
+    // 8. Default: Registration form
     return (
       <div className={styles.reg_card}>
         <div className={styles.reg_card__hdr}>
@@ -246,6 +284,7 @@ function TournamentDetailContent() {
       <div className="container">
         <Link href="/tournaments" className={styles.back}><ArrowLeft size={15} strokeWidth={2} /> All Tournaments</Link>
 
+        {/* Hero Section */}
         <div className={styles.hero} style={{ borderColor: color + '33' }}>
           <div className={styles.hero__left}>
             <div className={styles.hero__badges}>
@@ -290,7 +329,7 @@ function TournamentDetailContent() {
 
               {renderPanel()}
 
-              {isOrganizer && (
+              {canManageTournament && (
                 <Link href={`/tournaments/${tournament.id}/manage`} className={styles.manage_btn}>
                   <Shield size={14} strokeWidth={2} /> Manage Tournament
                 </Link>
@@ -304,6 +343,7 @@ function TournamentDetailContent() {
           </div>
         </div>
 
+        {/* Body Section */}
         <div className={styles.body}>
           <div className={styles.section}>
             <h2 className={styles.section__title}>
@@ -344,7 +384,15 @@ function TournamentDetailContent() {
             </div>
           )}
 
-          {tournament.challonge_url && (
+          {tournament.tournament_type === 'battle royale' ? (
+            <div className={styles.section}>
+              <h2 className={styles.section__title}>
+                <IconTile icon={Trophy} color="#FFD700" size={14} tileSize={28} radius={7} />
+                Live Standings
+              </h2>
+              <BRPublicLeaderboard tournamentId={id as string} />
+            </div>
+          ) : tournament.challonge_url ? (
             <div className={styles.section}>
               <h2 className={styles.section__title}>
                 <IconTile icon={Trophy} color="#FFD700" size={14} tileSize={28} radius={7} />
@@ -354,7 +402,7 @@ function TournamentDetailContent() {
                 frameBorder="0" scrolling="auto" 
                 className={styles.bracket_iframe} title="Bracket" />
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
