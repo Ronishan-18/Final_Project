@@ -13,7 +13,7 @@ import {
 // ── CREATE TOURNAMENT ──
 export const createTournament = async (req, res) => {
   try {
-    const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type } = req.body;
+    const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type, mode, venue_address, registration_open_date, registration_close_date } = req.body;
     if (!title || !game) return res.status(400).json({ success: false, message: 'Title and game are required!' });
 
     let challongeData = null;
@@ -22,9 +22,9 @@ export const createTournament = async (req, res) => {
     } catch (e) { console.warn('Challonge skip:', e.message); }
 
     const [result] = await db.query(
-      `INSERT INTO tournaments (organizer_id,title,game,description,rules,prize_pool,max_teams,entry_fee,start_date,end_date,tournament_type,status,challonge_id,challonge_url)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,'open',?,?)`,
-      [req.user.id, title, game, description||null, rules||null, prize_pool||0, max_teams||16, entry_fee||0, start_date||null, end_date||null, tournament_type||'single elimination', challongeData?.id||null, challongeData?.full_challonge_url||null]
+      `INSERT INTO tournaments (organizer_id,title,game,description,rules,prize_pool,max_teams,entry_fee,start_date,end_date,tournament_type,status,challonge_id,challonge_url,mode,venue_address,registration_open_date,registration_close_date)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,'open',?,?,?,?,?,?)`,
+      [req.user.id, title, game, description||null, rules||null, prize_pool||0, max_teams||16, entry_fee||0, start_date||null, end_date||null, tournament_type||'single elimination', challongeData?.id||null, challongeData?.full_challonge_url||null, mode||'online', venue_address||null, registration_open_date||null, registration_close_date||null]
     );
 
     await db.query('UPDATE organizer_profiles SET tournaments_hosted = tournaments_hosted + 1 WHERE user_id = ?', [req.user.id]).catch(()=>{});
@@ -459,6 +459,11 @@ export const registerTeamForTournament = async (req, res) => {
     );
     if (!leaderOf.length) return res.status(403).json({ success: false, message: 'Only the team leader can register this team!' });
     const team = leaderOf[0];
+
+    // Check team size is exactly 4
+    const [[{ memberCount }]] = await db.query("SELECT COUNT(*) as count FROM team_members WHERE team_id = ? AND status = 'approved'", [team.id]);
+    if (memberCount !== 4) return res.status(400).json({ success: false, message: 'Your team must have exactly 4 members to register for a tournament!' });
+
     const [rows] = await db.query("SELECT * FROM tournaments WHERE id = ? AND status = 'open'", [id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Tournament not open!' });
     const tournament = rows[0];

@@ -160,7 +160,7 @@ export const createTeamEntryCheckout = async (req, res) => {
 export const createTournamentCreationCheckout = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type, entry_fee_required } = req.body;
+    const { title, game, description, rules, prize_pool, max_teams, entry_fee, start_date, end_date, tournament_type, entry_fee_required, mode, venue_address, registration_open_date, registration_close_date } = req.body;
 
     if (!title || !game) {
       return res.status(400).json({ success: false, message: 'Title and game are required!' });
@@ -199,6 +199,10 @@ export const createTournamentCreationCheckout = async (req, res) => {
         start_date: start_date || '',
         end_date: end_date || '',
         tournament_type: tournament_type || 'single elimination',
+        mode: mode || 'online',
+        venue_address: venue_address || '',
+        registration_open_date: registration_open_date || '',
+        registration_close_date: registration_close_date || '',
         organizer_id: String(userId),
       },
       success_url: `${FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&type=creation`,
@@ -340,7 +344,8 @@ const processTeamEntryPayment = async (metadata, session) => {
 const processTournamentCreationPayment = async (metadata, session) => {
   const {
     user_id, title, game, description, rules, prize_pool, max_teams,
-    entry_fee, entry_fee_required, start_date, end_date, tournament_type
+    entry_fee, entry_fee_required, start_date, end_date, tournament_type,
+    mode, venue_address, registration_open_date, registration_close_date
   } = metadata;
 
   try {
@@ -361,8 +366,8 @@ const processTournamentCreationPayment = async (metadata, session) => {
       `INSERT INTO tournaments
         (organizer_id, title, game, description, rules, prize_pool, max_teams, entry_fee,
          entry_fee_required, start_date, end_date, tournament_type, status,
-         challonge_id, challonge_url, creation_fee_paid)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, TRUE)`,
+         challonge_id, challonge_url, creation_fee_paid, mode, venue_address, registration_open_date, registration_close_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, TRUE, ?, ?, ?, ?)`,
       [
         parseInt(user_id), title, game,
         description || null, rules || null,
@@ -374,6 +379,10 @@ const processTournamentCreationPayment = async (metadata, session) => {
         tournament_type || 'single elimination',
         challongeData?.id || null,
         challongeData?.full_challonge_url || null,
+        mode || 'online',
+        venue_address || null,
+        registration_open_date || null,
+        registration_close_date || null,
       ]
     );
 

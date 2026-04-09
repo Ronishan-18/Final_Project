@@ -28,6 +28,10 @@ function CreateTournamentContent() {
     start_date: '',
     end_date: '',
     tournament_type: 'single elimination',
+    mode: 'online',
+    venue_address: '',
+    registration_open_date: '',
+    registration_close_date: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -98,6 +102,19 @@ function CreateTournamentContent() {
               </select>
             </div>
             <div className={styles.field}>
+              <label>Mode</label>
+              <select name="mode" value={form.mode} onChange={handle}>
+                <option value="online">Online</option>
+                <option value="venue">Live Venue</option>
+              </select>
+            </div>
+            {form.mode === 'venue' && (
+              <div className={styles.field}>
+                <label>Venue address *</label>
+                <input name="venue_address" value={form.venue_address} onChange={handle} placeholder="Enter venue location" required />
+              </div>
+            )}
+            <div className={styles.field}>
               <label>Tournament type</label>
               <select name="tournament_type" value={form.tournament_type} onChange={handle}>
                 {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -120,6 +137,14 @@ function CreateTournamentContent() {
             <div className={styles.field}>
               <label>End date</label>
               <input name="end_date" type="datetime-local" value={form.end_date} onChange={handle} />
+            </div>
+            <div className={styles.field}>
+              <label>Registration start date</label>
+              <input name="registration_open_date" type="datetime-local" value={form.registration_open_date} onChange={handle} />
+            </div>
+            <div className={styles.field}>
+              <label>Registration end date</label>
+              <input name="registration_close_date" type="datetime-local" value={form.registration_close_date} onChange={handle} />
             </div>
             <div className={styles.field}>
               <label>Entry fee per team (USD)</label>

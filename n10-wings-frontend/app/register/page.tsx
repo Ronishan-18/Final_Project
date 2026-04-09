@@ -11,6 +11,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const type = searchParams.get('type') || 'user';
+  const returnTo = searchParams.get('returnTo');
 
   const [formData, setFormData] = useState({
     username: '',
@@ -74,7 +75,7 @@ function RegisterForm() {
         sessionStorage.setItem('pendingToken', result.pendingToken);
       }
       
-      router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
+      router.push(`/verify?email=${encodeURIComponent(formData.email)}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || 'Registration failed!');
@@ -215,7 +216,7 @@ function RegisterForm() {
 
           <p className={styles.register__login}>
             Already have an account?{' '}
-            <Link href="/login">Login here</Link>
+            <Link href={`/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}>Login here</Link>
           </p>
         </div>
       </div>

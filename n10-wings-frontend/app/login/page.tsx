@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Gamepad2, AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import api from '../../lib/api';
 import styles from './login.module.scss';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,8 +34,9 @@ export default function LoginPage() {
         localStorage.setItem('userId', String(userId));
       }
 
-      // Redirect based on role
-      if (role === 'admin') router.push('/dashboard/admin');
+      // Redirect based on role or returnTo
+      if (returnTo) router.push(returnTo);
+      else if (role === 'admin') router.push('/dashboard/admin');
       else if (role === 'sponsor') router.push('/dashboard/sponsor');
       else if (is_organizer) router.push('/dashboard/organizer');
       else router.push('/dashboard');
@@ -163,10 +166,18 @@ export default function LoginPage() {
 
           <p className={styles.login__register}>
             Don&apos;t have an account?{' '}
-            <Link href="/register">Register here</Link>
+            <Link href={`/register${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`}>Register here</Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

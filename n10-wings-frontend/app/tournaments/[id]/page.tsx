@@ -154,8 +154,15 @@ function TournamentDetailContent() {
       };
       const cfg = map[registrationStatus] || map.pending;
       return (
-        <div className={styles.reg_status} style={{ background: cfg.bg, borderColor: cfg.bd, color: cfg.c }}>
-          <cfg.Icon size={15} /> <span>{cfg.txt}</span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className={styles.reg_status} style={{ background: cfg.bg, borderColor: cfg.bd, color: cfg.c }}>
+            <cfg.Icon size={15} /> <span>{cfg.txt}</span>
+          </div>
+          {registrationStatus === 'approved' && (
+            <Link href={`/tournaments/${id}/claim?team_id=${selectedTeamId}`} className={styles.cta_btn} style={{ background: 'linear-gradient(135deg, #00FF88, #00F5FF)', color: '#0A0A0F', marginTop: '10px' }}>
+              <Trophy size={14} /> Claim Prize (if winner)
+            </Link>
+          )}
         </div>
       );
     }
@@ -165,7 +172,7 @@ function TournamentDetailContent() {
       </div>
     );
     if (!isLoggedIn) return (
-      <button className={styles.cta_btn} onClick={() => router.push('/login')} style={{ background: 'linear-gradient(135deg,#00F5FF,#8B00FF)' }}>
+      <button className={styles.cta_btn} onClick={() => router.push(`/login?returnTo=${encodeURIComponent(`/tournaments/${id}`)}`)} style={{ background: 'linear-gradient(135deg,#00F5FF,#8B00FF)' }}>
         <LogIn size={15} /> Login to Apply
       </button>
     );

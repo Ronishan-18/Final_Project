@@ -20,6 +20,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import friendRoutes from './routes/friend.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import prizeClaimRoutes from './routes/prizeClaim.routes.js';
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/prize-claims', prizeClaimRoutes);
 
 // Health check
 app.get('/', (req, res) => {

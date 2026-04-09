@@ -11,6 +11,7 @@ function VerifyForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const email = searchParams.get('email') || '';
+  const returnTo = searchParams.get('returnTo');
 
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +31,7 @@ function VerifyForm() {
       await verifyEmail({ email, otp, pendingToken });
       sessionStorage.removeItem('pendingToken');
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push(`/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`), 2000);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(error.response?.data?.message || 'Invalid OTP!');

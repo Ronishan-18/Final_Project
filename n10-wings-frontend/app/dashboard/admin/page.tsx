@@ -56,7 +56,7 @@ interface Application {
   created_at: string;
 }
 
-type Tab = 'overview' | 'users' | 'applications' | 'appeals';
+type Tab = 'overview' | 'users' | 'applications' | 'appeals' | 'claims';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -65,6 +65,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [appeals, setAppeals] = useState<any[]>([]);
+  const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -130,12 +131,20 @@ export default function AdminDashboard() {
     if (tab === 'users') fetchUsers();
     if (tab === 'applications') fetchApplications();
     if (tab === 'appeals') fetchAppeals();
+    if (tab === 'claims') fetchClaims();
   }, [tab, fetchUsers]);
 
   const fetchAppeals = async () => {
     try {
       const res = await api.get('/admin/appeals?status=pending');
       if (res.data.success) setAppeals(res.data.appeals);
+    } catch {}
+  };
+
+  const fetchClaims = async () => {
+    try {
+      const res = await api.get('/prize-claims?status=pending');
+      if (res.data.success) setClaims(res.data.claims);
     } catch {}
   };
 
@@ -147,6 +156,16 @@ export default function AdminDashboard() {
       setAppeals(prev => prev.filter(a => a.id !== appId));
     } catch { showToast('Action failed!'); }
     finally { setActionLoading(null); fetchStats(); }
+  };
+
+  const handleClaimStatus = async (claimId: number, status: 'paid' | 'rejected') => {
+    setActionLoading(claimId);
+    try {
+      const res = await api.put(`/prize-claims/${claimId}/status`, { status, notes: '' });
+      showToast(res.data.message);
+      setClaims(prev => prev.filter(c => c.id !== claimId));
+    } catch { showToast('Action failed!'); }
+    finally { setActionLoading(null); }
   };
 
   const handleOrganizerSuspend = async (userId: number) => {
@@ -205,6 +224,7 @@ export default function AdminDashboard() {
     { key: 'users', icon: Users, label: 'Users', badge: stats?.total_users },
     { key: 'applications', icon: ShieldCheck, label: 'Applications', badge: stats?.pending_applications },
     { key: 'appeals', icon: AlertTriangle, label: 'Appeals' },
+    { key: 'claims', icon: Trophy, label: 'Prize Claims' },
   ];
 
   return (
@@ -259,12 +279,14 @@ export default function AdminDashboard() {
               {tab === 'users' && 'User Management'}
               {tab === 'applications' && 'Organizer Applications'}
               {tab === 'appeals' && 'Suspension Appeals'}
+              {tab === 'claims' && 'Prize Claims'}
             </h1>
             <p className={styles.header__sub}>
               {tab === 'overview' && 'Real-time platform statistics'}
               {tab === 'users' && `${totalUsers || stats?.total_users || 0} total users`}
               {tab === 'applications' && `${stats?.pending_applications || 0} pending review`}
               {tab === 'appeals' && `${appeals.length} pending appeals`}
+              {tab === 'claims' && `${claims.length} pending claims`}
             </p>
           </div>
           <button className={styles.header__refresh} onClick={() => {
@@ -607,6 +629,59 @@ export default function AdminDashboard() {
                       >
                         <XCircle size={14} strokeWidth={2} />
                         Reject Appeal
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── CLAIMS TAB ── */}
+        {tab === 'claims' && (
+          <div className={styles.applications}>
+            {claims.length === 0 ? (
+              <div className={styles.empty}>
+                <CheckCircle size={40} color="#00FF88" strokeWidth={1.5} />
+                <p>No pending claims!</p>
+              </div>
+            ) : (
+              <div className={styles.app_grid}>
+                {claims.map((claim) => (
+                  <div key={claim.id} className={styles.app_card}>
+                    <div className={styles.app_card__header}>
+                      <div>
+                        <div className={styles.app_card__name}>{claim.tournament_title}</div>
+                        <div className={styles.app_card__email}>Team: {claim.team_name}</div>
+                        <div className={styles.app_card__email}>User: {claim.user_email}</div>
+                        <div className={styles.app_card__country} style={{ color: '#00FF88' }}>
+                          Amount: ${claim.amount}
+                        </div>
+                      </div>
+                    </div>
+                    <p className={styles.app_card__bio} style={{ borderLeft: '3px solid #00F5FF', paddingLeft: '1rem' }}>
+                      Bank Details: {claim.bank_details}
+                    </p>
+                    <div className={styles.app_card__meta}>
+                      Submitted {new Date(claim.created_at).toLocaleDateString()}
+                    </div>
+                    <div className={styles.app_card__actions}>
+                      <button
+                        className={styles.approve_btn}
+                        onClick={() => handleClaimStatus(claim.id, 'paid')}
+                        disabled={actionLoading === claim.id}
+                      >
+                        <CheckCircle size={14} strokeWidth={2} />
+                        Mark as Paid
+                      </button>
+                      <button
+                        className={styles.reject_btn}
+                        onClick={() => handleClaimStatus(claim.id, 'rejected')}
+                        disabled={actionLoading === claim.id}
+                      >
+                        <XCircle size={14} strokeWidth={2} />
+                        Reject
                       </button>
                     </div>
                   </div>

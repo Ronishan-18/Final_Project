@@ -168,10 +168,10 @@ export const invitePlayer = async (req, res) => {
       if (existing[0].status === 'pending') return res.status(400).json({ success: false, message: 'Invitation already sent!' });
     }
 
-    // Check member limit (max 10)
+    // Check member limit (max 4)
     const [[{ count }]] = await db.query(
       "SELECT COUNT(*) as count FROM team_members WHERE team_id = ? AND status = 'approved'", [teamId]);
-    if (count >= 10) return res.status(400).json({ success: false, message: 'Team is full (max 10 members)!' });
+    if (count >= 4) return res.status(400).json({ success: false, message: 'Team is full (max 4 members)!' });
 
     const [insertResult] = await db.query(
       "INSERT INTO team_members (team_id, user_id, role, status) VALUES (?, ?, 'member', 'pending') ON DUPLICATE KEY UPDATE status='pending'",
@@ -211,6 +211,10 @@ export const respondToInvitation = async (req, res) => {
     const teamName = teams[0].name;
 
     if (action === 'accept') {
+      // Check max joined teams
+      const [[{ myTeamsCount }]] = await db.query("SELECT COUNT(*) as count FROM team_members WHERE user_id = ? AND status = 'approved'", [req.user.id]);
+      if (myTeamsCount >= 3) return res.status(400).json({ success: false, message: 'You can only join a maximum of 3 teams!'});
+
       await db.query("UPDATE team_members SET status = 'approved' WHERE id = ?", [memberId]);
 
       await createNotification(
@@ -295,6 +299,10 @@ export const registerTeamForTournament = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Only the team leader can register this team!' });
     }
     const team = leaderOf[0];
+
+    // Check team size is exactly 4
+    const [[{ memberCount }]] = await db.query("SELECT COUNT(*) as count FROM team_members WHERE team_id = ? AND status = 'approved'", [team.id]);
+    if (memberCount !== 4) return res.status(400).json({ success: false, message: 'Your team must have exactly 4 members to register for a tournament!' });
 
     // Check tournament is open
     const [tournaments] = await db.query(
@@ -408,6 +416,10 @@ export const requestJoinTeam = async (req, res) => {
     );
     if (existing.length > 0) return res.status(400).json({ success: false, message: 'You are already in a team for this game!' });
 
+    // Check max teams joined
+    const [[{ myTeamsCount }]] = await db.query("SELECT COUNT(*) as count FROM team_members WHERE user_id = ? AND status = 'approved'", [userId]);
+    if (myTeamsCount >= 3) return res.status(400).json({ success: false, message: 'You can only join a maximum of 3 teams!' });
+
     // Check existing request
     const [existingMem] = await db.query('SELECT id, status FROM team_members WHERE team_id = ? AND user_id = ?', [teamId, userId]);
     if (existingMem.length > 0) {
@@ -483,9 +495,9 @@ export const respondToJoinRequest = async (req, res) => {
     const playerId = members[0].user_id;
 
     if (action === 'accept') {
-      // Check member limit (max 10)
+      // Check member limit (max 4)
       const [[{ count }]] = await db.query("SELECT COUNT(*) as count FROM team_members WHERE team_id = ? AND status = 'approved'", [teamId]);
-      if (count >= 10) return res.status(400).json({ success: false, message: 'Team is full (max 10)!' });
+      if (count >= 4) return res.status(400).json({ success: false, message: 'Team is full (max 4)!' });
 
       await db.query("UPDATE team_members SET status = 'approved' WHERE id = ?", [requestId]);
 
