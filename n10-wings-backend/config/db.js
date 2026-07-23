@@ -2,14 +2,12 @@ import mysql from 'mysql2';
 import 'dotenv/config';
 
 const pool = mysql.createPool({
-  // Railway uses MYSQLHOST, MYSQLUSER etc.
-  // Local dev uses DB_HOST, DB_USER etc.
-  // This works for both automatically
   host:     process.env.MYSQLHOST     || process.env.DB_HOST     || 'localhost',
   user:     process.env.MYSQLUSER     || process.env.DB_USER     || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.MYSQLDATABASE || process.env.DB_NAME     || 'esports_db',
   port:     process.env.MYSQLPORT     || process.env.DB_PORT     || 3306,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
