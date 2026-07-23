@@ -353,11 +353,6 @@ export default function PublicProfilePage() {
     ? Math.round((gamerProfile.wins / (gamerProfile.wins + gamerProfile.losses)) * 100)
     : 0;
 
-  const roleColor = user.role === 'sponsor' ? '#FF006E' :
-    user.is_organizer ? '#00F5FF' : '#00F5FF';
-  const roleLabel = user.role === 'sponsor' ? <><Briefcase size={14} style={{marginRight: 6}} /> SPONSOR</> :
-    user.is_organizer ? <><Trophy size={14} style={{marginRight: 6}} /> ORGANIZER</> : <><Gamepad2 size={14} style={{marginRight: 6}} /> GAMER</>;
-
   const apiGames = gameIdentities.filter(g => g.game_type === 'api');
   const manualGames = gameIdentities.filter(g => g.game_type === 'manual');
   const hasSocials = profile?.social_facebook || profile?.social_instagram ||
@@ -385,9 +380,6 @@ export default function PublicProfilePage() {
             }
           </div>
           <div className={styles.hero__info}>
-            <span className={styles.hero__role} style={{ color: roleColor, borderColor: roleColor }}>
-              {roleLabel}
-            </span>
             <h1 className={styles.hero__name}>{profile?.full_name || user.username}</h1>
             <p className={styles.hero__username}>@{user.username}</p>
             <div className={styles.hero__meta}>

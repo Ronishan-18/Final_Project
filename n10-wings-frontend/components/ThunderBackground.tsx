@@ -19,11 +19,12 @@ export default function ThunderBackground() {
   }, []);
 
   const triggerFlash = useCallback(() => {
-
+    if (document.visibilityState === 'hidden') return;
     setFlashKey(prev => prev + 1);
   }, []);
 
   const triggerBolt = useCallback(() => {
+    if (document.visibilityState === 'hidden') return;
     const randomPath = BOLT_PATHS[Math.floor(Math.random() * BOLT_PATHS.length)];
     const randomLeft = `${Math.floor(Math.random() * 80)}%`;
     const randomTop = `${Math.floor(Math.random() * 30)}%`;
@@ -35,33 +36,30 @@ export default function ThunderBackground() {
       key: Date.now()
     });
     
-    console.log('⚡ Lightning bolt triggered');
     triggerFlash();
   }, [triggerFlash]);
 
   useEffect(() => {
-    // Random interval for flashes (ambient) - More frequent now
+    if (!mounted) return;
+
     const flashTimer = setInterval(() => {
-      if (Math.random() > 0.5) triggerFlash();
-    }, 3000);
+      if (Math.random() > 0.7) triggerFlash(); // Reduced frequency slightly
+    }, 4000);
 
-    // Random interval for bolts (rare) - More frequent now
     const boltTimer = setInterval(() => {
-      if (Math.random() > 0.6) triggerBolt();
-    }, 5000);
-
+      if (Math.random() > 0.8) triggerBolt(); // Reduced frequency for performance
+    }, 6000);
 
     return () => {
       clearInterval(flashTimer);
       clearInterval(boltTimer);
     };
-  }, [triggerFlash, triggerBolt]);
+  }, [mounted, triggerFlash, triggerBolt]);
 
   if (!mounted) return null;
 
   return (
     <div className="thunder_bg">
-
       {/* Ambient Flash */}
       <div 
         key={`flash-${flashKey}`}

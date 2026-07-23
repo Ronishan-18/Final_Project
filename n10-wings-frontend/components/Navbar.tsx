@@ -204,9 +204,6 @@ export default function Navbar() {
                 </div>
                 <div className={styles.navbar__user_info}>
                   <span className={styles.navbar__username}>{user.username}</span>
-                  <span className={styles.navbar__role} style={{ color: getRoleColor() }}>
-                    {getRoleLabel()}
-                  </span>
                 </div>
                 <motion.div
                   animate={{ rotate: showDropdown ? 180 : 0 }}
@@ -239,10 +236,6 @@ export default function Navbar() {
                       <div>
                         <p className={styles.navbar__dropdown_name}>{user.username}</p>
                         <p className={styles.navbar__dropdown_email}>{user.email}</p>
-                        <span className={styles.navbar__dropdown_role}
-                          style={{ color: getRoleColor(), borderColor: `${getRoleColor()}40` }}>
-                          {getRoleLabel()}
-                        </span>
                       </div>
                     </div>
 

@@ -57,8 +57,9 @@ export const createTournament = async (req, res) => {
 // ── GET ALL TOURNAMENTS ──
 export const getTournaments = async (req, res) => {
   try {
-    const { game, status, search, filter } = req.query;
-    const userId = req.user?.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
 
     let query = `
       SELECT t.*, t.winner_team_name, u.username as organizer_username, p.full_name as organizer_name,
@@ -71,7 +72,7 @@ export const getTournaments = async (req, res) => {
     const params = [];
 
     if (filter === 'my') {
-      if (!userId) return res.status(200).json({ success: true, total: 0, tournaments: [] });
+      if (!userId) return res.status(200).json({ success: true, total: 0, tournaments: [], page: 1, totalPages: 0 });
       query += ` WHERE (t.organizer_id = ? OR t.id IN (
         SELECT tr.tournament_id FROM tournament_registrations tr
         JOIN teams tm ON tr.team_id = tm.id
@@ -89,8 +90,23 @@ export const getTournaments = async (req, res) => {
 
     query += ' GROUP BY t.id ORDER BY t.created_at DESC';
 
+    // Count query for pagination
+    const countQuery = `SELECT COUNT(DISTINCT t.id) as total FROM (${query}) as sub`;
+    const [[{ total }]] = await db.query(countQuery, params);
+
+    // Add limit and offset
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
     const [tournaments] = await db.query(query, params);
-    res.status(200).json({ success: true, total: tournaments.length, tournaments });
+    res.status(200).json({ 
+      success: true, 
+      total, 
+      tournaments, 
+      page, 
+      limit, 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (error) {
     console.error('Get Tournaments Error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -100,47 +116,58 @@ export const getTournaments = async (req, res) => {
 // ── GET SINGLE TOURNAMENT ──
 export const getTournament = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // Run basic tournament check first
     const [rows] = await db.query(
       `SELECT t.*, u.username as organizer_username, p.full_name as organizer_name
        FROM tournaments t
        LEFT JOIN users u ON t.organizer_id = u.id
        LEFT JOIN profiles p ON t.organizer_id = p.user_id
        WHERE t.id = ?`,
-      [req.params.id]
+      [id]
     );
 
     if (!rows.length) {
       return res.status(404).json({ success: false, message: 'Tournament not found!' });
     }
 
-    const [registrations] = await db.query(
-      `SELECT
-        r.id, r.tournament_id, r.team_id, r.user_id, r.status,
-        r.payment_status, r.registered_at,
-        COALESCE(tm.name, r.team_name) as team_name,
-        tm.tag as team_tag, tm.logo as team_logo,
-        u.username as leader_username,
-        p.full_name as leader_name,
-        p.avatar as leader_avatar
-       FROM tournament_registrations r
-       LEFT JOIN teams tm ON r.team_id = tm.id
-       LEFT JOIN team_members tmem ON tm.id = tmem.team_id AND tmem.role = 'leader' AND tmem.status = 'approved'
-       LEFT JOIN users u ON tmem.user_id = u.id
-       LEFT JOIN profiles p ON tmem.user_id = p.user_id
-       WHERE r.tournament_id = ?
-       ORDER BY r.registered_at DESC`,
-      [req.params.id]
-    );
+    const tournament = rows[0];
 
-    const [matches] = await db.query(
-      'SELECT * FROM matches WHERE tournament_id = ? ORDER BY round, id',
-      [req.params.id]
-    );
+    // Run registrations and matches queries in parallel
+    const [registrationsResult, matchesResult] = await Promise.all([
+      db.query(
+        `SELECT
+          r.id, r.tournament_id, r.team_id, r.user_id, r.status,
+          r.payment_status, r.registered_at,
+          COALESCE(tm.name, r.team_name) as team_name,
+          tm.tag as team_tag, tm.logo as team_logo,
+          u.username as leader_username,
+          p.full_name as leader_name,
+          p.avatar as leader_avatar
+         FROM tournament_registrations r
+         LEFT JOIN teams tm ON r.team_id = tm.id
+         LEFT JOIN team_members tmem ON tm.id = tmem.team_id AND tmem.role = 'leader' AND tmem.status = 'approved'
+         LEFT JOIN users u ON tmem.user_id = u.id
+         LEFT JOIN profiles p ON tmem.user_id = p.user_id
+         WHERE r.tournament_id = ?
+         ORDER BY r.registered_at DESC`,
+        [id]
+      ),
+      db.query(
+        'SELECT * FROM matches WHERE tournament_id = ? ORDER BY round, id',
+        [id]
+      )
+    ]);
+
+    const registrations = registrationsResult[0];
+    const matches = matchesResult[0];
 
     let challongeBracket = null;
-    if (rows[0].challonge_id) {
+    if (tournament.challonge_id) {
       try {
-        challongeBracket = await getChallongeTournament(rows[0].challonge_id);
+        // This is still serial but only happens if challonge_id exists
+        challongeBracket = await getChallongeTournament(tournament.challonge_id);
       } catch (e) {
         console.warn('Challonge fetch skip:', e.message);
       }
@@ -148,7 +175,7 @@ export const getTournament = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      tournament: rows[0],
+      tournament,
       registrations,
       matches,
       challongeBracket,
@@ -559,15 +586,30 @@ export const updateMatchResult = async (req, res) => {
 // ── MY TOURNAMENTS ──
 export const getMyTournaments = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const offset = (page - 1) * limit;
+
+    const countQuery = `SELECT COUNT(*) as total FROM tournaments WHERE organizer_id = ?`;
+    const [[{ total }]] = await db.query(countQuery, [req.user.id]);
+
     const [tournaments] = await db.query(
       `SELECT t.*, COUNT(DISTINCT r.id) as total_registrations,
         SUM(CASE WHEN r.status='approved' THEN 1 ELSE 0 END) as approved_teams,
         SUM(CASE WHEN r.status='pending' THEN 1 ELSE 0 END) as pending_teams
        FROM tournaments t LEFT JOIN tournament_registrations r ON t.id = r.tournament_id
-       WHERE t.organizer_id = ? GROUP BY t.id ORDER BY t.created_at DESC`,
-      [req.user.id]
+       WHERE t.organizer_id = ? GROUP BY t.id ORDER BY t.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [req.user.id, limit, offset]
     );
-    res.status(200).json({ success: true, tournaments });
+    res.status(200).json({ 
+      success: true, 
+      total, 
+      tournaments,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (error) {
     console.error('Get My Tournaments Error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

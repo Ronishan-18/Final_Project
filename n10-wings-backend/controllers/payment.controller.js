@@ -3,11 +3,11 @@ import db from '../config/db.js';
 import { createNotification } from './notification.controller.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const CREATION_FEE = parseInt(process.env.STRIPE_TOURNAMENT_CREATION_FEE || '50000'); // 500.00 LKR (Stripe minimum is ~150 LKR)
+const CREATION_FEE = parseInt(process.env.STRIPE_TOURNAMENT_CREATION_FEE || '500000'); // 5000.00 LKR
 const MIN_STRIPE_AMOUNT = 15000; // 150.00 LKR (approx $0.50 USD)
 
-
-const PLATFORM_COMMISSION_RATE = 0.05;
+const PLAYER_COMMISSION_LKR = 10;
+const DEFAULT_PLAYERS_PER_TEAM = 4;
 
 // ── CREATE CHECKOUT — TEAM ENTRY FEE ──
 export const createTeamEntryCheckout = async (req, res) => {
@@ -34,7 +34,7 @@ export const createTeamEntryCheckout = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This tournament has no entry fee!' });
     }
 
-    const commissionAmount = Math.round(entryFeeAmount * PLATFORM_COMMISSION_RATE);
+    const commissionAmount = PLAYER_COMMISSION_LKR * DEFAULT_PLAYERS_PER_TEAM * 100; // Rs 10 per player * 5 players
     const totalAmount = entryFeeAmount + commissionAmount;
 
     // STRIPE SAFETY: Ensure total amount is above minimum (~$0.50 USD)
@@ -114,8 +114,8 @@ export const createTeamEntryCheckout = async (req, res) => {
           price_data: {
             currency: 'lkr',
             product_data: {
-              name: 'Platform fee (5%)',
-              description: 'N-10 Wings platform service fee',
+              name: `Platform fee (Rs ${PLAYER_COMMISSION_LKR}/player)`,
+              description: `N-10 Wings platform service fee (${DEFAULT_PLAYERS_PER_TEAM} players)`,
             },
             unit_amount: commissionAmount,
           },

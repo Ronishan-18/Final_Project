@@ -42,6 +42,7 @@ const STATUSES = ['All', 'open', 'ongoing', 'completed'];
 function TournamentsContent() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState('');
   const [gameFilter, setGameFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -50,11 +51,12 @@ function TournamentsContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [myOwnedTeams, setMyOwnedTeams] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  
   const router = useRouter();
-
   const searchParams = useSearchParams();
   const filterParam = searchParams.get('filter');
 
@@ -82,8 +84,6 @@ function TournamentsContent() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
-
   const fetchMyTeams = async () => {
     try {
       const res = await api.get('/teams/my');
@@ -94,34 +94,58 @@ function TournamentsContent() {
   };
 
   useEffect(() => {
-    fetchTournaments();
-  }, [activeTab]);
+    setPage(1);
+    fetchTournaments({ page: '1' }, false);
+  }, [activeTab, gameFilter, statusFilter]);
 
-  const fetchTournaments = async (params: Record<string, string> = {}) => {
-    setLoading(true);
+  const fetchTournaments = async (params: Record<string, string> = {}, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+
     try {
       const mergedParams = {
         search,
         game: gameFilter !== 'All' ? gameFilter : '',
         status: statusFilter !== 'All' ? statusFilter : '',
         filter: activeTab === 'my' ? 'my' : '',
+        page: page.toString(),
+        limit: '12',
         ...params
       };
-      console.log('--- FETCH TOURNAMENTS ---');
-      console.log('Active Tab:', activeTab);
-      console.log('Final Params:', mergedParams);
 
       const query = new URLSearchParams(
         Object.fromEntries(Object.entries(mergedParams).filter(([, v]) => v && v !== 'All'))
       );
       const res = await api.get(`/tournaments?${query}`);
-      if (res.data.success) setTournaments(res.data.tournaments);
-    } catch { setTournaments([]); }
-    finally { setLoading(false); }
+      
+      if (res.data.success) {
+        if (append) {
+          setTournaments(prev => [...prev, ...res.data.tournaments]);
+        } else {
+          setTournaments(res.data.tournaments);
+        }
+        setTotalPages(res.data.totalPages);
+        setTotalItems(res.data.total);
+      }
+    } catch { 
+      if (!append) setTournaments([]); 
+    } finally { 
+      setLoading(false); 
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (page < totalPages) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchTournaments({ page: nextPage.toString() }, true);
+    }
   };
 
   const handleSearch = () => {
-    fetchTournaments();
+    setPage(1);
+    fetchTournaments({ page: '1' }, false);
   };
 
   const handleCreateTournamentClick = (e: React.MouseEvent) => {
@@ -271,126 +295,143 @@ function TournamentsContent() {
           </div>
         </div>
 
-
         {/* Results count */}
         <p className={styles.count}>
-          {loading ? 'Loading...' : `${tournaments.length} tournament${tournaments.length !== 1 ? 's' : ''} found`}
+          {loading ? 'Searching...' : `Found ${totalItems} tournament${totalItems !== 1 ? 's' : ''}`}
         </p>
 
-        {/* Grid */}
+        {/* Grid and Load More */}
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner} />
           </div>
-        ) : tournaments.length === 0 ? (
-          <div className={styles.empty}>
-            <Trophy size={48} color="#8892A4" strokeWidth={1.5} />
-            <p>{activeTab === 'my' ? "You haven't registered for any tournaments yet." : "No tournaments found"}</p>
-            {activeTab !== 'my' && (
-              <button onClick={handleCreateTournamentClick} className={styles.empty__btn}>
-                Create the first one →
-              </button>
-            )}
-          </div>
         ) : (
-          <div className={styles.grid}>
-            {tournaments.map(t => (
-              <Link key={t.id} href={`/tournaments/${t.id}`} className={styles.card}>
-                {/* Status bar */}
-                <div className={styles.card__bar} style={{ background: STATUS_COLOR[t.status] }} />
+          <>
+            {tournaments.length === 0 ? (
+              <div className={styles.empty}>
+                <Trophy size={48} color="#8892A4" strokeWidth={1.5} />
+                <p>{activeTab === 'my' ? "You haven't registered for any tournaments yet." : "No tournaments found"}</p>
+                {activeTab !== 'my' && (
+                  <button onClick={handleCreateTournamentClick} className={styles.empty__btn}>
+                    Create the first one →
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className={styles.grid}>
+                  {tournaments.map(t => (
+                    <Link key={t.id} href={`/tournaments/${t.id}`} className={styles.card}>
+                      {/* Status bar */}
+                      <div className={styles.card__bar} style={{ background: STATUS_COLOR[t.status] }} />
 
-                <div className={styles.card__top}>
-                  <div className={styles.card__game}>
-                    <Gamepad2 size={13} strokeWidth={1.75} style={{ marginRight: 4, display: 'inline' }} />
-                    {t.game}
-                  </div>
-                  <span
-                    className={styles.card__status}
-                    style={{ color: STATUS_COLOR[t.status], borderColor: STATUS_COLOR[t.status] + '44', background: STATUS_COLOR[t.status] + '14' }}
-                  >
-                    {t.status === 'ongoing' && <span className={styles.live_dot} />}
-                    {t.status.toUpperCase()}
-                  </span>
-                </div>
-
-                <h3 className={styles.card__title}>{t.title}</h3>
-
-                <div className={styles.card__type}>
-                  {t.tournament_type}
-                </div>
-
-                {t.status === 'completed' && t.winner_team_name ? (
-                  <div style={{ padding: '0.75rem', background: 'rgba(255,215,0,0.1)', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,215,0,0.3)' }}>
-                    <div style={{ color: '#FFD700', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Trophy size={11} strokeWidth={2.5} /> WINNER
-                    </div>
-                    <div style={{ color: '#FFF', fontSize: '1rem', fontWeight: 700 }}>
-                      {t.winner_team_name}
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.card__stats}>
-                    <div className={styles.card__stat}>
-                      <Zap size={14} color="#FFD700" strokeWidth={2} />
-                      <div>
-                        <div className={styles.card__stat_val} style={{ color: '#FFD700' }}>
-                          LKR {Number(t.prize_pool).toLocaleString()}
+                      <div className={styles.card__top}>
+                        <div className={styles.card__game}>
+                          <Gamepad2 size={13} strokeWidth={1.75} style={{ marginRight: 4, display: 'inline' }} />
+                          {t.game}
                         </div>
-                        <div className={styles.card__stat_label}>Prize Pool</div>
+                        <span
+                          className={styles.card__status}
+                          style={{ color: STATUS_COLOR[t.status], borderColor: STATUS_COLOR[t.status] + '44', background: STATUS_COLOR[t.status] + '14' }}
+                        >
+                          {t.status === 'ongoing' && <span className={styles.live_dot} />}
+                          {t.status.toUpperCase()}
+                        </span>
                       </div>
-                    </div>
-                    <div className={styles.card__stat}>
-                      <Users size={14} color="#00F5FF" strokeWidth={2} />
-                      <div>
-                        <div className={styles.card__stat_val} style={{ color: '#00F5FF' }}>
-                          {t.registered_teams}/{t.max_teams}
-                        </div>
-                        <div className={styles.card__stat_label}>Teams</div>
+
+                      <h3 className={styles.card__title}>{t.title}</h3>
+
+                      <div className={styles.card__type}>
+                        {t.tournament_type}
                       </div>
-                    </div>
-                    {t.start_date && (
-                      <div className={styles.card__stat}>
-                        <Calendar size={14} color="#FF6B00" strokeWidth={2} />
-                        <div>
-                          <div className={styles.card__stat_val} style={{ color: '#FF6B00' }}>
-                            {new Date(t.start_date).toLocaleDateString()}
+
+                      {t.status === 'completed' && t.winner_team_name ? (
+                        <div style={{ padding: '0.75rem', background: 'rgba(255,215,0,0.1)', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(255,215,0,0.3)' }}>
+                          <div style={{ color: '#FFD700', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Trophy size={11} strokeWidth={2.5} /> WINNER
                           </div>
-                          <div className={styles.card__stat_label}>Start Date</div>
+                          <div style={{ color: '#FFF', fontSize: '1rem', fontWeight: 700 }}>
+                            {t.winner_team_name}
+                          </div>
                         </div>
+                      ) : (
+                        <div className={styles.card__stats}>
+                          <div className={styles.card__stat}>
+                            <Zap size={14} color="#FFD700" strokeWidth={2} />
+                            <div>
+                              <div className={styles.card__stat_val} style={{ color: '#FFD700' }}>
+                                LKR {Number(t.prize_pool).toLocaleString()}
+                              </div>
+                              <div className={styles.card__stat_label}>Prize Pool</div>
+                            </div>
+                          </div>
+                          <div className={styles.card__stat}>
+                            <Users size={14} color="#00F5FF" strokeWidth={2} />
+                            <div>
+                              <div className={styles.card__stat_val} style={{ color: '#00F5FF' }}>
+                                {t.registered_teams}/{t.max_teams}
+                              </div>
+                              <div className={styles.card__stat_label}>Teams</div>
+                            </div>
+                          </div>
+                          {t.start_date && (
+                            <div className={styles.card__stat}>
+                              <Calendar size={14} color="#FF6B00" strokeWidth={2} />
+                              <div>
+                                <div className={styles.card__stat_val} style={{ color: '#FF6B00' }}>
+                                  {new Date(t.start_date).toLocaleDateString()}
+                                </div>
+                                <div className={styles.card__stat_label}>Start Date</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Fill bar */}
+                      <div className={styles.card__fill_track}>
+                        <div className={styles.card__fill_bar} style={{ width: `${fillPct(t)}%`, background: STATUS_COLOR[t.status] }} />
                       </div>
-                    )}
+
+                      <div className={styles.card__footer}>
+                        <span className={styles.card__organizer}>
+                          by {t.organizer_name || t.organizer_username}
+                        </span>
+                        {t.entry_fee > 0
+                          ? <span className={styles.card__fee}>LKR {t.entry_fee} entry</span>
+                          : <span className={styles.card__free}>FREE</span>
+                        }
+                      </div>
+
+                      <div className={styles.card__cta}>
+                        {t.is_registered ? (
+                          <span className={styles.card__registered}>
+                            <CheckCircle size={14} strokeWidth={2.5} /> ALREADY REGISTERED
+                          </span>
+                        ) : (
+                          <>
+                            View Tournament <ChevronRight size={14} strokeWidth={2.5} />
+                          </>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {page < totalPages && (
+                  <div className={styles.load_more_container}>
+                    <button 
+                      className={styles.load_more_btn} 
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? 'LOADING...' : 'LOAD MORE TOURNAMENTS'}
+                    </button>
                   </div>
                 )}
-
-                {/* Fill bar */}
-                <div className={styles.card__fill_track}>
-                  <div className={styles.card__fill_bar} style={{ width: `${fillPct(t)}%`, background: STATUS_COLOR[t.status] }} />
-                </div>
-
-                <div className={styles.card__footer}>
-                  <span className={styles.card__organizer}>
-                    by {t.organizer_name || t.organizer_username}
-                  </span>
-                  {t.entry_fee > 0
-                    ? <span className={styles.card__fee}>LKR {t.entry_fee} entry</span>
-                    : <span className={styles.card__free}>FREE</span>
-                  }
-                </div>
-
-                <div className={styles.card__cta}>
-                  {t.is_registered ? (
-                    <span className={styles.card__registered}>
-                      <CheckCircle size={14} strokeWidth={2.5} /> ALREADY REGISTERED
-                    </span>
-                  ) : (
-                    <>
-                      View Tournament <ChevronRight size={14} strokeWidth={2.5} />
-                    </>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
+              </>
+            )}
+          </>
         )}
       </div>
     </div>

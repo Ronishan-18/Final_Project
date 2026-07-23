@@ -17,7 +17,7 @@ export const createTeam = async (req, res) => {
       [req.user.id]
     );
     
-    if (ownedTeams.length >= 3) {
+    if (ownedTeams.length >= 2) {
       return res.status(400).json({ success: false, message: 'You can create a maximum of 3 teams!' });
     }
 

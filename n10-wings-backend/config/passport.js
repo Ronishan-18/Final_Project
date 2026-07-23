@@ -76,7 +76,7 @@ passport.use(
         return done(null, newUser[0]);
 
       } catch (error) {
-        console.error('❌ Google OAuth Strategy Callback Error:', error);
+        console.error(' Google OAuth Strategy Callback Error:', error);
         return done(error, null);
       }
     }

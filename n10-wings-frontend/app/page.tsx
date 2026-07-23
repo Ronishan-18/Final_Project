@@ -152,7 +152,7 @@ function FadeIn({ children, delay = 0, className = '' }: {
 }
 
 export default function HomePage() {
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const heroRef = useRef<HTMLDivElement>(null);
   const [liveStats, setLiveStats] = useState({
     activePlayers: 1200,
     tournaments: 48,
@@ -194,12 +194,18 @@ export default function HomePage() {
     };
     fetchStats();
 
-    const handle = (e: MouseEvent) => setMousePos({
-      x: e.clientX / window.innerWidth,
-      y: e.clientY / window.innerHeight,
-    });
-    window.addEventListener('mousemove', handle);
-    return () => window.removeEventListener('mousemove', handle);
+    fetchStats();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (heroRef.current) {
+        const x = (e.clientX / window.innerWidth) * 100;
+        const y = (e.clientY / window.innerHeight) * 100;
+        heroRef.current.style.setProperty('--mouse-x', `${x}%`);
+        heroRef.current.style.setProperty('--mouse-y', `${y}%`);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const stats = [
@@ -229,17 +235,16 @@ export default function HomePage() {
     <div className={styles.home}>
 
       {/* ── HERO ── */}
-      <section className={styles.hero}>
+      <section className={styles.hero} ref={heroRef}>
         {/* Background */}
         <div className={styles.hero__bg}>
           <div className={styles.hero__grid} />
-          <motion.div
+          <div 
             className={styles.hero__spotlight}
-            animate={{
-              background: `radial-gradient(700px at ${mousePos.x * 100}% ${mousePos.y * 100}%,
+            style={{
+              background: `radial-gradient(700px at var(--mouse-x, 50%) var(--mouse-y, 50%),
                 rgba(0,245,255,0.07) 0%, transparent 70%)`
             }}
-            transition={{ duration: 0.1 }}
           />
           <div className={styles.hero__glow_cyan} />
           <div className={styles.hero__glow_orange} />
