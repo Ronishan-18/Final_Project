@@ -105,3 +105,30 @@ export const sendAdminWelcomeEmail = async (email, username) => {
     `
   });
 };
+// ── Send Support Reply Email ──
+export const sendSupportReplyEmail = async (email, username, message) => {
+  await transporter.sendMail({
+    from: FROM,
+    to: email,
+    subject: '💬 Support Reply — N-10 Wings',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#070709;color:#E8EAF0;border-radius:12px;overflow:hidden;border:1px solid #1a1a2e;">
+        <div style="background:linear-gradient(135deg,#00F5FF22,#8B00FF22);padding:32px;text-align:center;border-bottom:1px solid #1a1a2e;">
+          <div style="font-family:monospace;font-size:28px;font-weight:900;color:#00F5FF;letter-spacing:4px;">N-10 WINGS</div>
+          <div style="color:#8892A4;font-size:12px;letter-spacing:2px;margin-top:6px;">SUPPORT TEAM</div>
+        </div>
+        <div style="padding:32px;">
+          <h2 style="color:#fff;margin:0 0 8px;">Hi ${username}! 👋</h2>
+          <p style="color:#8892A4;margin:0 0 20px;">Here is our reply to your support request:</p>
+          <div style="background:#0D0D16;border-left:3px solid #00F5FF;border-radius:0 8px 8px 0;padding:20px 24px;margin-bottom:24px;">
+            <p style="color:#E8EAF0;font-size:15px;line-height:1.7;margin:0;white-space:pre-wrap;">${message}</p>
+          </div>
+          <p style="color:#8892A4;font-size:13px;">If you have more questions, feel free to contact us again.</p>
+        </div>
+        <div style="padding:20px 32px;border-top:1px solid #1a1a2e;text-align:center;">
+          <p style="color:#8892A4;font-size:11px;margin:0;">N-10 Wings E-Sports Development & Management System</p>
+        </div>
+      </div>
+    `
+  });
+};
