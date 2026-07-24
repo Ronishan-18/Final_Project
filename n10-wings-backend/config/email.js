@@ -5,23 +5,35 @@ import 'dotenv/config';
 // Local dev  (NODE_ENV=development) → Gmail App Password
 // Production (NODE_ENV=production)  → Brevo SMTP (works on Render)
 
-export const transporter = process.env.NODE_ENV === 'production'
-  ? nodemailer.createTransport({
+const transportOptions = process.env.NODE_ENV === 'production'
+  ? {
       host: 'smtp-relay.brevo.com',
       port: 587,
       secure: false,
       auth: {
         user: process.env.BREVO_USER,
         pass: process.env.BREVO_SMTP_KEY
-      }
-    })
-  : nodemailer.createTransport({
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
+      logger: false,
+      debug: false,
+    }
+  : {
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-      }
-    });
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
+      logger: false,
+      debug: false,
+    };
+
+export const transporter = nodemailer.createTransport(transportOptions);
 
 // ── FROM address helper ──
 const FROM = process.env.NODE_ENV === 'production'
