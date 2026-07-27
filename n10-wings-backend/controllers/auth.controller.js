@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../config/email.js';
+import { queryWithRetry } from '../config/dbRetry.js';
 
 // ── Generate OTP ──
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -46,9 +47,9 @@ export const register = async (req, res) => {
     }
 
     // Check email exists
-    const [existingEmail] = await db.query(
+    const [existingEmail] = await queryWithRetry(() => db.query(
       'SELECT id FROM users WHERE email = ?', [email]
-    );
+    ));
     if (existingEmail.length > 0) {
       return res.status(400).json({
         success: false,
@@ -57,9 +58,9 @@ export const register = async (req, res) => {
     }
 
     // Check username exists
-    const [existingUsername] = await db.query(
+    const [existingUsername] = await queryWithRetry(() => db.query(
       'SELECT id FROM users WHERE username = ?', [username]
-    );
+    ));
     if (existingUsername.length > 0) {
       return res.status(400).json({
         success: false,
@@ -84,10 +85,14 @@ export const register = async (req, res) => {
       { expiresIn: '10m' }
     );
 
-    // Send OTP email (non-blocking fallback so SMTP timeout does not crash registration)
+    // Send OTP email without blocking registration success.
+    // If SMTP is unavailable, registration still completes and the client can continue with the pending token.
     console.log(`📤 Sending verification email to: ${email}...`);
     try {
-      await sendVerificationEmail(email, username, otp);
+      await Promise.race([
+        sendVerificationEmail(email, username, otp),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email send timed out')), 8000))
+      ]);
       console.log(`✅ Verification email sent to: ${email}`);
     } catch (emailErr) {
       console.error(`⚠️ Verification Email Failed to Send (SMTP Timeout/Config Error):`, emailErr.message || emailErr);

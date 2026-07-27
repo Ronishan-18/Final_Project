@@ -1,17 +1,8 @@
 import mysql from 'mysql2';
 import 'dotenv/config';
+import { getDbConfig } from './dbConfig.js';
 
-const pool = mysql.createPool({
-  host:     process.env.MYSQLHOST     || process.env.DB_HOST     || 'localhost',
-  user:     process.env.MYSQLUSER     || process.env.DB_USER     || 'root',
-  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME     || 'esports_db',
-  port:     process.env.MYSQLPORT     || process.env.DB_PORT     || 3306,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+const pool = mysql.createPool(getDbConfig(process.env));
 
 pool.getConnection((err, connection) => {
   if (err) {
