@@ -14,9 +14,9 @@ const transportOptions = process.env.NODE_ENV === 'production'
         user: process.env.BREVO_USER,
         pass: process.env.BREVO_SMTP_KEY
       },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 30000,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
       logger: false,
       debug: false,
     }
@@ -26,9 +26,9 @@ const transportOptions = process.env.NODE_ENV === 'production'
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 30000,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
       logger: false,
       debug: false,
     };

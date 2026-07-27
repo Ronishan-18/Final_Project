@@ -269,6 +269,19 @@ export default function RegisterScreen({ navigation }: any) {
               <Text style={styles.loginLinkHighlight}>Login here</Text>
             </Text>
           </TouchableOpacity>
+
+          {/* Guest Mode Link */}
+          <TouchableOpacity
+            style={[styles.loginLink, { marginTop: 12 }]}
+            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="compass-outline" size={16} color={colors.cyan} />
+              <Text style={[styles.loginLinkText, { color: colors.cyan, fontWeight: '700' }]}>
+                Explore App as Guest →
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

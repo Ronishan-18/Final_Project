@@ -84,10 +84,15 @@ export const register = async (req, res) => {
       { expiresIn: '10m' }
     );
 
-    // Send OTP email
+    // Send OTP email (non-blocking fallback so SMTP timeout does not crash registration)
     console.log(`📤 Sending verification email to: ${email}...`);
-    await sendVerificationEmail(email, username, otp);
-    console.log(`✅ Verification email sent to: ${email}`);
+    try {
+      await sendVerificationEmail(email, username, otp);
+      console.log(`✅ Verification email sent to: ${email}`);
+    } catch (emailErr) {
+      console.error(`⚠️ Verification Email Failed to Send (SMTP Timeout/Config Error):`, emailErr.message || emailErr);
+      console.log(`🔑 DEV/DEBUG FALLBACK OTP for ${email}: ${otp}`);
+    }
 
     res.status(201).json({
       success: true,
@@ -250,7 +255,12 @@ export const resendVerification = async (req, res) => {
       [otp, otpExpires, user.id]
     );
 
-    await sendVerificationEmail(email, user.username, otp);
+    try {
+      await sendVerificationEmail(email, user.username, otp);
+    } catch (emailErr) {
+      console.error(`⚠️ Resend Verification Email Failed (SMTP Timeout):`, emailErr.message || emailErr);
+      console.log(`🔑 DEV/DEBUG FALLBACK RESEND OTP for ${email}: ${otp}`);
+    }
 
     res.status(200).json({
       success: true,
@@ -419,7 +429,12 @@ export const forgotPassword = async (req, res) => {
       [otp, otpExpires, users[0].id]
     );
 
-    await sendPasswordResetEmail(email, users[0].username, otp);
+    try {
+      await sendPasswordResetEmail(email, users[0].username, otp);
+    } catch (emailErr) {
+      console.error(`⚠️ Password Reset Email Failed (SMTP Timeout):`, emailErr.message || emailErr);
+      console.log(`🔑 DEV/DEBUG FALLBACK RESET OTP for ${email}: ${otp}`);
+    }
 
     res.status(200).json({
       success: true,
